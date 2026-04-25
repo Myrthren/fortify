@@ -1,19 +1,15 @@
 import NextAuth from "next-auth";
-import Discord from "next-auth/providers/discord";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
+import { authConfig } from "@/auth.config";
 
+// Full auth setup with Prisma adapter — used by API routes and server components (Node runtime).
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  ...authConfig,
   adapter: PrismaAdapter(db),
-  providers: [
-    Discord({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-      authorization: { params: { scope: "identify email guilds.join" } },
-    }),
-  ],
   session: { strategy: "database" },
   callbacks: {
+    ...authConfig.callbacks,
     async session({ session, user }) {
       if (session.user) {
         (session.user as any).id = user.id;
@@ -25,7 +21,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   events: {
     async signIn({ user, account }) {
-      // Capture Discord ID from the OAuth account into the User row
       if (account?.provider === "discord" && account.providerAccountId) {
         await db.user.update({
           where: { id: user.id },
@@ -34,5 +29,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       }
     },
   },
-  pages: { signIn: "/login" },
 });
