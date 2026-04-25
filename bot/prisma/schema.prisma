@@ -1,0 +1,46 @@
+// Mirror of web/prisma/schema.prisma — keep in sync.
+// Bot uses the same Postgres DB, so the same models are required.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Tier {
+  FREE
+  PRO
+  ELITE
+  APEX
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  discordId     String?   @unique
+  tier          Tier      @default(FREE)
+  xp            Int       @default(0)
+  streak        Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  generations   Generation[]
+}
+
+model Generation {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String
+  input     String   @db.Text
+  output    String   @db.Text
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}

@@ -1,0 +1,61 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #000000;
+  --bg-subtle: #0a0a0a;
+  --bg-panel: #0f0f0f;
+  --border: #1a1a1a;
+  --text: #fafafa;
+  --text-muted: #737373;
+}
+
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-feature-settings: "ss01", "cv01";
+}
+
+::selection {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* Hide scrollbars but keep scroll */
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Subtle grid background utility */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* Glow */
+.glow-soft {
+  box-shadow: 0 0 60px -20px rgba(255,255,255,0.15);
+}
+
+/* Buttons */
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-md bg-white text-black px-4 py-2 text-sm font-medium transition hover:bg-neutral-200;
+}
+.btn-secondary {
+  @apply inline-flex items-center justify-center gap-2 rounded-md border border-bg-border bg-bg-panel text-text px-4 py-2 text-sm font-medium transition hover:bg-bg-subtle;
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-text-muted transition hover:text-text;
+}
+
+/* Inputs */
+.input {
+  @apply w-full rounded-md border border-bg-border bg-bg-subtle px-3 py-2 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-1 focus:ring-white/20;
+}
