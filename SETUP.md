@@ -45,14 +45,15 @@ cd ../bot && npm install
 3. (After deploy) Add: `https://<your-netlify>.netlify.app/api/auth/callback/discord`
 
 ### C. Roles
-In your Discord server, create 4 roles: **Recruit**, **Soldier**, **Knight**, **Apex**.
+In your Discord server, create 3 paid-tier roles: **Pro**, **Elite**, **Apex**.
+(Free tier has no role — they're just regular members.)
+
 Right-click each → Copy ID → fill into `.env.local`:
-- `DISCORD_ROLE_RECRUIT`
-- `DISCORD_ROLE_SOLDIER`
-- `DISCORD_ROLE_KNIGHT`
+- `DISCORD_ROLE_PRO`
+- `DISCORD_ROLE_ELITE`
 - `DISCORD_ROLE_APEX`
 
-**Critical:** the bot's role in the server must be **above** all four tier roles for it to assign them. Drag it up in Server Settings → Roles.
+**Critical:** the bot's role in the server must be **above** all three tier roles for it to assign them. Drag it up in Server Settings → Roles.
 
 ### D. Invite bot to server
 Use this URL (replace CLIENT_ID):

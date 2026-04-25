@@ -31,18 +31,19 @@ export async function syncTierRole(
   discordUserId: string,
   newTier: "FREE" | "PRO" | "ELITE" | "APEX"
 ) {
-  const map = {
-    FREE: process.env.DISCORD_ROLE_RECRUIT,
-    PRO: process.env.DISCORD_ROLE_SOLDIER,
-    ELITE: process.env.DISCORD_ROLE_KNIGHT,
+  const map: Record<"PRO" | "ELITE" | "APEX", string | undefined> = {
+    PRO: process.env.DISCORD_ROLE_PRO,
+    ELITE: process.env.DISCORD_ROLE_ELITE,
     APEX: process.env.DISCORD_ROLE_APEX,
-  } as const;
+  };
 
-  // Revoke all paid roles first, then grant the new one
+  // Revoke all paid roles the user shouldn't have, then grant the new one (if paid)
   for (const tier of ["PRO", "ELITE", "APEX"] as const) {
     if (tier !== newTier && map[tier]) {
       await revokeRole(discordUserId, map[tier]!);
     }
   }
-  if (map[newTier]) await grantRole(discordUserId, map[newTier]!);
+  if (newTier !== "FREE" && map[newTier]) {
+    await grantRole(discordUserId, map[newTier]!);
+  }
 }

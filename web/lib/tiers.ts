@@ -14,9 +14,9 @@ export const PLAN_TO_TIER: Record<string, Tier> = {
 };
 
 export const TIER_TO_ROLE_ID: Record<Tier, string | undefined> = {
-  FREE: process.env.DISCORD_ROLE_RECRUIT,
-  PRO: process.env.DISCORD_ROLE_SOLDIER,
-  ELITE: process.env.DISCORD_ROLE_KNIGHT,
+  FREE: undefined,
+  PRO: process.env.DISCORD_ROLE_PRO,
+  ELITE: process.env.DISCORD_ROLE_ELITE,
   APEX: process.env.DISCORD_ROLE_APEX,
 };
 
