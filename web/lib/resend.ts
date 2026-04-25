@@ -1,17 +1,23 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let _client: Resend | null = null;
+function client(): Resend | null {
+  if (!process.env.RESEND_API_KEY) return null;
+  if (!_client) _client = new Resend(process.env.RESEND_API_KEY);
+  return _client;
+}
 
 export async function sendEmail(opts: {
   to: string;
   subject: string;
   html: string;
 }) {
-  if (!process.env.RESEND_API_KEY) {
+  const c = client();
+  if (!c) {
     console.warn("RESEND_API_KEY not set, skipping email");
     return;
   }
-  return resend.emails.send({
+  return c.emails.send({
     from: process.env.RESEND_FROM ?? "Fortify <hello@fortify.app>",
     to: opts.to,
     subject: opts.subject,

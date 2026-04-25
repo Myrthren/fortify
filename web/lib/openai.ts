@@ -1,9 +1,17 @@
 import OpenAI from "openai";
 
-export const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+let _client: OpenAI | null = null;
+function client(): OpenAI {
+  if (!_client) {
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
+    _client = new OpenAI({ apiKey });
+  }
+  return _client;
+}
 
 export async function generateHooks(topic: string, count = 5): Promise<string[]> {
-  const res = await openai.chat.completions.create({
+  const res = await client().chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0.9,
     messages: [
