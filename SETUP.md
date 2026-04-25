@@ -140,7 +140,7 @@ Open http://localhost:3000.
 2. Click **Get started** → log in with Discord
 3. Land on `/dashboard`, generate a hook → should work
 4. In Discord, run `/hook topic: building in public` → should work
-5. Subscribe to Pro on `/pricing` with a real PayPal account → should grant Soldier role
+5. Subscribe to Pro on `/pricing` with a real PayPal account → should grant Pro role
 
 ---
 

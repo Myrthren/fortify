@@ -25,9 +25,9 @@ Both share the same Postgres database (Supabase). The site is the product surfac
 
 | Tier | Price | Role |
 |---|---|---|
-| Free | $0 | Recruit |
-| Pro | $29/mo | Soldier |
-| Elite | $79/mo | Knight |
+| Free | $0 | — |
+| Pro | $29/mo | Pro |
+| Elite | $79/mo | Elite |
 | Apex | $199/mo | Apex |
 
 ## Setup

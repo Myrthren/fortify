@@ -1,9 +1,9 @@
 import type { Tier } from "@prisma/client";
 
 export const TIERS = {
-  FREE: { name: "Recruit", price: 0, planId: null },
-  PRO: { name: "Soldier", price: 29, planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_PRO },
-  ELITE: { name: "Knight", price: 79, planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ELITE },
+  FREE: { name: "Free", price: 0, planId: null },
+  PRO: { name: "Pro", price: 29, planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_PRO },
+  ELITE: { name: "Elite", price: 79, planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ELITE },
   APEX: { name: "Apex", price: 199, planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_APEX },
 } as const;
 

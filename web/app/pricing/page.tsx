@@ -6,7 +6,7 @@ import { Check } from "lucide-react";
 const tiers = [
   {
     key: "free",
-    name: "Recruit",
+    name: "Free",
     price: "$0",
     blurb: "Get inside the gate.",
     cta: "Start free",
@@ -19,7 +19,7 @@ const tiers = [
   },
   {
     key: "pro",
-    name: "Soldier",
+    name: "Pro",
     price: "$29",
     blurb: "Armed and active.",
     cta: "Subscribe",
@@ -35,7 +35,7 @@ const tiers = [
   },
   {
     key: "elite",
-    name: "Knight",
+    name: "Elite",
     price: "$79",
     blurb: "Trusted operator.",
     cta: "Subscribe",
