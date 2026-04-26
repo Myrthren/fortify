@@ -6,18 +6,6 @@ import { db } from "@/lib/db";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(db),
   session: { strategy: "database" },
-  debug: true,
-  logger: {
-    error(error) {
-      console.error("[AUTH][ERROR]", error?.name, error?.message, error?.stack);
-    },
-    warn(code) {
-      console.warn("[AUTH][WARN]", code);
-    },
-    debug(code, metadata) {
-      console.log("[AUTH][DEBUG]", code, JSON.stringify(metadata));
-    },
-  },
   providers: [
     Discord({
       clientId: process.env.DISCORD_CLIENT_ID!,

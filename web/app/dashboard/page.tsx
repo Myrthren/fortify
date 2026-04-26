@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { Logo } from "@/components/logo";
 import { HookGenerator } from "@/components/hook-generator";
 import { TIERS } from "@/lib/tiers";
+import { isOwner } from "@/lib/owner";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -29,6 +30,14 @@ export default async function DashboardPage() {
             <span className="rounded-md border border-bg-border bg-bg-panel px-2.5 py-1 text-xs font-medium">
               {tierMeta.name}
             </span>
+            {isOwner(user.discordId) && (
+              <Link
+                href="/admin"
+                className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-xs font-medium text-yellow-200 hover:bg-yellow-500/20"
+              >
+                Admin
+              </Link>
+            )}
             <form
               action={async () => {
                 "use server";
