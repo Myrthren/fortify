@@ -3,11 +3,16 @@ import { Client, Collection, Events, GatewayIntentBits, Interaction } from "disc
 import * as hook from "./commands/hook";
 import * as upgrade from "./commands/upgrade";
 import * as profile from "./commands/profile";
+import * as voice from "./commands/voice";
+import * as outreach from "./commands/outreach";
+import * as audit from "./commands/audit";
 
-const commands = new Collection<string, typeof hook>();
-commands.set(hook.data.name, hook);
-commands.set(upgrade.data.name, upgrade as any);
-commands.set(profile.data.name, profile as any);
+type Command = { data: { name: string }; execute: (i: any) => Promise<void> };
+
+const commands = new Collection<string, Command>();
+for (const cmd of [hook, upgrade, profile, voice, outreach, audit] as Command[]) {
+  commands.set(cmd.data.name, cmd);
+}
 
 const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
