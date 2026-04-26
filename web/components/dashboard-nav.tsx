@@ -5,12 +5,19 @@ import { isOwner } from "@/lib/owner";
 import { signOut } from "@/auth";
 import type { Tier } from "@prisma/client";
 
+const NAV_ITEMS = [
+  { key: "dashboard", href: "/dashboard", label: "Dashboard" },
+  { key: "voice", href: "/dashboard/voice", label: "Brand Voice" },
+  { key: "outreach", href: "/dashboard/outreach", label: "Outreach" },
+  { key: "audit", href: "/dashboard/audit", label: "Funnel Audit" },
+] as const;
+
 export function DashboardNav({
   user,
   active,
 }: {
   user: { email: string | null; tier: Tier; discordId: string | null };
-  active: "dashboard" | "voice";
+  active: "dashboard" | "voice" | "outreach" | "audit";
 }) {
   const tierMeta = TIERS[user.tier];
 
@@ -20,26 +27,19 @@ export function DashboardNav({
         <div className="flex items-center gap-6">
           <Logo withWord />
           <nav className="hidden items-center gap-1 text-sm sm:flex">
-            <Link
-              href="/dashboard"
-              className={
-                active === "dashboard"
-                  ? "rounded-md px-3 py-1.5 font-medium text-text"
-                  : "rounded-md px-3 py-1.5 text-text-muted transition hover:bg-white/[0.04] hover:text-text"
-              }
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/dashboard/voice"
-              className={
-                active === "voice"
-                  ? "rounded-md px-3 py-1.5 font-medium text-text"
-                  : "rounded-md px-3 py-1.5 text-text-muted transition hover:bg-white/[0.04] hover:text-text"
-              }
-            >
-              Brand Voice
-            </Link>
+            {NAV_ITEMS.map((it) => (
+              <Link
+                key={it.key}
+                href={it.href}
+                className={
+                  active === it.key
+                    ? "rounded-md px-3 py-1.5 font-medium text-text"
+                    : "rounded-md px-3 py-1.5 text-text-muted transition hover:bg-white/[0.04] hover:text-text"
+                }
+              >
+                {it.label}
+              </Link>
+            ))}
           </nav>
         </div>
 
@@ -70,27 +70,20 @@ export function DashboardNav({
       </div>
 
       {/* Mobile nav row */}
-      <div className="flex gap-1 overflow-x-auto border-t border-bg-border px-4 py-1.5 text-sm sm:hidden">
-        <Link
-          href="/dashboard"
-          className={
-            active === "dashboard"
-              ? "rounded-md px-3 py-1.5 font-medium text-text"
-              : "rounded-md px-3 py-1.5 text-text-muted hover:text-text"
-          }
-        >
-          Dashboard
-        </Link>
-        <Link
-          href="/dashboard/voice"
-          className={
-            active === "voice"
-              ? "rounded-md px-3 py-1.5 font-medium text-text"
-              : "rounded-md px-3 py-1.5 text-text-muted hover:text-text"
-          }
-        >
-          Brand Voice
-        </Link>
+      <div className="scrollbar-hide flex gap-1 overflow-x-auto border-t border-bg-border px-4 py-1.5 text-sm sm:hidden">
+        {NAV_ITEMS.map((it) => (
+          <Link
+            key={it.key}
+            href={it.href}
+            className={
+              active === it.key
+                ? "shrink-0 rounded-md px-3 py-1.5 font-medium text-text"
+                : "shrink-0 rounded-md px-3 py-1.5 text-text-muted hover:text-text"
+            }
+          >
+            {it.label}
+          </Link>
+        ))}
       </div>
     </header>
   );

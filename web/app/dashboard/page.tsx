@@ -54,11 +54,18 @@ export default async function DashboardPage() {
               </dl>
             </Card>
 
+            <Card title="Your tools">
+              <ul className="space-y-2 text-sm">
+                <ToolLink href="/dashboard/voice" name="Brand Voice Studio" desc="Train Claude on your tone" />
+                <ToolLink href="/dashboard/outreach" name="Cold Outreach" desc="Personalised messages that get replies" />
+                <ToolLink href="/dashboard/audit" name="Funnel Auditor" desc="Score + fix any landing page" />
+              </ul>
+            </Card>
+
             <Card title="Coming soon">
-              <ul className="space-y-2 text-sm text-text-muted">
-                <li>· Funnel Auditor</li>
+              <ul className="space-y-1.5 text-sm text-text-muted">
                 <li>· Trend Radar</li>
-                <li>· Cold Outreach Generator</li>
+                <li>· Competitor Scanner</li>
                 <li>· Member Matchmaking</li>
                 <li>· Strategy Reports</li>
               </ul>
@@ -96,5 +103,22 @@ function Stat({ label, value }: { label: string; value: string }) {
       <dt className="text-text-muted">{label}</dt>
       <dd className="font-medium">{value}</dd>
     </div>
+  );
+}
+
+function ToolLink({ href, name, desc }: { href: string; name: string; desc: string }) {
+  return (
+    <li>
+      <Link
+        href={href}
+        className="-mx-2 flex items-center justify-between rounded-md px-2 py-1.5 transition hover:bg-white/[0.04]"
+      >
+        <div>
+          <p className="font-medium">{name}</p>
+          <p className="text-xs text-text-muted">{desc}</p>
+        </div>
+        <span className="text-text-muted">→</span>
+      </Link>
+    </li>
   );
 }
