@@ -62,7 +62,7 @@ export default async function AdminPage() {
         <section>
           <h2 className="text-lg font-semibold tracking-tight">Recent users</h2>
           <p className="mt-1 text-sm text-text-muted">Last 50 by created date.</p>
-          <div className="mt-4 overflow-hidden rounded-lg border border-bg-border bg-bg-panel">
+          <div className="card mt-4 overflow-hidden">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-bg-border bg-black/20">
                 <tr>

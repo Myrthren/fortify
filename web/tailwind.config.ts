@@ -6,15 +6,16 @@ export default {
     extend: {
       colors: {
         bg: {
-          DEFAULT: "#000000",
-          subtle: "#0a0a0a",
-          panel: "#0f0f0f",
-          border: "#1a1a1a",
+          DEFAULT: "#050505",
+          subtle: "#0c0c0c",
+          panel: "#111111",
+          elevated: "#161616",
+          border: "#1f1f1f",
         },
         text: {
           DEFAULT: "#fafafa",
-          muted: "#737373",
-          dim: "#404040",
+          muted: "#8a8a8a",
+          dim: "#555555",
         },
         accent: {
           DEFAULT: "#ffffff",

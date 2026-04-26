@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { Logo } from "@/components/logo";
 import { HookGenerator } from "@/components/hook-generator";
 import { TIERS } from "@/lib/tiers";
-import { isOwner } from "@/lib/owner";
+import { DashboardNav } from "@/components/dashboard-nav";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -21,80 +20,45 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      {/* Top bar */}
-      <header className="border-b border-bg-border">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-          <div className="flex items-center gap-4">
-            <Logo withWord />
-            <nav className="hidden gap-4 text-sm text-text-muted sm:flex">
-              <Link href="/dashboard" className="text-text">Dashboard</Link>
-              <Link href="/dashboard/voice" className="hover:text-text">Brand Voice</Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="hidden text-text-muted sm:inline">{user.email}</span>
-            <span className="rounded-md border border-bg-border bg-bg-panel px-2.5 py-1 text-xs font-medium">
-              {tierMeta.name}
-            </span>
-            {isOwner(user.discordId) && (
-              <Link
-                href="/admin"
-                className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2.5 py-1 text-xs font-medium text-yellow-200 hover:bg-yellow-500/20"
-              >
-                Admin
-              </Link>
-            )}
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/" });
-              }}
-            >
-              <button className="btn-ghost text-xs">Sign out</button>
-            </form>
-          </div>
-        </div>
-      </header>
+      <DashboardNav user={user} active="dashboard" />
 
-      <main className="mx-auto max-w-6xl px-6 py-12">
+      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-10">
-          <h1 className="text-3xl font-semibold tracking-tight">
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Welcome, {user.name?.split(" ")[0] ?? "operator"}.
           </h1>
-          <p className="mt-2 text-text-muted">
-            You're on <span className="text-text">{tierMeta.name}</span>. {user.tier === "FREE" && (
-              <Link href="/pricing" className="underline hover:text-white">
-                Upgrade for unlimited.
+          <p className="mt-3 text-text-muted">
+            You're on <span className="text-text">{tierMeta.name}</span>.{" "}
+            {user.tier === "FREE" && (
+              <Link href="/pricing" className="text-text underline-offset-4 hover:underline">
+                Upgrade for unlimited →
               </Link>
             )}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <Card title="Hook Generator" subtitle="Type a topic. Get 5 viral hooks.">
               <HookGenerator />
             </Card>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-5">
             <Card title="Your stats">
               <dl className="space-y-3 text-sm">
                 <Stat label="Tier" value={tierMeta.name} />
                 <Stat label="XP" value={user.xp.toString()} />
                 <Stat label="Streak" value={`${user.streak} days`} />
-                <Stat
-                  label="Subscription"
-                  value={user.subscription?.status ?? "—"}
-                />
+                <Stat label="Subscription" value={user.subscription?.status ?? "—"} />
               </dl>
             </Card>
 
             <Card title="Coming soon">
               <ul className="space-y-2 text-sm text-text-muted">
-                <li>· Brand Voice Studio</li>
                 <li>· Funnel Auditor</li>
                 <li>· Trend Radar</li>
+                <li>· Cold Outreach Generator</li>
                 <li>· Member Matchmaking</li>
                 <li>· Strategy Reports</li>
               </ul>
@@ -116,8 +80,8 @@ function Card({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-bg-border bg-bg-panel p-6">
-      <div className="mb-4">
+    <div className="card p-5 sm:p-6">
+      <div className="mb-5">
         <h2 className="text-base font-semibold tracking-tight">{title}</h2>
         {subtitle && <p className="mt-1 text-sm text-text-muted">{subtitle}</p>}
       </div>

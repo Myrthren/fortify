@@ -96,7 +96,7 @@ export function VoiceManager({
     <div className="space-y-8">
       {/* Free tier upsell */}
       {tier === "FREE" && (
-        <div className="rounded-lg border border-yellow-500/20 bg-yellow-500/5 p-6">
+        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
           <h3 className="font-semibold">Brand Voice is a Pro feature</h3>
           <p className="mt-1 text-sm text-text-muted">
             Train Claude on your writing for outputs that sound like you, not generic AI.
@@ -107,7 +107,7 @@ export function VoiceManager({
 
       {/* Create form */}
       {tier !== "FREE" && (
-        <div className="rounded-lg border border-bg-border bg-bg-panel p-6">
+        <div className="card p-6">
           {!creating ? (
             <button
               onClick={() => setCreating(true)}
@@ -204,10 +204,10 @@ function VoiceCard({
   const [showPrompt, setShowPrompt] = useState(false);
   return (
     <div
-      className={`rounded-lg border p-5 ${
+      className={`p-5 ${
         voice.isActive
-          ? "border-white/30 bg-white/[0.03]"
-          : "border-bg-border bg-bg-panel"
+          ? "card-elevated ring-1 ring-white/15"
+          : "card"
       }`}
     >
       <div className="flex items-start justify-between gap-4">

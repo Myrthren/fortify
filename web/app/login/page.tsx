@@ -5,28 +5,42 @@ import { LoginButton } from "@/components/login-button";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen bg-bg">
-      <div className="px-6 py-6">
-        <Link href="/" className="inline-flex items-center gap-1 text-sm text-text-muted hover:text-text">
+    <div className="relative min-h-screen overflow-hidden bg-bg">
+      <div className="bg-spotlight absolute inset-x-0 top-0 h-[600px]" />
+
+      <div className="relative px-6 py-6">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1 text-sm text-text-muted transition hover:text-text"
+        >
           <ChevronLeft className="h-4 w-4" /> Home
         </Link>
       </div>
 
-      <div className="mx-auto flex max-w-sm flex-col items-center px-6 pt-20 pb-32 text-center">
-        <Logo size={44} />
-        <h1 className="mt-6 text-2xl font-semibold tracking-tight">Welcome to Fortify</h1>
-        <p className="mt-2 text-sm text-text-muted">
+      <div className="relative mx-auto flex max-w-sm flex-col items-center px-6 pt-12 pb-32 text-center sm:pt-20">
+        <Logo size={48} />
+
+        <h1 className="mt-8 text-3xl font-bold tracking-tight">
+          Welcome to Fortify
+        </h1>
+        <p className="mt-3 text-sm text-text-muted">
           Log in with Discord to continue.
         </p>
 
-        <div className="mt-8 w-full">
+        <div className="mt-10 w-full">
           <LoginButton />
         </div>
 
-        <p className="mt-8 text-xs text-text-muted">
+        <p className="mt-10 text-xs text-text-dim">
           By continuing you agree to our{" "}
-          <Link href="/terms" className="underline hover:text-text">Terms</Link> and{" "}
-          <Link href="/privacy" className="underline hover:text-text">Privacy Policy</Link>.
+          <Link href="/terms" className="text-text-muted underline-offset-4 hover:text-text hover:underline">
+            Terms
+          </Link>{" "}
+          and{" "}
+          <Link href="/privacy" className="text-text-muted underline-offset-4 hover:text-text hover:underline">
+            Privacy Policy
+          </Link>
+          .
         </p>
       </div>
     </div>
