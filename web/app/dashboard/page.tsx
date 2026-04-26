@@ -24,7 +24,13 @@ export default async function DashboardPage() {
       {/* Top bar */}
       <header className="border-b border-bg-border">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
-          <Logo withWord />
+          <div className="flex items-center gap-4">
+            <Logo withWord />
+            <nav className="hidden gap-4 text-sm text-text-muted sm:flex">
+              <Link href="/dashboard" className="text-text">Dashboard</Link>
+              <Link href="/dashboard/voice" className="hover:text-text">Brand Voice</Link>
+            </nav>
+          </div>
           <div className="flex items-center gap-3 text-sm">
             <span className="hidden text-text-muted sm:inline">{user.email}</span>
             <span className="rounded-md border border-bg-border bg-bg-panel px-2.5 py-1 text-xs font-medium">

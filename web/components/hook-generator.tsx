@@ -6,6 +6,7 @@ import { Loader2, Sparkles } from "lucide-react";
 export function HookGenerator() {
   const [topic, setTopic] = useState("");
   const [hooks, setHooks] = useState<string[]>([]);
+  const [voice, setVoice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -26,6 +27,7 @@ export function HookGenerator() {
       }
       const data = await res.json();
       setHooks(data.hooks);
+      setVoice(data.voice ?? null);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -57,16 +59,23 @@ export function HookGenerator() {
       )}
 
       {hooks.length > 0 && (
-        <ul className="space-y-2">
-          {hooks.map((h, i) => (
-            <li
-              key={i}
-              className="rounded-md border border-bg-border bg-bg-subtle px-3 py-2.5 text-sm"
-            >
-              {h}
-            </li>
-          ))}
-        </ul>
+        <div>
+          {voice && (
+            <p className="mb-2 text-xs text-text-muted">
+              Generated in voice: <span className="text-text">{voice}</span>
+            </p>
+          )}
+          <ul className="space-y-2">
+            {hooks.map((h, i) => (
+              <li
+                key={i}
+                className="rounded-md border border-bg-border bg-bg-subtle px-3 py-2.5 text-sm"
+              >
+                {h}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );

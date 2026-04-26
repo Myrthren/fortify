@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { generateHooks } from "@/lib/openai";
+import { generateInVoice } from "@/lib/voice";
 import { canGenerate, logGeneration } from "@/lib/usage";
 
 export async function POST(req: Request) {
@@ -25,10 +26,36 @@ export async function POST(req: Request) {
     return new NextResponse("Topic required", { status: 400 });
   }
 
-  const hooks = await generateHooks(topic, 5);
-  const output = hooks.join("\n");
+  // If user has an active brand voice, generate via Claude with that voice.
+  // Otherwise fall back to the OpenAI generic hook generator.
+  const activeVoice = await db.brandVoice.findFirst({
+    where: { userId, isActive: true },
+    select: { systemPrompt: true, name: true },
+  });
 
+  let hooks: string[];
+  let voiceUsed: string | null = null;
+
+  if (activeVoice) {
+    voiceUsed = activeVoice.name;
+    const text = await generateInVoice({
+      systemPrompt:
+        activeVoice.systemPrompt +
+        `\n\nWhen asked for hooks, output 5 scroll-stopping short-form video hooks under 12 words each. One per line, no numbering, no hashtags, no emojis.`,
+      userPrompt: `Topic: ${topic}\n\nWrite 5 hooks.`,
+      maxTokens: 400,
+    });
+    hooks = text
+      .split("\n")
+      .map((l) => l.trim().replace(/^[-•\d.)\]]+\s*/, ""))
+      .filter(Boolean)
+      .slice(0, 5);
+  } else {
+    hooks = await generateHooks(topic, 5);
+  }
+
+  const output = hooks.join("\n");
   await logGeneration({ userId, type: "hook", input: topic, output });
 
-  return NextResponse.json({ hooks });
+  return NextResponse.json({ hooks, voice: voiceUsed });
 }
