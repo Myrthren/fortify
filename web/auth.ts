@@ -13,7 +13,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       authorization: { params: { scope: "identify email guilds.join" } },
     }),
   ],
-  pages: { signIn: "/login" },
+  pages: { signIn: "/login", error: "/auth/error" },
   callbacks: {
     async session({ session, user }) {
       if (session.user) {
