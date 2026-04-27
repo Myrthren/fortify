@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { key: "voice", href: "/dashboard/voice", label: "Brand Voice" },
   { key: "outreach", href: "/dashboard/outreach", label: "Outreach" },
   { key: "audit", href: "/dashboard/audit", label: "Funnel Audit" },
+  { key: "competitors", href: "/dashboard/competitors", label: "Competitors" },
   { key: "trends", href: "/dashboard/trends", label: "Trend Radar" },
   { key: "members", href: "/dashboard/members", label: "Members" },
   { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking" },
@@ -21,7 +22,7 @@ export function DashboardNav({
   active,
 }: {
   user: { email: string | null; tier: Tier; discordId: string | null };
-  active: "dashboard" | "voice" | "outreach" | "audit" | "members" | "profile" | "trends" | "matchmaking";
+  active: "dashboard" | "voice" | "outreach" | "audit" | "members" | "profile" | "trends" | "matchmaking" | "competitors";
 }) {
   const tierMeta = TIERS[user.tier];
 

@@ -69,6 +69,7 @@ model User {
   subscription   Subscription?
   brandVoices    BrandVoice[]
   watchTerms     WatchTerm[]
+  competitors    Competitor[]
   generations    Generation[]
   profile        Profile?
 }
@@ -113,6 +114,20 @@ model WatchTerm {
   term      String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Competitor {
+  id          String    @id @default(cuid())
+  userId      String
+  name        String
+  url         String
+  notes       String?   @db.Text
+  lastReport  Json?
+  lastScanned DateTime?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
 
 model Generation {
