@@ -22,13 +22,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const embed = new EmbedBuilder()
     .setTitle("Your brand voices")
     .setColor(0xffffff)
-    .setFooter({ text: `${voices.length} / ${limitDisplay} used · Manage at fortify-io.netlify.app/dashboard/voice` });
+    .setFooter({ text: `${voices.length} / ${limitDisplay} used · Manage at fortify-io.com/dashboard/voice` });
 
   if (voices.length === 0) {
     embed.setDescription(
       user.tier === "FREE"
         ? "Brand Voice is a Pro feature. Run `/upgrade` to unlock."
-        : "No voices yet. Train your first at fortify-io.netlify.app/dashboard/voice"
+        : "No voices yet. Train your first at fortify-io.com/dashboard/voice"
     );
   } else {
     embed.setDescription(

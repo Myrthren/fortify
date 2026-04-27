@@ -34,7 +34,7 @@ export async function auditUrl(rawUrl: string): Promise<AuditResult> {
     const res = await fetch(url, {
       headers: {
         "User-Agent":
-          "Mozilla/5.0 (compatible; FortifyAuditor/1.0; +https://fortify-io.netlify.app)",
+          "Mozilla/5.0 (compatible; FortifyAuditor/1.0; +https://fortify-io.com)",
         Accept: "text/html,application/xhtml+xml",
       },
       redirect: "follow",

@@ -82,7 +82,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       .setFooter({
         text: activeVoice
           ? `In voice: ${activeVoice.name} · Fortify`
-          : `Fortify · set an active voice at fortify-io.netlify.app/dashboard/voice`,
+          : `Fortify · set an active voice at fortify-io.com/dashboard/voice`,
       });
 
     await interaction.editReply({ embeds: [embed] });

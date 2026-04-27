@@ -80,7 +80,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             ]
           : [])
       )
-      .setFooter({ text: "Full report at fortify-io.netlify.app/dashboard/audit" });
+      .setFooter({ text: "Full report at fortify-io.com/dashboard/audit" });
 
     await interaction.editReply({ embeds: [embed] });
   } catch (e: any) {

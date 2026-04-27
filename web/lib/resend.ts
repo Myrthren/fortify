@@ -18,7 +18,7 @@ export async function sendEmail(opts: {
     return;
   }
   return c.emails.send({
-    from: process.env.RESEND_FROM ?? "Fortify <hello@fortify.app>",
+    from: process.env.RESEND_FROM ?? "Fortify <hello@fortify-io.com>",
     to: opts.to,
     subject: opts.subject,
     html: opts.html,
@@ -32,7 +32,7 @@ export function welcomeEmail(name: string, tier: string) {
       <p style="color: #555; line-height: 1.6;">
         You've unlocked the <strong>${tier}</strong> tier. Head to your dashboard to start using your new tools.
       </p>
-      <a href="https://fortify.app/dashboard" style="display: inline-block; margin-top: 24px; background: #000; color: #fff; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 500;">
+      <a href="https://fortify-io.com/dashboard" style="display: inline-block; margin-top: 24px; background: #000; color: #fff; padding: 12px 20px; border-radius: 8px; text-decoration: none; font-weight: 500;">
         Open dashboard →
       </a>
     </div>
