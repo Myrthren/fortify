@@ -10,14 +10,13 @@ import Link from "next/link";
 export default async function OutreachPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const userId = (session.user as any).id;
 
-  const user = await db.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
+  const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) redirect("/login");
 
   const limit = TIER_LIMITS[user.tier].monthlyOutreach;
-  const { used } = await checkMonthly(user.id, "outreach", limit);
+  const { used } = await checkMonthly(userId, "outreach", limit);
   const limitDisplay = limit === Infinity ? "unlimited" : String(limit);
 
   return (

@@ -9,19 +9,17 @@ import Link from "next/link";
 export default async function TrendsPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const userId = (session.user as any).id;
 
-  const user = await db.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
+  // Parallel: user + watch terms
+  const [user, terms] = await Promise.all([
+    db.user.findUnique({ where: { id: userId } }),
+    db.watchTerm.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
+  ]);
   if (!user) redirect("/login");
 
   const limit = TIER_LIMITS[user.tier].watchTerms;
   const limitDisplay = limit === Infinity ? "unlimited" : String(limit);
-
-  const terms = await db.watchTerm.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-  });
 
   return (
     <div className="min-h-screen bg-bg">

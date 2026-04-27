@@ -8,23 +8,24 @@ import { VoiceManager } from "@/components/voice-manager";
 export default async function VoicePage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const userId = (session.user as any).id;
 
-  const user = await db.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
+  // Parallel: user + voices
+  const [user, voices] = await Promise.all([
+    db.user.findUnique({ where: { id: userId } }),
+    db.brandVoice.findMany({
+      where: { userId },
+      orderBy: [{ isActive: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        systemPrompt: true,
+        createdAt: true,
+      },
+    }),
+  ]);
   if (!user) redirect("/login");
-
-  const voices = await db.brandVoice.findMany({
-    where: { userId: user.id },
-    orderBy: [{ isActive: "desc" }, { createdAt: "desc" }],
-    select: {
-      id: true,
-      name: true,
-      isActive: true,
-      systemPrompt: true,
-      createdAt: true,
-    },
-  });
 
   const limit = TIER_LIMITS[user.tier].brandVoices;
   const limitDisplay = limit === Infinity ? "unlimited" : String(limit);

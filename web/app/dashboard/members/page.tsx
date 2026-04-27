@@ -7,25 +7,24 @@ import { MemberDirectory } from "@/components/member-directory";
 export default async function MembersPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  const userId = (session.user as any).id;
 
-  const me = await db.user.findUnique({
-    where: { id: (session.user as any).id },
-  });
-  if (!me) redirect("/login");
-
-  // Anyone with a non-empty profile (niche OR any skill) is shown.
-  // Excludes the current user.
-  const rawMembers = await db.user.findMany({
-    where: {
-      id: { not: me.id },
-      profile: {
-        OR: [{ niche: { not: null } }, { skills: { isEmpty: false } }],
+  // Parallel: me + everyone-else with a profile
+  const [me, rawMembers] = await Promise.all([
+    db.user.findUnique({ where: { id: userId } }),
+    db.user.findMany({
+      where: {
+        id: { not: userId },
+        profile: {
+          OR: [{ niche: { not: null } }, { skills: { isEmpty: false } }],
+        },
       },
-    },
-    include: { profile: true },
-    orderBy: [{ tier: "desc" }, { createdAt: "desc" }],
-    take: 200,
-  });
+      include: { profile: true },
+      orderBy: [{ tier: "desc" }, { createdAt: "desc" }],
+      take: 200,
+    }),
+  ]);
+  if (!me) redirect("/login");
 
   const isPaid = me.tier !== "FREE";
 
