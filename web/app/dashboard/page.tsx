@@ -59,6 +59,8 @@ export default async function DashboardPage() {
                 <ToolLink href="/dashboard/voice" name="Brand Voice Studio" desc="Train Claude on your tone" />
                 <ToolLink href="/dashboard/outreach" name="Cold Outreach" desc="Personalised messages that get replies" />
                 <ToolLink href="/dashboard/audit" name="Funnel Auditor" desc="Score + fix any landing page" />
+                <ToolLink href="/dashboard/members" name="Member Directory" desc="Find founders, operators, creators" />
+                <ToolLink href="/dashboard/profile" name="Your profile" desc="Set niche, skills, what you offer" />
               </ul>
             </Card>
 
@@ -66,7 +68,7 @@ export default async function DashboardPage() {
               <ul className="space-y-1.5 text-sm text-text-muted">
                 <li>· Trend Radar</li>
                 <li>· Competitor Scanner</li>
-                <li>· Member Matchmaking</li>
+                <li>· AI Matchmaking</li>
                 <li>· Strategy Reports</li>
               </ul>
             </Card>
