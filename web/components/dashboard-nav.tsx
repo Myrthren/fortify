@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { key: "audit", href: "/dashboard/audit", label: "Funnel Audit" },
   { key: "trends", href: "/dashboard/trends", label: "Trend Radar" },
   { key: "members", href: "/dashboard/members", label: "Members" },
+  { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking" },
   { key: "profile", href: "/dashboard/profile", label: "Profile" },
 ] as const;
 
@@ -20,7 +21,7 @@ export function DashboardNav({
   active,
 }: {
   user: { email: string | null; tier: Tier; discordId: string | null };
-  active: "dashboard" | "voice" | "outreach" | "audit" | "members" | "profile" | "trends";
+  active: "dashboard" | "voice" | "outreach" | "audit" | "members" | "profile" | "trends" | "matchmaking";
 }) {
   const tierMeta = TIERS[user.tier];
 

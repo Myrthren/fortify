@@ -61,6 +61,7 @@ export default async function DashboardPage() {
                 <ToolLink href="/dashboard/audit" name="Funnel Auditor" desc="Score + fix any landing page" />
                 <ToolLink href="/dashboard/trends" name="Trend Radar" desc="Track topics across the web" />
                 <ToolLink href="/dashboard/members" name="Member Directory" desc="Find founders, operators, creators" />
+                <ToolLink href="/dashboard/matchmaking" name="AI Matchmaking" desc="Top members worth talking to" />
                 <ToolLink href="/dashboard/profile" name="Your profile" desc="Set niche, skills, what you offer" />
               </ul>
             </Card>
@@ -68,9 +69,9 @@ export default async function DashboardPage() {
             <Card title="Coming soon">
               <ul className="space-y-1.5 text-sm text-text-muted">
                 <li>· Competitor Scanner</li>
-                <li>· AI Matchmaking</li>
                 <li>· Strategy Reports</li>
                 <li>· Daily digest emails</li>
+                <li>· Deal board</li>
               </ul>
             </Card>
           </div>
