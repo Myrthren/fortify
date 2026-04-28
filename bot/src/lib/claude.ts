@@ -11,6 +11,6 @@ export function claude(): Anthropic {
 }
 
 export const CLAUDE_MODELS = {
-  fast: "claude-sonnet-4-5",
-  premium: "claude-opus-4-5",
+  fast: "claude-sonnet-4-6",
+  premium: "claude-opus-4-7",
 } as const;
