@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { TIERS } from "@/lib/tiers";
 import { isOwner } from "@/lib/owner";
-import { signOut } from "@/auth";
+import { handleSignOut } from "@/app/actions/auth";
 import type { Tier } from "@prisma/client";
 
 const NAV_ITEMS = [
@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { key: "members", href: "/dashboard/members", label: "Members" },
   { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking" },
   { key: "profile", href: "/dashboard/profile", label: "Profile" },
+  { key: "settings", href: "/dashboard/settings", label: "Settings" },
 ] as const;
 
 export function DashboardNav({
@@ -22,7 +23,7 @@ export function DashboardNav({
   active,
 }: {
   user: { email: string | null; tier: Tier; discordId: string | null };
-  active: "dashboard" | "voice" | "outreach" | "audit" | "members" | "profile" | "trends" | "matchmaking" | "competitors";
+  active: "dashboard" | "voice" | "outreach" | "audit" | "members" | "profile" | "trends" | "matchmaking" | "competitors" | "settings";
 }) {
   const tierMeta = TIERS[user.tier];
 
@@ -63,12 +64,7 @@ export function DashboardNav({
               Admin
             </Link>
           )}
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/" });
-            }}
-          >
+          <form action={handleSignOut}>
             <button className="btn-ghost text-xs">Sign out</button>
           </form>
         </div>

@@ -64,14 +64,15 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts       Account[]
-  sessions       Session[]
-  subscription   Subscription?
-  brandVoices    BrandVoice[]
-  watchTerms     WatchTerm[]
-  competitors    Competitor[]
-  generations    Generation[]
-  profile        Profile?
+  accounts           Account[]
+  sessions           Session[]
+  subscription       Subscription?
+  brandVoices        BrandVoice[]
+  watchTerms         WatchTerm[]
+  competitors        Competitor[]
+  generations        Generation[]
+  profile            Profile?
+  notificationPrefs  NotificationPrefs?
 }
 
 model Profile {
@@ -128,6 +129,23 @@ model Competitor {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model NotificationPrefs {
+  userId            String  @id
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Toggleable — all default true
+  dmPaymentFailed   Boolean @default(true)
+  dmWeeklyReport    Boolean @default(true)
+  dmTrendAlerts     Boolean @default(true)
+  dmCompetitorDone  Boolean @default(true)
+  dmLimitWarning    Boolean @default(true)
+  dmRenewalReminder Boolean @default(true)
+  dmOnboarding      Boolean @default(true)
+  dmMilestones      Boolean @default(true)
+  dmMatchmaking     Boolean @default(true)
+  dmOwnerNewSub     Boolean @default(true)
+  dmOwnerChurn      Boolean @default(true)
 }
 
 model Generation {

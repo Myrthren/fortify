@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/paypal";
 import { syncTierRole, sendDM } from "@/lib/discord";
+import { sendDMConditional } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -63,8 +64,10 @@ export async function POST(req: Request) {
         include: { user: true },
       });
       if (sub?.user.discordId) {
-        await sendDM(
+        await sendDMConditional(
           sub.user.discordId,
+          sub.userId,
+          "dmPaymentFailed",
           `Your Fortify payment failed. Update your billing to keep your access: https://fortify-io.com/pricing`
         );
       }
