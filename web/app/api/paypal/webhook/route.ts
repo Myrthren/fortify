@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/paypal";
-import { syncTierRole } from "@/lib/discord";
+import { syncTierRole, sendDM } from "@/lib/discord";
 
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -38,27 +38,41 @@ export async function POST(req: Request) {
         include: { user: true },
       });
       if (sub) {
+        const status = type.split(".").pop()!; // CANCELLED / SUSPENDED / EXPIRED
         await db.$transaction([
           db.subscription.update({
             where: { paypalSubId: subId },
-            data: {
-              status: type.split(".").pop()!, // CANCELLED / SUSPENDED / EXPIRED
-              cancelledAt: new Date(),
-            },
+            data: { status, cancelledAt: new Date() },
           }),
           db.user.update({ where: { id: sub.userId }, data: { tier: "FREE" } }),
         ]);
-        if (sub.user.discordId) await syncTierRole(sub.user.discordId, "FREE");
+        if (sub.user.discordId) {
+          await syncTierRole(sub.user.discordId, "FREE");
+          await sendDM(
+            sub.user.discordId,
+            `Your Fortify subscription has been ${status.toLowerCase()}. You've been moved to the Free tier. Resubscribe any time at https://fortify-io.com/pricing`
+          );
+        }
       }
       break;
     }
 
-    case "BILLING.SUBSCRIPTION.PAYMENT.FAILED":
-      // TODO: dunning email via Resend
+    case "BILLING.SUBSCRIPTION.PAYMENT.FAILED": {
+      const sub = await db.subscription.findUnique({
+        where: { paypalSubId: subId },
+        include: { user: true },
+      });
+      if (sub?.user.discordId) {
+        await sendDM(
+          sub.user.discordId,
+          `Your Fortify payment failed. Update your billing to keep your access: https://fortify-io.com/pricing`
+        );
+      }
       break;
+    }
 
     case "PAYMENT.SALE.COMPLETED":
-      // TODO: log revenue, send receipt
+      // TODO: log revenue
       break;
   }
 

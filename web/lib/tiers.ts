@@ -15,9 +15,9 @@ export const PLAN_TO_TIER: Record<string, Tier> = {
 
 export const TIER_TO_ROLE_ID: Record<Tier, string | undefined> = {
   FREE: undefined,
-  PRO: process.env.DISCORD_ROLE_PRO,
-  ELITE: process.env.DISCORD_ROLE_ELITE,
-  APEX: process.env.DISCORD_ROLE_APEX,
+  PRO: "1497408012816744568",
+  ELITE: "1497408076486148247",
+  APEX: "1497408133444931664",
 };
 
 export const TIER_LIMITS = {

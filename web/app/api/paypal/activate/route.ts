@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { getSubscription } from "@/lib/paypal";
-import { syncTierRole } from "@/lib/discord";
-import { sendEmail, welcomeEmail } from "@/lib/resend";
+import { syncTierRole, sendDM } from "@/lib/discord";
 import { PLAN_TO_TIER } from "@/lib/tiers";
 
 export async function POST(req: Request) {
@@ -52,18 +51,13 @@ export async function POST(req: Request) {
     },
   });
 
-  // Discord role
+  // Discord role + welcome DM
   if (user.discordId) {
     await syncTierRole(user.discordId, tier);
-  }
-
-  // Welcome email
-  if (user.email) {
-    await sendEmail({
-      to: user.email,
-      subject: `Welcome to Fortify ${tier}`,
-      html: welcomeEmail(user.name ?? "there", tier),
-    });
+    await sendDM(
+      user.discordId,
+      `Welcome to Fortify ${tier}, ${user.name ?? "there"}. Head to your dashboard: https://fortify-io.com/dashboard`
+    );
   }
 
   return NextResponse.json({ ok: true, tier });

@@ -1,9 +1,35 @@
+import { TIER_TO_ROLE_ID } from "@/lib/tiers";
+import type { Tier } from "@prisma/client";
+
 const DISCORD_API = "https://discord.com/api/v10";
 
 const headers = () => ({
   Authorization: `Bot ${process.env.DISCORD_BOT_TOKEN}`,
   "Content-Type": "application/json",
 });
+
+export async function sendDM(discordUserId: string, content: string) {
+  // Open (or reuse) a DM channel
+  const dmRes = await fetch(`${DISCORD_API}/users/@me/channels`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ recipient_id: discordUserId }),
+  });
+  if (!dmRes.ok) {
+    console.error("Discord createDM failed:", dmRes.status, await dmRes.text());
+    return;
+  }
+  const { id: channelId } = await dmRes.json();
+
+  const msgRes = await fetch(`${DISCORD_API}/channels/${channelId}/messages`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ content }),
+  });
+  if (!msgRes.ok) {
+    console.error("Discord sendDM failed:", msgRes.status, await msgRes.text());
+  }
+}
 
 export async function grantRole(discordUserId: string, roleId: string) {
   const guildId = process.env.DISCORD_GUILD_ID!;
@@ -27,23 +53,15 @@ export async function revokeRole(discordUserId: string, roleId: string) {
   }
 }
 
-export async function syncTierRole(
-  discordUserId: string,
-  newTier: "FREE" | "PRO" | "ELITE" | "APEX"
-) {
-  const map: Record<"PRO" | "ELITE" | "APEX", string | undefined> = {
-    PRO: process.env.DISCORD_ROLE_PRO,
-    ELITE: process.env.DISCORD_ROLE_ELITE,
-    APEX: process.env.DISCORD_ROLE_APEX,
-  };
-
-  // Revoke all paid roles the user shouldn't have, then grant the new one (if paid)
+export async function syncTierRole(discordUserId: string, newTier: Tier) {
   for (const tier of ["PRO", "ELITE", "APEX"] as const) {
-    if (tier !== newTier && map[tier]) {
-      await revokeRole(discordUserId, map[tier]!);
+    const roleId = TIER_TO_ROLE_ID[tier];
+    if (tier !== newTier && roleId) {
+      await revokeRole(discordUserId, roleId);
     }
   }
-  if (newTier !== "FREE" && map[newTier]) {
-    await grantRole(discordUserId, map[newTier]!);
+  const newRoleId = TIER_TO_ROLE_ID[newTier];
+  if (newTier !== "FREE" && newRoleId) {
+    await grantRole(discordUserId, newRoleId);
   }
 }
