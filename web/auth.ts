@@ -10,7 +10,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Discord({
       clientId: process.env.DISCORD_CLIENT_ID!,
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-      authorization: { params: { scope: "identify email guilds.join" } },
+      authorization: { params: { scope: "identify email" } },
     }),
   ],
   pages: { signIn: "/login", error: "/auth/error" },
