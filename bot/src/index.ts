@@ -54,7 +54,16 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 client.on(Events.MessageCreate, async (message: Message) => {
   if (message.author.bot) return;
   if (!client.user) return;
-  if (!message.mentions.has(client.user)) return;
+
+  const mentioned =
+    message.mentions.users.has(client.user.id) ||
+    message.content.includes(`<@${client.user.id}>`);
+
+  console.log(
+    `[msg] ${message.author.username} in ${message.channelId} | mentioned=${mentioned} | content="${message.content.slice(0, 60)}"`
+  );
+
+  if (!mentioned) return;
 
   await handleMention(message).catch((err) => {
     console.error("handleMention error:", err);
