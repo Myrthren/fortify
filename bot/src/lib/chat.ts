@@ -3,8 +3,8 @@ import { claude, CLAUDE_MODELS } from "./claude";
 import { db } from "./db";
 
 const OWNER_ID = "731207920007643167";
-const CONFIDENTIAL_CHANNEL_ID = "1487571461408297182";
-const DELETE_AFTER_MS = 15 * 60 * 1000; // 15 minutes
+const CONFIDENTIAL_CHANNEL_ID = "1455300155183206400";
+const DELETE_AFTER_MS = 10 * 60 * 1000; // 10 minutes
 
 const SYSTEM_BASE = `You are Fortify, the AI co-pilot built for the Fortune Fortress community. You help operators, founders, and resellers grow their online businesses.
 
