@@ -10,6 +10,7 @@ exports.data = new discord_js_1.SlashCommandBuilder()
     .setName("voice")
     .setDescription("Show your trained brand voices.");
 async function execute(interaction) {
+    await interaction.deferReply({ ephemeral: true });
     const user = await (0, usage_1.getOrCreateUser)(interaction.user.id, interaction.user.username);
     const voices = await db_1.db.brandVoice.findMany({
         where: { userId: user.id },
@@ -32,5 +33,5 @@ async function execute(interaction) {
             .map((v) => `${v.isActive ? "🟢" : "⚪"} **${v.name}** — trained ${v.createdAt.toISOString().slice(0, 10)}`)
             .join("\n"));
     }
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.editReply({ embeds: [embed] });
 }

@@ -87,6 +87,7 @@ client.on(discord_js_1.Events.MessageCreate, async (message) => {
         return;
     await (0, chat_1.handleMention)(message).catch((err) => {
         console.error("handleMention error:", err);
+        message.reply("Something went wrong. Try again.").catch(() => { });
     });
 });
 client.login(process.env.DISCORD_BOT_TOKEN);

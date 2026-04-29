@@ -6,6 +6,8 @@ export const data = new SlashCommandBuilder()
   .setDescription("Show your Fortify profile.");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply({ ephemeral: true });
+
   const user = await getOrCreateUser(interaction.user.id, interaction.user.username);
 
   const embed = new EmbedBuilder()
@@ -18,5 +20,5 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       { name: "Streak", value: `${user.streak} days`, inline: true }
     );
 
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  await interaction.editReply({ embeds: [embed] });
 }

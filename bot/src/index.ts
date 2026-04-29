@@ -67,6 +67,7 @@ client.on(Events.MessageCreate, async (message: Message) => {
 
   await handleMention(message).catch((err) => {
     console.error("handleMention error:", err);
+    message.reply("Something went wrong. Try again.").catch(() => {});
   });
 });
 

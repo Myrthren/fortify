@@ -8,11 +8,12 @@ exports.data = new discord_js_1.SlashCommandBuilder()
     .setName("profile")
     .setDescription("Show your Fortify profile.");
 async function execute(interaction) {
+    await interaction.deferReply({ ephemeral: true });
     const user = await (0, usage_1.getOrCreateUser)(interaction.user.id, interaction.user.username);
     const embed = new discord_js_1.EmbedBuilder()
         .setTitle(`${interaction.user.username}'s Fortify profile`)
         .setColor(0xffffff)
         .setThumbnail(interaction.user.displayAvatarURL())
         .addFields({ name: "Tier", value: user.tier, inline: true }, { name: "XP", value: user.xp.toString(), inline: true }, { name: "Streak", value: `${user.streak} days`, inline: true });
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    await interaction.editReply({ embeds: [embed] });
 }

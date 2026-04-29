@@ -8,6 +8,8 @@ export const data = new SlashCommandBuilder()
   .setDescription("Show your trained brand voices.");
 
 export async function execute(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply({ ephemeral: true });
+
   const user = await getOrCreateUser(interaction.user.id, interaction.user.username);
 
   const voices = await db.brandVoice.findMany({
@@ -41,5 +43,5 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     );
   }
 
-  await interaction.reply({ embeds: [embed], ephemeral: true });
+  await interaction.editReply({ embeds: [embed] });
 }
