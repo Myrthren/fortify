@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/paypal";
 import { syncTierRole, sendDM } from "@/lib/discord";
-import { sendDMConditional } from "@/lib/notifications";
+import { sendDMConditional, alertOwner } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -27,6 +27,10 @@ export async function POST(req: Request) {
           data: { status: "ACTIVE", cancelledAt: null },
         });
         if (sub.user.discordId) await syncTierRole(sub.user.discordId, sub.tier);
+        await alertOwner(
+          "dmOwnerNewSub",
+          `New subscriber: **${sub.user.name ?? sub.user.email ?? "unknown"}** — ${sub.tier} tier`
+        );
       }
       break;
     }
@@ -54,6 +58,10 @@ export async function POST(req: Request) {
             `Your Fortify subscription has been ${status.toLowerCase()}. You've been moved to the Free tier. Resubscribe any time at https://fortify-io.com/pricing`
           );
         }
+        await alertOwner(
+          "dmOwnerChurn",
+          `Churn: **${sub.user.name ?? sub.user.email ?? "unknown"}** — ${sub.tier} tier — ${status.toLowerCase()}`
+        );
       }
       break;
     }

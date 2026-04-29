@@ -44,8 +44,8 @@ const TOGGLES: { key: keyof Prefs; label: string; desc: string; comingSoon?: boo
 ];
 
 const OWNER_TOGGLES: { key: keyof Prefs; label: string; desc: string; comingSoon?: boolean }[] = [
-  { key: "dmOwnerNewSub", label: "New subscriber alert", desc: "Who joined, what tier, revenue.", comingSoon: true },
-  { key: "dmOwnerChurn", label: "Churn alert", desc: "Who cancelled or failed payment and their tier.", comingSoon: true },
+  { key: "dmOwnerNewSub", label: "New subscriber alert", desc: "Who joined, what tier, revenue." },
+  { key: "dmOwnerChurn", label: "Churn alert", desc: "Who cancelled or failed payment and their tier." },
 ];
 
 export default function SettingsPage() {
