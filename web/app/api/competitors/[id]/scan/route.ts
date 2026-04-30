@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { scanCompetitor } from "@/lib/competitor";
 import { logGeneration } from "@/lib/usage";
+import { sendDMConditional } from "@/lib/notifications";
 
 export async function POST(
   _req: Request,
@@ -51,6 +52,13 @@ export async function POST(
       input: `${competitor.name} (${competitor.url})`,
       output: JSON.stringify(report),
     });
+
+    if (me.discordId) {
+      await sendDMConditional(
+        me.discordId, userId, "dmCompetitorDone",
+        `Competitor scan for **${competitor.name}** is done. View your report: https://fortify-io.com/dashboard/competitors`
+      );
+    }
 
     return NextResponse.json({ competitor: updated });
   } catch (e: any) {

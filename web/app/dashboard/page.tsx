@@ -12,17 +12,27 @@ export default async function DashboardPage() {
 
   const user = await db.user.findUnique({
     where: { id: (session.user as any).id },
-    include: { subscription: true },
+    include: { subscription: true, profile: true },
   });
   if (!user) redirect("/login");
 
   const tierMeta = TIERS[user.tier];
+  const profileIncomplete = !user.profile || (!user.profile.niche && user.profile.skills.length === 0 && user.profile.canOffer.length === 0);
 
   return (
     <div className="min-h-screen bg-bg">
       <DashboardNav user={user} active="dashboard" />
 
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
+        {profileIncomplete && (
+          <div className="mb-6 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+            Your profile is incomplete —{" "}
+            <Link href="/dashboard/profile" className="underline underline-offset-2">
+              fill it in
+            </Link>{" "}
+            to get the most out of AI Matchmaking and Member Directory.
+          </div>
+        )}
         <div className="mb-10">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Welcome, {user.name?.split(" ")[0] ?? "operator"}.
@@ -64,15 +74,15 @@ export default async function DashboardPage() {
                 <ToolLink href="/dashboard/members" name="Member Directory" desc="Find founders, operators, creators" />
                 <ToolLink href="/dashboard/matchmaking" name="AI Matchmaking" desc="Top members worth talking to" />
                 <ToolLink href="/dashboard/profile" name="Your profile" desc="Set niche, skills, what you offer" />
+                <ToolLink href="/dashboard/deals" name="Deal Board" desc="Post and browse community deals" />
+                <ToolLink href="/dashboard/pods" name="Mastermind Pods" desc="Apex accountability circles" />
               </ul>
             </Card>
 
             <Card title="Coming soon">
               <ul className="space-y-1.5 text-sm text-text-muted">
-                <li>· Strategy Reports</li>
-                <li>· Daily digest emails</li>
-                <li>· Deal board</li>
-                <li>· Mastermind pods</li>
+                <li>· Weekly digest emails</li>
+                <li>· Milestone badges</li>
               </ul>
             </Card>
           </div>

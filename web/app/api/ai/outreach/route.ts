@@ -8,6 +8,7 @@ import {
   OUTREACH_CHANNELS,
   type OutreachChannel,
 } from "@/lib/outreach";
+import { sendDMConditional } from "@/lib/notifications";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -29,6 +30,13 @@ export async function POST(req: Request) {
         upgrade: true,
       },
       { status: limit === 0 ? 403 : 429 }
+    );
+  }
+
+  if (limit !== Infinity && (used + 1) >= Math.ceil(limit * 0.8) && user.discordId) {
+    await sendDMConditional(
+      user.discordId, userId, "dmLimitWarning",
+      `Heads up: you've used ${used + 1}/${limit} outreach messages this month. Upgrade at https://fortify-io.com/pricing`
     );
   }
 
