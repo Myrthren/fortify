@@ -73,6 +73,8 @@ model User {
   generations        Generation[]
   profile            Profile?
   notificationPrefs  NotificationPrefs?
+  dealPosts          DealPost[]
+  pods               PodMember[]
 }
 
 model Profile {
@@ -157,4 +159,41 @@ model Generation {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+enum DealType {
+  HIRING
+  COLLAB
+  OPPORTUNITY
+}
+
+model DealPost {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  description String   @db.Text
+  type        DealType
+  budget      String?
+  link        String?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+}
+
+model Pod {
+  id        String      @id @default(cuid())
+  name      String
+  createdAt DateTime    @default(now())
+  members   PodMember[]
+}
+
+model PodMember {
+  podId     String
+  userId    String
+  joinedAt  DateTime @default(now())
+  pod       Pod      @relation(fields: [podId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([podId, userId])
 }

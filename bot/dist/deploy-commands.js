@@ -41,6 +41,9 @@ const profile = __importStar(require("./commands/profile"));
 const voice = __importStar(require("./commands/voice"));
 const outreach = __importStar(require("./commands/outreach"));
 const audit = __importStar(require("./commands/audit"));
+const trends = __importStar(require("./commands/trends"));
+const competitors = __importStar(require("./commands/competitors"));
+const matchmake = __importStar(require("./commands/matchmake"));
 const commands = [
     hook.data.toJSON(),
     upgrade.data.toJSON(),
@@ -48,6 +51,9 @@ const commands = [
     voice.data.toJSON(),
     outreach.data.toJSON(),
     audit.data.toJSON(),
+    trends.data.toJSON(),
+    competitors.data.toJSON(),
+    matchmake.data.toJSON(),
 ];
 const rest = new discord_js_1.REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN);
 (async () => {

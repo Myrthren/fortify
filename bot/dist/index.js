@@ -41,9 +41,12 @@ const profile = __importStar(require("./commands/profile"));
 const voice = __importStar(require("./commands/voice"));
 const outreach = __importStar(require("./commands/outreach"));
 const audit = __importStar(require("./commands/audit"));
+const trends = __importStar(require("./commands/trends"));
+const competitors = __importStar(require("./commands/competitors"));
+const matchmake = __importStar(require("./commands/matchmake"));
 const chat_1 = require("./lib/chat");
 const commands = new discord_js_1.Collection();
-for (const cmd of [hook, upgrade, profile, voice, outreach, audit]) {
+for (const cmd of [hook, upgrade, profile, voice, outreach, audit, trends, competitors, matchmake]) {
     commands.set(cmd.data.name, cmd);
 }
 const client = new discord_js_1.Client({
