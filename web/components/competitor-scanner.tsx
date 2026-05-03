@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Trash2, RefreshCw, ExternalLink, Target, Youtube, Play } from "lucide-react";
+import {
+  Loader2, Plus, Trash2, RefreshCw, ExternalLink, Target, Youtube, Play,
+} from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -71,20 +73,18 @@ export function CompetitorScanner({
   const [list, setList] = useState<Competitor[]>(initial);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [addError, setAddError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [scanningId, setScanningId] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(initial[0]?.id ?? null);
   const [credits, setCredits] = useState(userCredits);
 
   const atCapacity = limit !== -1 && list.length >= limit;
   const open = list.find((c) => c.id === openId) ?? null;
 
-  // ── Add competitor ──────────────────────────────────────────────────────────
   function add() {
-    setError(null);
-    if (name.trim().length < 1) { setError("Name required"); return; }
-    if (url.trim().length < 4)  { setError("URL required");  return; }
+    setAddError(null);
+    if (!name.trim()) { setAddError("Name required"); return; }
+    if (url.trim().length < 4) { setAddError("URL required"); return; }
     startTransition(async () => {
       const res = await fetch("/api/competitors", {
         method: "POST",
@@ -93,7 +93,7 @@ export function CompetitorScanner({
       });
       if (!res.ok) {
         const data = await res.json().catch(async () => ({ error: await res.text() }));
-        setError(data.error ?? "Failed");
+        setAddError(data.error ?? "Failed");
         return;
       }
       const data = await res.json();
@@ -111,7 +111,7 @@ export function CompetitorScanner({
         tiktokScanAt: null,
         createdAt: new Date(data.competitor.createdAt).toISOString(),
       };
-      setList([c, ...list]);
+      setList((prev) => [c, ...prev]);
       setName("");
       setUrl("");
       setOpenId(c.id);
@@ -119,42 +119,22 @@ export function CompetitorScanner({
     });
   }
 
-  // ── Remove competitor ───────────────────────────────────────────────────────
   function remove(id: string) {
     if (!confirm("Remove this competitor?")) return;
     startTransition(async () => {
       await fetch(`/api/competitors/${id}`, { method: "DELETE" });
-      const next = list.filter((c) => c.id !== id);
-      setList(next);
-      if (openId === id) setOpenId(next[0]?.id ?? null);
+      setList((prev) => {
+        const next = prev.filter((c) => c.id !== id);
+        if (openId === id) setOpenId(next[0]?.id ?? null);
+        return next;
+      });
       router.refresh();
     });
   }
 
-  // ── Website scan ────────────────────────────────────────────────────────────
-  async function scan(id: string) {
-    setScanningId(id + ":website");
-    setError(null);
-    try {
-      const res = await fetch(`/api/competitors/${id}/scan`, { method: "POST" });
-      if (!res.ok) { setError(await res.text()); return; }
-      const data = await res.json();
-      setList((prev) =>
-        prev.map((c) =>
-          c.id === id
-            ? { ...c, lastReport: data.competitor.lastReport, lastScanned: data.competitor.lastScanned ? new Date(data.competitor.lastScanned).toISOString() : null }
-            : c
-        )
-      );
-    } finally {
-      setScanningId(null);
-    }
+  function patchCompetitor(id: string, patch: Partial<Competitor>) {
+    setList((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
   }
-
-  // ── Social scan ─────────────────────────────────────────────────────────────
-  const updateCompetitor = useCallback((id: string, patch: Partial<Competitor>) => {
-    setList((prev) => prev.map((c) => c.id === id ? { ...c, ...patch } : c));
-  }, []);
 
   return (
     <div className="space-y-6">
@@ -186,14 +166,14 @@ export function CompetitorScanner({
             {atCapacity ? "Limit reached" : "Track"}
           </button>
         </div>
-        {error && (
+        {addError && (
           <div className="mt-3 rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
-            {error}
+            {addError}
           </div>
         )}
       </div>
 
-      {/* Chips */}
+      {/* Competitor chips */}
       {list.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           {list.map((c) => (
@@ -226,103 +206,130 @@ export function CompetitorScanner({
         </p>
       )}
 
-      {/* Detail panel */}
+      {/* Detail panel — keyed so state fully resets when switching competitors */}
       {open && (
         <CompetitorDetail
+          key={open.id}
           competitor={open}
-          scanningId={scanningId}
           credits={credits}
-          onWebsiteScan={() => scan(open.id)}
-          onSocialScanStart={(id) => setScanningId(id)}
-          onSocialScanEnd={() => setScanningId(null)}
-          onUpdate={(patch) => updateCompetitor(open.id, patch)}
-          onCreditsSpent={(amount) => setCredits((c) => c - amount)}
+          onPatch={(patch) => patchCompetitor(open.id, patch)}
+          onCreditsSpent={(n) => setCredits((c) => c - n)}
         />
       )}
     </div>
   );
 }
 
-// ─── CompetitorDetail with tabs ───────────────────────────────────────────────
+// ─── CompetitorDetail ─────────────────────────────────────────────────────────
+// Keyed by competitor.id, so all state resets when a different competitor is opened.
 
 function CompetitorDetail({
   competitor,
-  scanningId,
   credits,
-  onWebsiteScan,
-  onSocialScanStart,
-  onSocialScanEnd,
-  onUpdate,
+  onPatch,
   onCreditsSpent,
 }: {
   competitor: Competitor;
-  scanningId: string | null;
   credits: number;
-  onWebsiteScan: () => void;
-  onSocialScanStart: (id: string) => void;
-  onSocialScanEnd: () => void;
-  onUpdate: (patch: Partial<Competitor>) => void;
-  onCreditsSpent: (amount: number) => void;
+  onPatch: (patch: Partial<Competitor>) => void;
+  onCreditsSpent: (n: number) => void;
 }) {
   const [tab, setTab] = useState<Tab>("website");
+
+  // Website scan
+  const [websiteScanning, setWebsiteScanning] = useState(false);
+  const [websiteError, setWebsiteError] = useState<string | null>(null);
+
+  // Social scan
   const [ytHandle, setYtHandle] = useState(competitor.youtubeHandle ?? "");
   const [ttHandle, setTtHandle] = useState(competitor.tiktokHandle ?? "");
-  const [socialError, setSocialError] = useState<string | null>(null);
-  const [pollInterval, setPollInterval] = useState<ReturnType<typeof setInterval> | null>(null);
   const [scanningPlatform, setScanningPlatform] = useState<"youtube" | "tiktok" | null>(null);
+  const [socialError, setSocialError] = useState<string | null>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const websiteScanning = scanningId === competitor.id + ":website";
+  async function doWebsiteScan() {
+    setWebsiteScanning(true);
+    setWebsiteError(null);
+    try {
+      const res = await fetch(`/api/competitors/${competitor.id}/scan`, { method: "POST" });
+      if (!res.ok) {
+        setWebsiteError(await res.text());
+        return;
+      }
+      const data = await res.json();
+      onPatch({
+        lastReport: data.competitor.lastReport,
+        lastScanned: data.competitor.lastScanned
+          ? new Date(data.competitor.lastScanned).toISOString()
+          : null,
+      });
+    } catch (e: any) {
+      setWebsiteError(e.message ?? "Scan failed");
+    } finally {
+      setWebsiteScanning(false);
+    }
+  }
 
-  async function startSocialScan(platform: "youtube" | "tiktok") {
-    const handle = platform === "youtube" ? ytHandle.trim() : ttHandle.trim();
+  async function doSocialScan(platform: "youtube" | "tiktok") {
+    const handle = (platform === "youtube" ? ytHandle : ttHandle).trim().replace(/^@/, "");
     if (!handle) { setSocialError("Enter a handle first"); return; }
+
     setSocialError(null);
     setScanningPlatform(platform);
-    onSocialScanStart(competitor.id + ":" + platform);
 
-    const res = await fetch(`/api/competitors/${competitor.id}/scan-social`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ platform, handle }),
-    });
-    const data = await res.json();
-    if (!res.ok) {
-      setSocialError(data.error ?? "Failed to start scan");
-      setScanningPlatform(null);
-      onSocialScanEnd();
-      return;
-    }
-
-    onCreditsSpent(50);
-    const { runId } = data;
-
-    // Poll every 5 seconds
-    const iv = setInterval(async () => {
-      const pollRes = await fetch(
-        `/api/competitors/${competitor.id}/scan-social?runId=${runId}&platform=${platform}`
-      );
-      const pollData = await pollRes.json();
-
-      if (pollData.status === "running") return; // still going
-
-      clearInterval(iv);
-      setPollInterval(null);
-      setScanningPlatform(null);
-      onSocialScanEnd();
-
-      if (pollData.status === "succeeded" && pollData.report) {
-        const now = new Date().toISOString();
-        if (platform === "youtube") {
-          onUpdate({ youtubeReport: pollData.report, youtubeScanAt: now, youtubeHandle: handle });
-        } else {
-          onUpdate({ tiktokReport: pollData.report, tiktokScanAt: now, tiktokHandle: handle });
-        }
-      } else {
-        setSocialError(pollData.error ?? "Scan failed");
+    try {
+      const res = await fetch(`/api/competitors/${competitor.id}/scan-social`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ platform, handle }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSocialError(data.error ?? "Failed to start scan");
+        setScanningPlatform(null);
+        return;
       }
-    }, 5000);
 
-    setPollInterval(iv);
+      onCreditsSpent(50);
+      const { runId } = data as { runId: string };
+
+      // Clear any previous interval
+      if (pollRef.current) clearInterval(pollRef.current);
+
+      pollRef.current = setInterval(async () => {
+        try {
+          const pollRes = await fetch(
+            `/api/competitors/${competitor.id}/scan-social?runId=${runId}&platform=${platform}`
+          );
+          const pollData = await pollRes.json();
+
+          if (pollData.status === "running") return;
+
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setScanningPlatform(null);
+
+          if (pollData.status === "succeeded" && pollData.report) {
+            const now = new Date().toISOString();
+            if (platform === "youtube") {
+              onPatch({ youtubeReport: pollData.report, youtubeScanAt: now, youtubeHandle: handle });
+            } else {
+              onPatch({ tiktokReport: pollData.report, tiktokScanAt: now, tiktokHandle: handle });
+            }
+          } else {
+            setSocialError(pollData.error ?? "Scan failed. Check the handle and try again.");
+          }
+        } catch {
+          clearInterval(pollRef.current!);
+          pollRef.current = null;
+          setScanningPlatform(null);
+          setSocialError("Lost connection while polling. Refresh and try again.");
+        }
+      }, 5000);
+    } catch (e: any) {
+      setScanningPlatform(null);
+      setSocialError(e.message ?? "Failed");
+    }
   }
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
@@ -333,7 +340,7 @@ function CompetitorDetail({
 
   return (
     <div className="space-y-5">
-      {/* Header */}
+      {/* Competitor header */}
       <div className="card flex flex-wrap items-center justify-between gap-3 p-4">
         <div className="min-w-0">
           <p className="font-semibold">{competitor.name}</p>
@@ -347,8 +354,7 @@ function CompetitorDetail({
             <ExternalLink className="h-3 w-3" />
           </a>
         </div>
-        {/* Credit balance pill */}
-        <span className="rounded-md border border-bg-border bg-bg-panel px-2 py-1 text-xs text-text-muted tabular-nums">
+        <span className="rounded-md border border-bg-border bg-bg-panel px-2 py-1 text-xs tabular-nums text-text-muted">
           {credits.toLocaleString()} credits
         </span>
       </div>
@@ -371,7 +377,7 @@ function CompetitorDetail({
         ))}
       </div>
 
-      {/* ── Website tab ────────────────────────────────────────────────────── */}
+      {/* ── Website tab ── */}
       {tab === "website" && (
         <div className="space-y-4">
           <div className="card flex flex-wrap items-center justify-between gap-3 p-4">
@@ -383,14 +389,22 @@ function CompetitorDetail({
               )}
             </div>
             <button
-              onClick={onWebsiteScan}
+              onClick={doWebsiteScan}
               disabled={websiteScanning}
               className="btn-secondary text-xs"
             >
-              {websiteScanning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              {websiteScanning
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <RefreshCw className="h-3.5 w-3.5" />}
               {competitor.lastReport ? "Re-scan" : "Scan now"}
             </button>
           </div>
+
+          {websiteError && (
+            <div className="rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
+              {websiteError}
+            </div>
+          )}
 
           {websiteScanning && (
             <div className="flex flex-col items-center gap-2 py-6 text-sm text-text-muted">
@@ -403,7 +417,7 @@ function CompetitorDetail({
             <ReportView report={competitor.lastReport} />
           )}
 
-          {!competitor.lastReport && !websiteScanning && (
+          {!competitor.lastReport && !websiteScanning && !websiteError && (
             <div className="card p-8 text-center text-sm text-text-muted">
               <Target className="mx-auto h-5 w-5" />
               <p className="mt-3">Click "Scan now" to generate the first intel report.</p>
@@ -412,7 +426,7 @@ function CompetitorDetail({
         </div>
       )}
 
-      {/* ── YouTube tab ────────────────────────────────────────────────────── */}
+      {/* ── YouTube tab ── */}
       {tab === "youtube" && (
         <SocialTab
           platform="youtube"
@@ -423,14 +437,14 @@ function CompetitorDetail({
           scanning={scanningPlatform === "youtube"}
           credits={credits}
           error={socialError}
-          onScan={() => startSocialScan("youtube")}
+          onScan={() => doSocialScan("youtube")}
           renderReport={(r) => <YoutubeReportView report={r as YoutubeReport} />}
-          placeholder="e.g. mkbhd or @mkbhd"
+          placeholder="e.g. mkbhd  (with or without @)"
           creditCost={50}
         />
       )}
 
-      {/* ── TikTok tab ─────────────────────────────────────────────────────── */}
+      {/* ── TikTok tab ── */}
       {tab === "tiktok" && (
         <SocialTab
           platform="tiktok"
@@ -441,9 +455,9 @@ function CompetitorDetail({
           scanning={scanningPlatform === "tiktok"}
           credits={credits}
           error={socialError}
-          onScan={() => startSocialScan("tiktok")}
+          onScan={() => doSocialScan("tiktok")}
           renderReport={(r) => <TiktokReportView report={r as TiktokReport} />}
-          placeholder="e.g. nike (no @)"
+          placeholder="e.g. nike  (no @)"
           creditCost={50}
         />
       )}
@@ -484,7 +498,7 @@ function SocialTab({
     <div className="space-y-4">
       <div className="card p-4">
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
-          {platform === "youtube" ? "YouTube" : "TikTok"} Handle
+          {platform === "youtube" ? "YouTube" : "TikTok"} handle
         </p>
         <div className="flex gap-2">
           <input
@@ -492,6 +506,7 @@ function SocialTab({
             placeholder={placeholder}
             value={handle}
             onChange={(e) => setHandle(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && !scanning && credits >= creditCost && onScan()}
             disabled={scanning}
           />
           <button
@@ -509,14 +524,12 @@ function SocialTab({
         <p className="mt-1.5 text-xs text-text-muted">
           Costs {creditCost} credits · You have {credits.toLocaleString()} credits
         </p>
-
         {credits < creditCost && !scanning && (
           <p className="mt-2 text-xs text-amber-300">
             Not enough credits.{" "}
             <a href="/dashboard/credits" className="underline">Top up here</a>.
           </p>
         )}
-
         {error && (
           <div className="mt-3 rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
             {error}
@@ -527,7 +540,9 @@ function SocialTab({
       {scanning && (
         <div className="flex flex-col items-center gap-2 py-8 text-sm text-text-muted">
           <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Scraping {platform === "youtube" ? "YouTube" : "TikTok"} — usually 30-90 seconds…</span>
+          <span>
+            Scraping {platform === "youtube" ? "YouTube" : "TikTok"} — usually 30-90 seconds…
+          </span>
         </div>
       )}
 
@@ -546,7 +561,9 @@ function SocialTab({
         <div className="card p-8 text-center text-sm text-text-muted">
           <Play className="mx-auto h-5 w-5" />
           <p className="mt-3">
-            Enter the {platform === "youtube" ? "YouTube channel handle" : "TikTok username"} and click Scan to generate an analysis.
+            Enter the{" "}
+            {platform === "youtube" ? "YouTube channel handle" : "TikTok username"} and
+            click Scan to generate an analysis.
           </p>
         </div>
       )}
@@ -592,8 +609,8 @@ function ReportView({ report }: { report: Report }) {
 function YoutubeReportView({ report }: { report: YoutubeReport }) {
   return (
     <div className="space-y-4">
-      {(report.channelName || report.subscriberCount) && (
-        <div className="card flex flex-wrap items-center gap-4 p-5">
+      {(report.channelName || report.subscriberCount || report.postingFrequency) && (
+        <div className="card flex flex-wrap items-center gap-6 p-5">
           {report.channelName && (
             <div>
               <p className="text-xs text-text-muted">Channel</p>
@@ -614,29 +631,25 @@ function YoutubeReportView({ report }: { report: YoutubeReport }) {
           )}
         </div>
       )}
-
       {report.summary && (
         <div className="card p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Summary</p>
           <p className="mt-1 text-sm leading-relaxed">{report.summary}</p>
         </div>
       )}
-
       {report.contentStyle && (
         <div className="card p-5">
-          <p className="text-xs uppercase tracking-wide text-text-muted">Content Style</p>
+          <p className="text-xs uppercase tracking-wide text-text-muted">Content style</p>
           <p className="mt-1 text-sm leading-relaxed">{report.contentStyle}</p>
         </div>
       )}
-
       <Section title="Top Topics" items={report.topTopics ?? []} accent="text-blue-300" />
       <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-purple-300" />
-
-      {report.topVideos && report.topVideos.length > 0 && (
+      {(report.topVideos ?? []).length > 0 && (
         <div className="card p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Top Videos</p>
           <div className="mt-2 space-y-2">
-            {report.topVideos.map((v, i) => (
+            {report.topVideos!.map((v, i) => (
               <div key={i} className="flex items-start gap-3 text-sm">
                 <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
                   {i + 1}
@@ -655,12 +668,11 @@ function YoutubeReportView({ report }: { report: YoutubeReport }) {
           </div>
         </div>
       )}
-
-      {report.opportunities && report.opportunities.length > 0 && (
+      {(report.opportunities ?? []).length > 0 && (
         <div className="card-elevated ring-1 ring-white/10 p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Opportunities for you</p>
           <ol className="mt-2 space-y-2 text-sm">
-            {report.opportunities.map((o, i) => (
+            {report.opportunities!.map((o, i) => (
               <li key={i} className="flex gap-3">
                 <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
                   {i + 1}
@@ -680,8 +692,8 @@ function YoutubeReportView({ report }: { report: YoutubeReport }) {
 function TiktokReportView({ report }: { report: TiktokReport }) {
   return (
     <div className="space-y-4">
-      {(report.username || report.followerCount) && (
-        <div className="card flex flex-wrap items-center gap-4 p-5">
+      {(report.username || report.followerCount || report.postingFrequency) && (
+        <div className="card flex flex-wrap items-center gap-6 p-5">
           {report.username && (
             <div>
               <p className="text-xs text-text-muted">Username</p>
@@ -702,29 +714,25 @@ function TiktokReportView({ report }: { report: TiktokReport }) {
           )}
         </div>
       )}
-
       {report.summary && (
         <div className="card p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Summary</p>
           <p className="mt-1 text-sm leading-relaxed">{report.summary}</p>
         </div>
       )}
-
       {report.contentStyle && (
         <div className="card p-5">
-          <p className="text-xs uppercase tracking-wide text-text-muted">Content Style</p>
+          <p className="text-xs uppercase tracking-wide text-text-muted">Content style</p>
           <p className="mt-1 text-sm leading-relaxed">{report.contentStyle}</p>
         </div>
       )}
-
       <Section title="Top Topics" items={report.topTopics ?? []} accent="text-pink-300" />
       <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-purple-300" />
-
-      {report.topPosts && report.topPosts.length > 0 && (
+      {(report.topPosts ?? []).length > 0 && (
         <div className="card p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Top Posts</p>
           <div className="mt-2 space-y-2">
-            {report.topPosts.map((p, i) => (
+            {report.topPosts!.map((p, i) => (
               <div key={i} className="flex items-start gap-3 text-sm">
                 <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
                   {i + 1}
@@ -743,12 +751,11 @@ function TiktokReportView({ report }: { report: TiktokReport }) {
           </div>
         </div>
       )}
-
-      {report.opportunities && report.opportunities.length > 0 && (
+      {(report.opportunities ?? []).length > 0 && (
         <div className="card-elevated ring-1 ring-white/10 p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Opportunities for you</p>
           <ol className="mt-2 space-y-2 text-sm">
-            {report.opportunities.map((o, i) => (
+            {report.opportunities!.map((o, i) => (
               <li key={i} className="flex gap-3">
                 <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
                   {i + 1}
