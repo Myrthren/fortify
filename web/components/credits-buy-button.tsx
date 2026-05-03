@@ -34,7 +34,7 @@ export function CreditsBuyButton({
     <button
       onClick={handleBuy}
       disabled={status === "loading"}
-      className="mt-auto w-full rounded-lg bg-white px-4 py-2.5 text-sm font-medium text-bg transition hover:bg-white/90 disabled:opacity-60"
+      className="btn-primary mt-auto w-full"
     >
       {status === "loading" ? "Redirecting…" : `Buy for £${price}`}
     </button>

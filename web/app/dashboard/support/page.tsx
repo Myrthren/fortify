@@ -67,9 +67,9 @@ export default async function SupportPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-text-muted">Discord</p>
-              <p className="mt-0.5 font-mono text-sm">keneamaechina</p>
+              <p className="mt-0.5 font-mono text-sm">pluniez</p>
             </div>
-            <CopyButton text="keneamaechina" />
+            <CopyButton text="pluniez" />
           </div>
         </section>
 
