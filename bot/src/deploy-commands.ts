@@ -9,6 +9,8 @@ import * as audit from "./commands/audit";
 import * as trends from "./commands/trends";
 import * as competitors from "./commands/competitors";
 import * as matchmake from "./commands/matchmake";
+import * as ticket from "./commands/ticket";
+import * as supportsetup from "./commands/supportsetup";
 
 const commands = [
   hook.data.toJSON(),
@@ -20,6 +22,8 @@ const commands = [
   trends.data.toJSON(),
   competitors.data.toJSON(),
   matchmake.data.toJSON(),
+  ticket.data.toJSON(),
+  supportsetup.data.toJSON(),
 ];
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN!);
