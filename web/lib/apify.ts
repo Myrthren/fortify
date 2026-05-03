@@ -1,5 +1,10 @@
 const APIFY_BASE = "https://api.apify.com/v2";
-const TOKEN = process.env.APIFY_API_TOKEN!;
+
+function getToken(): string {
+  const t = process.env.APIFY_API_TOKEN;
+  if (!t) throw new Error("APIFY_API_TOKEN is not set on this server.");
+  return t;
+}
 
 export const ACTOR_IDS = {
   youtube: "h7sDV53CddomktSi5",
@@ -10,9 +15,10 @@ export type Platform = keyof typeof ACTOR_IDS;
 
 /** Start an Apify actor run and return the runId */
 export async function startRun(platform: Platform, input: Record<string, unknown>): Promise<string> {
+  const token = getToken();
   const actorId = ACTOR_IDS[platform];
   const res = await fetch(
-    `${APIFY_BASE}/acts/${actorId}/runs?token=${TOKEN}`,
+    `${APIFY_BASE}/acts/${actorId}/runs?token=${token}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -29,7 +35,8 @@ export async function startRun(platform: Platform, input: Record<string, unknown
 
 /** Poll the status of a run. Returns "RUNNING" | "SUCCEEDED" | "FAILED" | "ABORTED" | "TIMED-OUT" */
 export async function getRunStatus(runId: string): Promise<string> {
-  const res = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${TOKEN}`);
+  const token = getToken();
+  const res = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${token}`);
   if (!res.ok) throw new Error(`Apify getRunStatus failed (${res.status})`);
   const json = await res.json();
   return json.data.status as string;
@@ -37,8 +44,9 @@ export async function getRunStatus(runId: string): Promise<string> {
 
 /** Fetch all items from a run's default dataset */
 export async function getDatasetItems<T = unknown>(runId: string): Promise<T[]> {
+  const token = getToken();
   const res = await fetch(
-    `${APIFY_BASE}/actor-runs/${runId}/dataset/items?token=${TOKEN}&clean=true&format=json`
+    `${APIFY_BASE}/actor-runs/${runId}/dataset/items?token=${token}&clean=true&format=json`
   );
   if (!res.ok) throw new Error(`Apify getDatasetItems failed (${res.status})`);
   return (await res.json()) as T[];

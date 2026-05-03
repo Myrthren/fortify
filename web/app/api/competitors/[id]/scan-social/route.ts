@@ -70,7 +70,7 @@ export async function POST(
     runId = await startRun(platform, input);
   } catch (e: any) {
     console.error("[scan-social] startRun failed:", e);
-    return NextResponse.json({ error: "Failed to start scan. Try again." }, { status: 502 });
+    return NextResponse.json({ error: e.message ?? "Failed to start scan." }, { status: 502 });
   }
 
   // Deduct credits atomically and save handle
