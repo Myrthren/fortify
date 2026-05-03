@@ -5,6 +5,7 @@ import { isOwner } from "@/lib/owner";
 import { TIERS } from "@/lib/tiers";
 import { Logo } from "@/components/logo";
 import { TierSwitcher } from "@/components/tier-switcher";
+import { AdminCreditAdjuster } from "@/components/admin-credit-adjuster";
 import Link from "next/link";
 
 export default async function AdminPage() {
@@ -27,6 +28,7 @@ export default async function AdminPage() {
       email: true,
       discordId: true,
       tier: true,
+      credits: true,
       createdAt: true,
     },
   });
@@ -47,7 +49,8 @@ export default async function AdminPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-6 py-12 space-y-10">
+      <main className="mx-auto max-w-4xl space-y-10 px-6 py-12">
+        {/* Tier switcher */}
         <section>
           <h2 className="text-lg font-semibold tracking-tight">Your tier</h2>
           <p className="mt-1 text-sm text-text-muted">
@@ -59,6 +62,25 @@ export default async function AdminPage() {
           </div>
         </section>
 
+        {/* Credit adjuster */}
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">Adjust credits</h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Add or deduct credits from any account. Logged as an admin transaction.
+          </p>
+          <div className="card mt-4 p-5">
+            <AdminCreditAdjuster
+              users={allUsers.map((u) => ({
+                id: u.id,
+                name: u.name,
+                email: u.email,
+                credits: u.credits,
+              }))}
+            />
+          </div>
+        </section>
+
+        {/* Users table */}
         <section>
           <h2 className="text-lg font-semibold tracking-tight">Recent users</h2>
           <p className="mt-1 text-sm text-text-muted">Last 50 by created date.</p>
@@ -69,6 +91,7 @@ export default async function AdminPage() {
                   <th className="px-4 py-2 font-medium text-text-muted">Name</th>
                   <th className="px-4 py-2 font-medium text-text-muted">Email</th>
                   <th className="px-4 py-2 font-medium text-text-muted">Tier</th>
+                  <th className="px-4 py-2 font-medium text-text-muted tabular-nums">Credits</th>
                   <th className="px-4 py-2 font-medium text-text-muted">Joined</th>
                 </tr>
               </thead>
@@ -81,6 +104,9 @@ export default async function AdminPage() {
                       <span className="rounded border border-bg-border bg-black/20 px-1.5 py-0.5 text-xs">
                         {u.tier}
                       </span>
+                    </td>
+                    <td className="px-4 py-2 tabular-nums text-text-muted">
+                      {u.credits.toLocaleString()}
                     </td>
                     <td className="px-4 py-2 text-text-muted">
                       {u.createdAt.toISOString().slice(0, 10)}
