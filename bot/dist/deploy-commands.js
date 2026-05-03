@@ -44,6 +44,8 @@ const audit = __importStar(require("./commands/audit"));
 const trends = __importStar(require("./commands/trends"));
 const competitors = __importStar(require("./commands/competitors"));
 const matchmake = __importStar(require("./commands/matchmake"));
+const ticket = __importStar(require("./commands/ticket"));
+const supportsetup = __importStar(require("./commands/supportsetup"));
 const commands = [
     hook.data.toJSON(),
     upgrade.data.toJSON(),
@@ -54,6 +56,8 @@ const commands = [
     trends.data.toJSON(),
     competitors.data.toJSON(),
     matchmake.data.toJSON(),
+    ticket.data.toJSON(),
+    supportsetup.data.toJSON(),
 ];
 const rest = new discord_js_1.REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN);
 (async () => {
