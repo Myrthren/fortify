@@ -18,7 +18,8 @@ type ActiveKey =
   | "pods"
   | "profile"
   | "settings"
-  | "support";
+  | "support"
+  | "credits";
 
 const TOOLS = [
   { key: "voice",       href: "/dashboard/voice",       label: "Brand Voice" },
@@ -38,6 +39,7 @@ const COMMUNITY = [
 const ACCOUNT = [
   { key: "profile",  href: "/dashboard/profile",  label: "Profile" },
   { key: "settings", href: "/dashboard/settings", label: "Settings" },
+  { key: "credits",  href: "/dashboard/credits",  label: "Credits" },
   { key: "support",  href: "/dashboard/support",  label: "Support" },
 ] as const;
 
@@ -97,7 +99,7 @@ export function DashboardNav({
   user,
   active,
 }: {
-  user: { email: string | null; tier: Tier; discordId: string | null };
+  user: { email: string | null; tier: Tier; discordId: string | null; credits?: number };
   active: ActiveKey;
 }) {
   const tierMeta      = TIERS[user.tier];
@@ -210,7 +212,14 @@ export function DashboardNav({
               <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl">
                 {ACCOUNT.map((item) => (
                   <DropdownLink key={item.key} href={item.href} active={active === item.key}>
-                    {item.label}
+                    <span className="flex w-full items-center justify-between">
+                      {item.label}
+                      {item.key === "credits" && user.credits !== undefined && (
+                        <span className="tabular-nums text-xs text-text-muted">
+                          {user.credits.toLocaleString()}
+                        </span>
+                      )}
+                    </span>
                   </DropdownLink>
                 ))}
                 <div className="my-1 border-t border-bg-border" />
