@@ -8,7 +8,7 @@ import { CREDIT_PACKS, pencePerCredit } from "@/lib/credit-packs";
 export default async function CreditsPage({
   searchParams,
 }: {
-  searchParams: { success?: string; cancelled?: string };
+  searchParams: Promise<{ success?: string; cancelled?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");

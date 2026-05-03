@@ -13,7 +13,7 @@ const PAYPAL_BASE =
 export default async function CreditsConfirmPage({
   searchParams,
 }: {
-  searchParams: { token?: string };
+  searchParams: Promise<{ token?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");

@@ -59,9 +59,16 @@ export default async function CompetitorsPage() {
               url: c.url,
               lastReport: c.lastReport as any,
               lastScanned: c.lastScanned ? c.lastScanned.toISOString() : null,
+              youtubeHandle: c.youtubeHandle ?? null,
+              tiktokHandle: c.tiktokHandle ?? null,
+              youtubeReport: c.youtubeReport as any ?? null,
+              tiktokReport: c.tiktokReport as any ?? null,
+              youtubeScanAt: c.youtubeScanAt ? c.youtubeScanAt.toISOString() : null,
+              tiktokScanAt: c.tiktokScanAt ? c.tiktokScanAt.toISOString() : null,
               createdAt: c.createdAt.toISOString(),
             }))}
             limit={limit === Infinity ? -1 : limit}
+            userCredits={user.credits}
           />
         )}
       </main>
