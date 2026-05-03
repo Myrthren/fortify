@@ -79,6 +79,13 @@ model User {
   creditTransactions CreditTransaction[]
 }
 
+model Announcement {
+  id        String    @id @default(cuid())
+  message   String
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+}
+
 model CreditTransaction {
   id        String   @id @default(cuid())
   userId    String

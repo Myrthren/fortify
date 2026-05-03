@@ -6,6 +6,7 @@ import { TIERS } from "@/lib/tiers";
 import { Logo } from "@/components/logo";
 import { TierSwitcher } from "@/components/tier-switcher";
 import { AdminCreditAdjuster } from "@/components/admin-credit-adjuster";
+import { AdminAnnouncementManager } from "@/components/admin-announcement-manager";
 import Link from "next/link";
 
 export default async function AdminPage() {
@@ -19,6 +20,12 @@ export default async function AdminPage() {
   if (!isOwner(user.discordId)) redirect("/dashboard");
 
   const tierMeta = TIERS[user.tier];
+
+  const announcements = await db.announcement.findMany({
+    orderBy: { createdAt: "asc" },
+    select: { id: true, message: true, expiresAt: true },
+  });
+
   const allUsers = await db.user.findMany({
     orderBy: { createdAt: "desc" },
     take: 50,
@@ -59,6 +66,23 @@ export default async function AdminPage() {
           </p>
           <div className="mt-4">
             <TierSwitcher current={user.tier} />
+          </div>
+        </section>
+
+        {/* Announcements */}
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">Announcements</h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Active announcements show in a bar at the top of every dashboard page. Multiple messages cycle every 10 seconds.
+          </p>
+          <div className="card mt-4 p-5">
+            <AdminAnnouncementManager
+              initial={announcements.map((a) => ({
+                id: a.id,
+                message: a.message,
+                expiresAt: a.expiresAt ? a.expiresAt.toISOString() : null,
+              }))}
+            />
           </div>
         </section>
 
