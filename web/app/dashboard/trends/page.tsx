@@ -42,10 +42,9 @@ export default async function TrendsPage() {
 
         {limit === 0 ? (
           <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
-            <h3 className="font-semibold">Trend Radar is an Elite feature</h3>
+            <h3 className="font-semibold">Trend Radar is a Pro+ feature</h3>
             <p className="mt-1 text-sm text-text-muted">
-              Track up to 10 topics on Elite, unlimited on Apex. Get fresh search results
-              for what matters to you.
+              Track 3 topics on Pro (web), 10 on Elite (web + Reddit), unlimited on Apex.
             </p>
             <Link href="/pricing" className="btn-primary mt-4 w-fit">Upgrade</Link>
           </div>
@@ -57,6 +56,7 @@ export default async function TrendsPage() {
               createdAt: t.createdAt.toISOString(),
             }))}
             limit={limit === Infinity ? -1 : limit}
+            tier={user.tier}
           />
         )}
       </main>
