@@ -2,17 +2,29 @@
 
 import { useState, useTransition, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Trash2, RefreshCw, ExternalLink } from "lucide-react";
+import { Loader2, Plus, Trash2, RefreshCw, ExternalLink, ArrowUp, MessageSquare } from "lucide-react";
+import type { Tier } from "@prisma/client";
+import Link from "next/link";
 
 type Term = { id: string; term: string; createdAt: string };
-type Result = {
+
+type WebResult = {
   title: string;
   url: string;
   description: string;
   age?: string;
   source?: string;
-  favicon?: string;
 };
+
+type RedditPost = {
+  title: string;
+  url: string;
+  score: number;
+  numComments: number;
+  subreddit: string;
+};
+
+type Source = "web" | "reddit";
 
 type Freshness = "pd" | "pw" | "pm" | "py";
 const FRESHNESS_LABELS: Record<Freshness, string> = {
@@ -25,9 +37,11 @@ const FRESHNESS_LABELS: Record<Freshness, string> = {
 export function TrendRadar({
   initialTerms,
   limit,
+  tier,
 }: {
   initialTerms: Term[];
   limit: number; // -1 = unlimited
+  tier: Tier;
 }) {
   const router = useRouter();
   const [terms, setTerms] = useState<Term[]>(initialTerms);
@@ -36,46 +50,53 @@ export function TrendRadar({
   const [activeTermId, setActiveTermId] = useState<string | null>(
     initialTerms[0]?.id ?? null
   );
+  const [source, setSource] = useState<Source>("web");
   const [freshness, setFreshness] = useState<Freshness>("pw");
-  const [results, setResults] = useState<Result[] | null>(null);
+  const [webResults, setWebResults] = useState<WebResult[] | null>(null);
+  const [redditPosts, setRedditPosts] = useState<RedditPost[] | null>(null);
   const [resultsLoading, setResultsLoading] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const atCapacity = limit !== -1 && terms.length >= limit;
+  const canReddit = tier === "ELITE" || tier === "APEX";
 
-  const loadResults = useCallback(
-    async (termId: string, fresh: Freshness) => {
-      setResultsLoading(true);
-      setResults(null);
-      try {
-        const res = await fetch(
-          `/api/trends/search?termId=${termId}&freshness=${fresh}`
-        );
-        if (!res.ok) {
-          setResults([]);
-          setError(await res.text());
-          return;
-        }
-        const data = await res.json();
-        setResults(data.results);
-        setError(null);
-      } finally {
-        setResultsLoading(false);
-      }
-    },
-    []
-  );
+  const loadWebResults = useCallback(async (termId: string, fresh: Freshness) => {
+    setResultsLoading(true);
+    setWebResults(null);
+    try {
+      const res = await fetch(`/api/trends/search?termId=${termId}&freshness=${fresh}`);
+      if (!res.ok) { setWebResults([]); setError(await res.text()); return; }
+      const data = await res.json();
+      setWebResults(data.results);
+      setError(null);
+    } finally {
+      setResultsLoading(false);
+    }
+  }, []);
+
+  const loadRedditPosts = useCallback(async (termId: string, fresh: Freshness) => {
+    setResultsLoading(true);
+    setRedditPosts(null);
+    try {
+      const res = await fetch(`/api/trends/reddit?termId=${termId}&freshness=${fresh}`);
+      if (!res.ok) { setRedditPosts([]); setError(await res.text()); return; }
+      const data = await res.json();
+      setRedditPosts(data.posts);
+      setError(null);
+    } finally {
+      setResultsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    if (activeTermId) loadResults(activeTermId, freshness);
-  }, [activeTermId, freshness, loadResults]);
+    if (!activeTermId) return;
+    if (source === "web") loadWebResults(activeTermId, freshness);
+    else loadRedditPosts(activeTermId, freshness);
+  }, [activeTermId, source, freshness, loadWebResults, loadRedditPosts]);
 
   function addTerm() {
     setError(null);
-    if (draft.trim().length < 2) {
-      setError("Term must be at least 2 chars");
-      return;
-    }
+    if (draft.trim().length < 2) { setError("Term must be at least 2 chars"); return; }
     startTransition(async () => {
       const res = await fetch("/api/trends/watch", {
         method: "POST",
@@ -90,10 +111,9 @@ export function TrendRadar({
       const data = await res.json();
       const newTerm = {
         ...data.term,
-        createdAt:
-          typeof data.term.createdAt === "string"
-            ? data.term.createdAt
-            : new Date(data.term.createdAt).toISOString(),
+        createdAt: typeof data.term.createdAt === "string"
+          ? data.term.createdAt
+          : new Date(data.term.createdAt).toISOString(),
       };
       if (!data.deduped) {
         setTerms([newTerm, ...terms]);
@@ -113,10 +133,17 @@ export function TrendRadar({
       setTerms(next);
       if (activeTermId === id) {
         setActiveTermId(next[0]?.id ?? null);
-        setResults(null);
+        setWebResults(null);
+        setRedditPosts(null);
       }
       router.refresh();
     });
+  }
+
+  function refresh() {
+    if (!activeTermId) return;
+    if (source === "web") loadWebResults(activeTermId, freshness);
+    else loadRedditPosts(activeTermId, freshness);
   }
 
   return (
@@ -139,11 +166,7 @@ export function TrendRadar({
             onKeyDown={(e) => e.key === "Enter" && addTerm()}
             disabled={pending || atCapacity}
           />
-          <button
-            onClick={addTerm}
-            disabled={pending || atCapacity}
-            className="btn-primary"
-          >
+          <button onClick={addTerm} disabled={pending || atCapacity} className="btn-primary">
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             {atCapacity ? "Limit reached" : "Track"}
           </button>
@@ -155,7 +178,7 @@ export function TrendRadar({
         )}
       </div>
 
-      {/* Term list (chips) */}
+      {/* Term chips */}
       {terms.length > 0 && (
         <div className="flex flex-wrap items-center gap-2">
           {terms.map((t) => (
@@ -170,10 +193,7 @@ export function TrendRadar({
             >
               {t.term}
               <span
-                onClick={(e) => {
-                  e.stopPropagation();
-                  removeTerm(t.id);
-                }}
+                onClick={(e) => { e.stopPropagation(); removeTerm(t.id); }}
                 className="text-text-dim hover:text-red-300"
                 role="button"
                 aria-label="remove"
@@ -191,35 +211,67 @@ export function TrendRadar({
         </p>
       )}
 
-      {/* Freshness + refresh */}
+      {/* Source tabs + freshness + refresh */}
       {activeTermId && (
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-bg-border pt-4">
-          <div className="flex gap-1">
-            {(Object.keys(FRESHNESS_LABELS) as Freshness[]).map((f) => (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-bg-border pt-4">
+          <div className="flex items-center gap-3">
+            {/* Source selector */}
+            <div className="flex rounded-md border border-bg-border overflow-hidden text-xs">
               <button
-                key={f}
-                onClick={() => setFreshness(f)}
+                onClick={() => setSource("web")}
                 disabled={resultsLoading}
-                className={`rounded-md border px-2.5 py-1 text-xs transition ${
-                  freshness === f
-                    ? "border-white/40 bg-white/10 text-white"
-                    : "border-bg-border bg-bg-elevated text-text-muted hover:text-text"
+                className={`px-3 py-1.5 transition ${
+                  source === "web"
+                    ? "bg-white/10 text-white"
+                    : "bg-bg-elevated text-text-muted hover:text-text"
                 }`}
               >
-                {FRESHNESS_LABELS[f]}
+                Web
               </button>
-            ))}
+              {canReddit ? (
+                <button
+                  onClick={() => setSource("reddit")}
+                  disabled={resultsLoading}
+                  className={`px-3 py-1.5 transition border-l border-bg-border ${
+                    source === "reddit"
+                      ? "bg-white/10 text-white"
+                      : "bg-bg-elevated text-text-muted hover:text-text"
+                  }`}
+                >
+                  Reddit
+                </button>
+              ) : (
+                <Link
+                  href="/pricing"
+                  className="border-l border-bg-border px-3 py-1.5 text-text-dim bg-bg-elevated hover:text-text-muted transition"
+                  title="Upgrade to Elite to unlock Reddit signals"
+                >
+                  Reddit ↑
+                </Link>
+              )}
+            </div>
+
+            {/* Freshness pills */}
+            <div className="flex gap-1">
+              {(Object.keys(FRESHNESS_LABELS) as Freshness[]).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setFreshness(f)}
+                  disabled={resultsLoading}
+                  className={`rounded-md border px-2.5 py-1 text-xs transition ${
+                    freshness === f
+                      ? "border-white/40 bg-white/10 text-white"
+                      : "border-bg-border bg-bg-elevated text-text-muted hover:text-text"
+                  }`}
+                >
+                  {FRESHNESS_LABELS[f]}
+                </button>
+              ))}
+            </div>
           </div>
-          <button
-            onClick={() => loadResults(activeTermId, freshness)}
-            disabled={resultsLoading}
-            className="btn-ghost text-xs"
-          >
-            {resultsLoading ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <RefreshCw className="h-3 w-3" />
-            )}
+
+          <button onClick={refresh} disabled={resultsLoading} className="btn-ghost text-xs">
+            {resultsLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />}
             Refresh
           </button>
         </div>
@@ -229,16 +281,16 @@ export function TrendRadar({
       {activeTermId && (
         <div className="space-y-3">
           {resultsLoading && (
-            <p className="text-center text-sm text-text-muted">
+            <p className="text-center text-sm text-text-muted py-8">
               <Loader2 className="mx-auto h-4 w-4 animate-spin" />
             </p>
           )}
-          {!resultsLoading && results?.length === 0 && (
-            <p className="text-center text-sm text-text-muted">
-              No results in this window. Try widening the freshness.
-            </p>
+
+          {/* Web results */}
+          {!resultsLoading && source === "web" && webResults?.length === 0 && (
+            <p className="text-center text-sm text-text-muted">No results in this window. Try widening the freshness.</p>
           )}
-          {results?.map((r) => (
+          {source === "web" && webResults?.map((r) => (
             <a
               key={r.url}
               href={r.url}
@@ -249,13 +301,43 @@ export function TrendRadar({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-text">{r.title}</p>
-                  <p className="mt-1 line-clamp-2 text-xs text-text-muted">
-                    {r.description}
-                  </p>
+                  <p className="mt-1 line-clamp-2 text-xs text-text-muted">{r.description}</p>
                   <p className="mt-2 flex items-center gap-2 text-[11px] text-text-dim">
                     {r.source && <span>{r.source}</span>}
                     {r.source && r.age && <span>·</span>}
                     {r.age && <span>{r.age}</span>}
+                  </p>
+                </div>
+                <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-text-dim" />
+              </div>
+            </a>
+          ))}
+
+          {/* Reddit results */}
+          {!resultsLoading && source === "reddit" && redditPosts?.length === 0 && (
+            <p className="text-center text-sm text-text-muted">No Reddit posts found. Try widening the freshness.</p>
+          )}
+          {source === "reddit" && redditPosts?.map((p) => (
+            <a
+              key={p.url}
+              href={p.url}
+              target="_blank"
+              rel="noreferrer noopener"
+              className="card block p-4 transition hover:border-bg-border/80 hover:bg-bg-panel"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-text">{p.title}</p>
+                  <p className="mt-2 flex items-center gap-3 text-[11px] text-text-dim">
+                    <span className="text-text-muted">r/{p.subreddit}</span>
+                    <span className="flex items-center gap-1">
+                      <ArrowUp className="h-3 w-3" />
+                      {p.score.toLocaleString()}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      {p.numComments.toLocaleString()}
+                    </span>
                   </p>
                 </div>
                 <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-text-dim" />
