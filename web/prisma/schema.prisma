@@ -110,15 +110,17 @@ model Profile {
 }
 
 model Subscription {
-  id            String    @id @default(cuid())
-  userId        String    @unique
-  paypalSubId   String    @unique
-  tier          Tier
-  status        String    // ACTIVE, CANCELLED, SUSPENDED, EXPIRED
-  startedAt     DateTime  @default(now())
-  cancelledAt   DateTime?
-  nextBillingAt DateTime?
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  paypalSubId       String    @unique
+  tier              Tier
+  status            String    // ACTIVE, CANCELLED, SUSPENDED, EXPIRED
+  startedAt         DateTime  @default(now())
+  cancelledAt       DateTime?
+  nextBillingAt     DateTime?
+  paymentFailedAt   DateTime?
+  paymentRescueStep Int       @default(0)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BrandVoice {
@@ -141,21 +143,25 @@ model WatchTerm {
 }
 
 model Competitor {
-  id             String    @id @default(cuid())
-  userId         String
-  name           String
-  url            String
-  notes          String?   @db.Text
-  lastReport     Json?
-  lastScanned    DateTime?
-  youtubeHandle  String?
-  tiktokHandle   String?
-  youtubeReport  Json?
-  tiktokReport   Json?
-  youtubeScanAt  DateTime?
-  tiktokScanAt   DateTime?
-  createdAt      DateTime  @default(now())
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String    @id @default(cuid())
+  userId           String
+  name             String
+  url              String
+  notes            String?   @db.Text
+  lastReport       Json?
+  lastScanned      DateTime?
+  youtubeHandle    String?
+  tiktokHandle     String?
+  youtubeReport    Json?
+  tiktokReport     Json?
+  youtubeScanAt    DateTime?
+  tiktokScanAt     DateTime?
+  changeReport     Json?
+  changeDetectedAt DateTime?
+  reviewReport     Json?
+  reviewScannedAt  DateTime?
+  createdAt        DateTime  @default(now())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }

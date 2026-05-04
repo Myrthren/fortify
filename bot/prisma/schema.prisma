@@ -117,8 +117,10 @@ model Subscription {
   status        String    // ACTIVE, CANCELLED, SUSPENDED, EXPIRED
   startedAt     DateTime  @default(now())
   cancelledAt   DateTime?
-  nextBillingAt DateTime?
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nextBillingAt     DateTime?
+  paymentFailedAt   DateTime?
+  paymentRescueStep Int       @default(0)
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BrandVoice {
@@ -152,10 +154,14 @@ model Competitor {
   tiktokHandle   String?
   youtubeReport  Json?
   tiktokReport   Json?
-  youtubeScanAt  DateTime?
-  tiktokScanAt   DateTime?
-  createdAt      DateTime  @default(now())
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  youtubeScanAt    DateTime?
+  tiktokScanAt     DateTime?
+  changeReport     Json?
+  changeDetectedAt DateTime?
+  reviewReport     Json?
+  reviewScannedAt  DateTime?
+  createdAt        DateTime  @default(now())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
 }

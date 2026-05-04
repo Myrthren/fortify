@@ -14,6 +14,7 @@ type ActiveKey =
   | "competitors"
   | "matchmaking"
   | "inspiration"
+  | "leads"
   | "members"
   | "deals"
   | "pods"
@@ -28,6 +29,7 @@ const TOOLS = [
   { key: "audit",       href: "/dashboard/audit",       label: "Funnel Audit" },
   { key: "trends",      href: "/dashboard/trends",      label: "Trend Radar" },
   { key: "competitors", href: "/dashboard/competitors", label: "Competitors" },
+  { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing" },
   { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration" },
   { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking" },
 ] as const;
