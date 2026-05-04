@@ -3,7 +3,7 @@
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Loader2, Plus, Trash2, RefreshCw, ExternalLink, Target, Youtube, Play,
+  Loader2, Plus, Trash2, RefreshCw, ExternalLink, Target, Youtube, Play, Star,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -53,10 +53,27 @@ type Competitor = {
   tiktokReport: TiktokReport | null;
   youtubeScanAt: string | null;
   tiktokScanAt: string | null;
+  changeReport: ChangeReport | null;
+  changeDetectedAt: string | null;
+  reviewReport: ReviewReport | null;
+  reviewScannedAt: string | null;
   createdAt: string;
 };
 
-type Tab = "website" | "youtube" | "tiktok";
+type Tab = "website" | "youtube" | "tiktok" | "reviews";
+
+type ChangeReport = {
+  changes: string[];
+  brief: string;
+};
+
+type ReviewReport = {
+  sentiment: "positive" | "mixed" | "negative";
+  topComplaints: string[];
+  topPraises: string[];
+  opportunities: string[];
+  summary: string;
+};
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
@@ -109,6 +126,10 @@ export function CompetitorScanner({
         tiktokReport: null,
         youtubeScanAt: null,
         tiktokScanAt: null,
+        changeReport: null,
+        changeDetectedAt: null,
+        reviewReport: null,
+        reviewScannedAt: null,
         createdAt: new Date(data.competitor.createdAt).toISOString(),
       };
       setList((prev) => [c, ...prev]);
@@ -240,6 +261,30 @@ function CompetitorDetail({
   const [websiteScanning, setWebsiteScanning] = useState(false);
   const [websiteError, setWebsiteError] = useState<string | null>(null);
 
+  // Reviews scan
+  const [reviewScanning, setReviewScanning] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+
+  async function doReviewScan() {
+    setReviewScanning(true);
+    setReviewError(null);
+    try {
+      const res = await fetch(`/api/competitors/${competitor.id}/reviews`, { method: "POST" });
+      if (!res.ok) { setReviewError(await res.text()); return; }
+      const data = await res.json();
+      onPatch({
+        reviewReport: data.report,
+        reviewScannedAt: data.reviewScannedAt
+          ? new Date(data.reviewScannedAt).toISOString()
+          : new Date().toISOString(),
+      });
+    } catch (e: any) {
+      setReviewError(e.message ?? "Review scan failed");
+    } finally {
+      setReviewScanning(false);
+    }
+  }
+
   // Social scan
   const [ytHandle, setYtHandle] = useState(competitor.youtubeHandle ?? "");
   const [ttHandle, setTtHandle] = useState(competitor.tiktokHandle ?? "");
@@ -336,6 +381,7 @@ function CompetitorDetail({
     { key: "website", label: "Website Intel", icon: <Target className="h-3.5 w-3.5" /> },
     { key: "youtube", label: "YouTube",       icon: <Youtube className="h-3.5 w-3.5" /> },
     { key: "tiktok",  label: "TikTok",        icon: <Play className="h-3.5 w-3.5" /> },
+    { key: "reviews", label: "Reviews",       icon: <Star className="h-3.5 w-3.5" /> },
   ];
 
   return (
@@ -380,6 +426,20 @@ function CompetitorDetail({
       {/* ── Website tab ── */}
       {tab === "website" && (
         <div className="space-y-4">
+          {/* Change detection alert */}
+          {competitor.changeDetectedAt &&
+            Date.now() - new Date(competitor.changeDetectedAt).getTime() < 7 * 24 * 60 * 60 * 1000 && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
+              <p className="font-medium text-amber-300">New activity detected this week</p>
+              {(competitor.changeReport?.changes ?? []).slice(0, 3).map((c, i) => (
+                <p key={i} className="mt-1 text-xs text-amber-200/80">· {c}</p>
+              ))}
+              {competitor.changeReport?.brief && (
+                <p className="mt-2 text-xs text-amber-200/70 italic">{competitor.changeReport.brief}</p>
+              )}
+              <p className="mt-2 text-xs text-text-muted">Re-scan for a fresh full report.</p>
+            </div>
+          )}
           <div className="card flex flex-wrap items-center justify-between gap-3 p-4">
             <div>
               {competitor.lastScanned && (
@@ -460,6 +520,58 @@ function CompetitorDetail({
           placeholder="e.g. nike  (no @)"
           creditCost={50}
         />
+      )}
+
+      {/* ── Reviews tab ── */}
+      {tab === "reviews" && (
+        <div className="space-y-4">
+          <div className="card flex flex-wrap items-center justify-between gap-3 p-4">
+            <div>
+              {competitor.reviewScannedAt && (
+                <p className="text-xs text-text-muted">
+                  Last scanned {new Date(competitor.reviewScannedAt).toLocaleString()}
+                </p>
+              )}
+              <p className="text-xs text-text-muted mt-0.5">
+                Pulls from G2, Trustpilot, and Capterra
+              </p>
+            </div>
+            <button
+              onClick={doReviewScan}
+              disabled={reviewScanning}
+              className="btn-secondary text-xs"
+            >
+              {reviewScanning
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <RefreshCw className="h-3.5 w-3.5" />}
+              {competitor.reviewReport ? "Re-scan" : "Scan reviews"}
+            </button>
+          </div>
+
+          {reviewError && (
+            <div className="rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
+              {reviewError}
+            </div>
+          )}
+
+          {reviewScanning && (
+            <div className="flex flex-col items-center gap-2 py-6 text-sm text-text-muted">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Searching review sites — usually 10-20 seconds…</span>
+            </div>
+          )}
+
+          {competitor.reviewReport && !reviewScanning && (
+            <ReviewReportView report={competitor.reviewReport} />
+          )}
+
+          {!competitor.reviewReport && !reviewScanning && !reviewError && (
+            <div className="card p-8 text-center text-sm text-text-muted">
+              <Star className="mx-auto h-5 w-5" />
+              <p className="mt-3">Click "Scan reviews" to pull customer sentiment from review sites.</p>
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
@@ -766,6 +878,43 @@ function TiktokReportView({ report }: { report: TiktokReport }) {
           </ol>
         </div>
       )}
+    </div>
+  );
+}
+
+// ─── Review report ────────────────────────────────────────────────────────────
+
+function ReviewReportView({ report }: { report: ReviewReport }) {
+  const sentimentColor = {
+    positive: "text-green-400",
+    mixed: "text-amber-300",
+    negative: "text-red-400",
+  }[report.sentiment];
+
+  return (
+    <div className="space-y-4">
+      <div className="card p-5">
+        <p className="text-xs uppercase tracking-wide text-text-muted">Overall sentiment</p>
+        <p className={`mt-1 text-base font-semibold capitalize ${sentimentColor}`}>
+          {report.sentiment}
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-text-muted">{report.summary}</p>
+      </div>
+      <Section title="What customers complain about" items={report.topComplaints} accent="text-red-400" />
+      <Section title="What customers praise" items={report.topPraises} accent="text-green-400" />
+      <div className="card-elevated ring-1 ring-white/10 p-5">
+        <p className="text-xs uppercase tracking-wide text-text-muted">Positioning opportunities for you</p>
+        <ol className="mt-2 space-y-2 text-sm">
+          {report.opportunities.map((o, i) => (
+            <li key={i} className="flex gap-3">
+              <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
+                {i + 1}
+              </span>
+              <span>{o}</span>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   );
 }

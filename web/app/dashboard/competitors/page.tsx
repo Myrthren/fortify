@@ -65,6 +65,10 @@ export default async function CompetitorsPage() {
               tiktokReport: c.tiktokReport as any ?? null,
               youtubeScanAt: c.youtubeScanAt ? c.youtubeScanAt.toISOString() : null,
               tiktokScanAt: c.tiktokScanAt ? c.tiktokScanAt.toISOString() : null,
+              changeReport: c.changeReport as any ?? null,
+              changeDetectedAt: c.changeDetectedAt ? c.changeDetectedAt.toISOString() : null,
+              reviewReport: c.reviewReport as any ?? null,
+              reviewScannedAt: c.reviewScannedAt ? c.reviewScannedAt.toISOString() : null,
               createdAt: c.createdAt.toISOString(),
             }))}
             limit={limit === Infinity ? -1 : limit}

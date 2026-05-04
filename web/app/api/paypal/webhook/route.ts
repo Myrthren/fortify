@@ -24,7 +24,7 @@ export async function POST(req: Request) {
       if (sub) {
         await db.subscription.update({
           where: { paypalSubId: subId },
-          data: { status: "ACTIVE", cancelledAt: null },
+          data: { status: "ACTIVE", cancelledAt: null, paymentFailedAt: null, paymentRescueStep: 0 },
         });
         if (sub.user.discordId) await syncTierRole(sub.user.discordId, sub.tier);
         await alertOwner(
@@ -71,13 +71,22 @@ export async function POST(req: Request) {
         where: { paypalSubId: subId },
         include: { user: true },
       });
-      if (sub?.user.discordId) {
-        await sendDMConditional(
-          sub.user.discordId,
-          sub.userId,
-          "dmPaymentFailed",
-          `Your Fortify payment failed. Update your billing to keep your access: https://fortify-io.com/pricing`
-        );
+      if (sub) {
+        // Record failure time for rescue sequence cron (only if not already in rescue)
+        if (!sub.paymentFailedAt) {
+          await db.subscription.update({
+            where: { paypalSubId: subId },
+            data: { paymentFailedAt: new Date(), paymentRescueStep: 0 },
+          });
+        }
+        if (sub.user.discordId) {
+          await sendDMConditional(
+            sub.user.discordId,
+            sub.userId,
+            "dmPaymentFailed",
+            `Your Fortify payment failed. Update your billing to keep your access: https://fortify-io.com/pricing\n\nIf this keeps failing we'll follow up with next steps.`
+          );
+        }
       }
       break;
     }
