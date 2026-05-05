@@ -45,9 +45,10 @@ export async function POST(
   // Build Apify input
   let input: Record<string, unknown>;
   if (platform === "youtube") {
+    // youtube-scraper expects startUrls as plain strings, not objects
     const url = handle.startsWith("http") ? handle : `https://www.youtube.com/@${handle}`;
     input = {
-      startUrls: [{ url }],
+      startUrls: [url],
       maxResults: 15,
     };
   } else {

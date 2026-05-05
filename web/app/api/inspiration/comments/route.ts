@@ -5,13 +5,16 @@ import { TIER_LIMITS } from "@/lib/tiers";
 import { startRun, getRunStatus, getDatasetItems } from "@/lib/apify";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
 
+// Fields returned by streamers/youtube-scraper (search mode)
 type YTVideo = {
   title?: string;
   description?: string;
   url?: string;
   viewCount?: number;
+  views?: number;       // scraper may use either field name
   duration?: string;
   channelName?: string;
+  channel?: string;
 };
 
 type CommentInsight = {
@@ -47,12 +50,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Niche is required (min 2 chars)." }, { status: 400 });
   }
 
-  const searchQuery = encodeURIComponent(`${niche} tips questions`);
-  const searchUrl = `https://www.youtube.com/results?search_query=${searchQuery}`;
-
   try {
-    const runId = await startRun("youtubeSearch", {
-      startUrls: [{ url: searchUrl }],
+    // youtube-scraper: use searches + videosSearch:true for keyword search mode
+    const runId = await startRun("youtube", {
+      searches: [`${niche} tips questions`],
+      videosSearch: true,
       maxResults: 12,
     });
 
@@ -72,7 +74,8 @@ export async function POST(req: Request) {
       .slice(0, 10)
       .map((v) => {
         const desc = (v.description ?? "").slice(0, 300);
-        return `Title: "${v.title}" | Views: ${v.viewCount ?? "?"} | Description: ${desc}`;
+        const views = v.viewCount ?? v.views ?? "?";
+        return `Title: "${v.title}" | Views: ${views} | Description: ${desc}`;
       })
       .join("\n\n");
 

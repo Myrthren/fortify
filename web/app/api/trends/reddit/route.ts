@@ -4,14 +4,14 @@ import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
 import { startRun, getRunStatus, getDatasetItems } from "@/lib/apify";
 
+// Fields returned by trudax/reddit-scraper-lite
 type RedditPost = {
   title: string;
   url: string;
   score: number;
-  numComments: number;
+  numberOfComments: number; // scraper returns "numberOfComments" not "numComments"
   subreddit: string;
-  selftext?: string;
-  createdAt?: string;
+  body?: string;
 };
 
 const FRESHNESS_TO_REDDIT: Record<string, string> = {
@@ -53,12 +53,15 @@ export async function GET(req: Request) {
   }
 
   const timeFilter = FRESHNESS_TO_REDDIT[freshness] ?? "week";
-  const searchUrl = `https://www.reddit.com/search/?q=${encodeURIComponent(term.term)}&sort=top&t=${timeFilter}`;
 
   try {
     const runId = await startRun("reddit", {
-      startUrls: [{ url: searchUrl }],
+      searches: [term.term],
+      sort: "top",
+      time: timeFilter,
       maxItems: 20,
+      maxPostCount: 20,
+      maxComments: 0,
     });
 
     // Poll until done (max 60s)
@@ -78,7 +81,7 @@ export async function GET(req: Request) {
       title: p.title,
       url: p.url,
       score: p.score ?? 0,
-      numComments: p.numComments ?? 0,
+      numComments: p.numberOfComments ?? 0,
       subreddit: p.subreddit ?? "",
     }));
 

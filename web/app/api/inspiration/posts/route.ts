@@ -5,13 +5,14 @@ import { TIER_LIMITS } from "@/lib/tiers";
 import { startRun, getRunStatus, getDatasetItems } from "@/lib/apify";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
 
+// Fields returned by trudax/reddit-scraper-lite
 type RedditPost = {
   title: string;
   url: string;
   score: number;
-  numComments: number;
+  numberOfComments: number;
   subreddit: string;
-  selftext?: string;
+  body?: string;
 };
 
 type InspirationPost = {
@@ -47,12 +48,14 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Niche is required (min 2 chars)." }, { status: 400 });
   }
 
-  const searchUrl = `https://www.reddit.com/search/?q=${encodeURIComponent(niche)}&sort=top&t=month`;
-
   try {
     const runId = await startRun("reddit", {
-      startUrls: [{ url: searchUrl }],
+      searches: [niche],
+      sort: "top",
+      time: "month",
       maxItems: 25,
+      maxPostCount: 25,
+      maxComments: 0,
     });
 
     const deadline = Date.now() + 60_000;

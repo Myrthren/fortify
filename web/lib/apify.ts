@@ -7,11 +7,9 @@ function getToken(): string {
 }
 
 export const ACTOR_IDS = {
-  youtube:           "h7sDV53CddomktSi5",
-  tiktok:            "GdWCkxBtKWOsKjdch",
-  // Verify these IDs in your Apify console if runs fail
-  reddit:            "trudovs57z7kZBXFn",
-  youtubeSearch:     "h7sDV53CddomktSi5", // same actor, search URL input
+  youtube: "h7sDV53CddomktSi5",  // streamers/youtube-scraper
+  tiktok:  "GdWCkxBtKWOsKjdch",  // clockworks/tiktok-scraper
+  reddit:  "oAuCIx3ItNrs2okjQ",  // trudax/reddit-scraper-lite
 } as const;
 
 export type Platform = keyof typeof ACTOR_IDS;
