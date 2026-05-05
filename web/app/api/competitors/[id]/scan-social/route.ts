@@ -2,11 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { startRun, getRunStatus, getDatasetItems, type Platform } from "@/lib/apify";
-import Anthropic from "@anthropic-ai/sdk";
+import { claude, CLAUDE_MODELS } from "@/lib/claude";
 
 const SCAN_COST = 50; // credits per social scan
-
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
 // ── POST /api/competitors/[id]/scan-social ──────────────────────────────────
 // Body: { platform: "youtube" | "tiktok", handle: string }
@@ -184,8 +182,8 @@ ${dataStr}`
 Data:
 ${dataStr}`;
 
-  const msg = await anthropic.messages.create({
-    model: "claude-opus-4-5",
+  const msg = await claude().messages.create({
+    model: CLAUDE_MODELS.fast,
     max_tokens: 1024,
     messages: [{ role: "user", content: prompt }],
   });

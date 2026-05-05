@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       {
         error:
           limit === 0
-            ? "Trend Radar is an Elite+ feature. Upgrade to track topics."
+            ? "Trend Radar is a Pro+ feature. Upgrade to track topics."
             : `Watch term limit reached (${limit}). Delete one or upgrade for more.`,
         upgrade: true,
       },

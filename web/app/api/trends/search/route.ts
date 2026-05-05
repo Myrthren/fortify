@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 
   if (TIER_LIMITS[user.tier].watchTerms === 0) {
     return NextResponse.json(
-      { error: "Trend Radar is an Elite+ feature.", upgrade: true },
+      { error: "Trend Radar is a Pro+ feature.", upgrade: true },
       { status: 403 }
     );
   }

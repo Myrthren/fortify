@@ -81,8 +81,9 @@ Return ONLY a JSON object:
     });
 
     const raw = (msg.content[0] as any).text as string;
-    const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
-    const report: ReviewReport = JSON.parse(cleaned);
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Claude returned no JSON object");
+    const report: ReviewReport = JSON.parse(jsonMatch[0]);
 
     const updated = await db.competitor.update({
       where: { id },
