@@ -34,7 +34,39 @@ export async function startRun(platform: Platform, input: Record<string, unknown
   return json.data.id as string;
 }
 
-/** Poll the status of a run. Returns "RUNNING" | "SUCCEEDED" | "FAILED" | "ABORTED" | "TIMED-OUT" */
+/**
+ * Start an actor run and block until it finishes (or waitSecs elapses).
+ * Uses Apify's native waitForFinish query param — single HTTP call, no polling loop.
+ * Returns the runId if SUCCEEDED, throws otherwise.
+ */
+export async function startRunAndWait(
+  platform: Platform,
+  input: Record<string, unknown>,
+  waitSecs = 50
+): Promise<string> {
+  const token = getToken();
+  const actorId = ACTOR_IDS[platform];
+  const res = await fetch(
+    `${APIFY_BASE}/acts/${actorId}/runs?token=${token}&waitForFinish=${waitSecs}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    }
+  );
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Apify startRun failed (${res.status}): ${text}`);
+  }
+  const json = await res.json();
+  const run = json.data;
+  if (run.status !== "SUCCEEDED") {
+    throw new Error(`Apify run ended with status: ${run.status}`);
+  }
+  return run.id as string;
+}
+
+/** Poll the status of a run. Returns "READY" | "RUNNING" | "SUCCEEDED" | "FAILED" | "ABORTED" | "TIMED-OUT" */
 export async function getRunStatus(runId: string): Promise<string> {
   const token = getToken();
   const res = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${token}`);

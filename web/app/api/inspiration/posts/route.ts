@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
-import { startRun, getRunStatus, getDatasetItems } from "@/lib/apify";
+import { startRunAndWait, getDatasetItems } from "@/lib/apify";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
+
+// Allow up to 55 s — Apify waitForFinish=50 + buffer (Netlify Pro: 60 s max)
+export const maxDuration = 55;
 
 // Fields returned by trudax/reddit-scraper-lite
 type RedditPost = {
@@ -49,27 +52,24 @@ export async function POST(req: Request) {
   }
 
   try {
-    const runId = await startRun("reddit", {
+    // waitForFinish=50 blocks until the actor finishes (or 50s elapses) — no polling loop needed
+    const runId = await startRunAndWait("reddit", {
       searches: [niche],
       sort: "top",
       time: "month",
       maxItems: 25,
-      maxPostCount: 25,
       maxComments: 0,
-    });
-
-    const deadline = Date.now() + 60_000;
-    let status = "RUNNING";
-    while (status === "RUNNING" && Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, 3000));
-      status = await getRunStatus(runId);
-    }
-
-    if (status !== "SUCCEEDED") {
-      return new NextResponse(`Apify run ${status}`, { status: 500 });
-    }
+    }, 50);
 
     const items = await getDatasetItems<RedditPost>(runId);
+
+    if (items.length === 0) {
+      return NextResponse.json(
+        { error: "No Reddit posts found for that niche. Try a broader term." },
+        { status: 422 }
+      );
+    }
+
     const top = items
       .slice(0, 20)
       .map((p) => `- "${p.title}" (${p.score} upvotes, r/${p.subreddit})`)
