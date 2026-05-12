@@ -2,33 +2,20 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
-import { startRunAndWait, getDatasetItems } from "@/lib/apify";
+import { braveSearch } from "@/lib/brave";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
-
-// Allow up to 55 s — Apify waitForFinish=50 + buffer (Netlify Pro: 60 s max)
-export const maxDuration = 55;
-
-// Fields returned by trudax/reddit-scraper-lite
-type RedditPost = {
-  title: string;
-  url: string;
-  score: number;
-  numberOfComments: number;
-  subreddit: string;
-  body?: string;
-};
 
 type InspirationPost = {
   hook: string;
   angle: string;
   format: string;
-  source: { title: string; url: string; score: number };
+  source: { title: string; url: string };
 };
 
 /**
  * POST /api/inspiration/posts
  * Body: { niche: string }
- * Scrapes top Reddit posts in the niche, extracts hook patterns via Claude.
+ * Searches Reddit via Brave for top posts in the niche, extracts hook patterns via Claude.
  */
 export async function POST(req: Request) {
   const session = await auth();
@@ -52,16 +39,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    // waitForFinish=50 blocks until the actor finishes (or 50s elapses) — no polling loop needed
-    const runId = await startRunAndWait("reddit", {
-      searches: [niche],
-      sort: "top",
-      time: "month",
-      maxItems: 25,
-      maxComments: 0,
-    }, 50);
-
-    const items = await getDatasetItems<RedditPost>(runId);
+    // Brave Search: restrict to Reddit, past month, up to 20 results
+    const items = await braveSearch({
+      query: `site:reddit.com ${niche}`,
+      count: 20,
+      freshness: "pm",
+    });
 
     if (items.length === 0) {
       return NextResponse.json(
@@ -70,9 +53,8 @@ export async function POST(req: Request) {
       );
     }
 
-    const top = items
-      .slice(0, 20)
-      .map((p) => `- "${p.title}" (${p.score} upvotes, r/${p.subreddit})`)
+    const postsText = items
+      .map((p) => `- "${p.title}"\n  ${p.description ?? ""}`)
       .join("\n");
 
     const msg = await claude().messages.create({
@@ -84,7 +66,7 @@ export async function POST(req: Request) {
           content: `You are a content strategist. Analyse these top Reddit posts about "${niche}" and extract 6 distinct content angles that clearly resonate with this audience. For each, give a hook, the underlying angle, and the best content format (e.g. listicle, story, hot take, tutorial, case study).
 
 Posts:
-${top}
+${postsText}
 
 Return ONLY a JSON array of 6 objects: [{ "hook": string, "angle": string, "format": string }]`,
         },
@@ -96,13 +78,11 @@ Return ONLY a JSON array of 6 objects: [{ "hook": string, "angle": string, "form
     if (!jsonMatch) throw new Error("Claude returned invalid JSON");
     const patterns: Omit<InspirationPost, "source">[] = JSON.parse(jsonMatch[0]);
 
-    // Attach source post to each insight
     const results: InspirationPost[] = patterns.map((p, i) => ({
       ...p,
       source: {
         title: items[i]?.title ?? "",
         url: items[i]?.url ?? "",
-        score: items[i]?.score ?? 0,
       },
     }));
 

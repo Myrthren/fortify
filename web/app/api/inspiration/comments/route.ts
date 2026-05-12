@@ -2,23 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
-import { startRunAndWait, getDatasetItems } from "@/lib/apify";
+import { braveSearch } from "@/lib/brave";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
-
-// Allow up to 55 s — Apify waitForFinish=50 + buffer (Netlify Pro: 60 s max)
-export const maxDuration = 55;
-
-// Fields returned by streamers/youtube-scraper (search mode)
-type YTVideo = {
-  title?: string;
-  description?: string;
-  url?: string;
-  viewCount?: number;
-  views?: number;       // scraper may use either field name
-  duration?: string;
-  channelName?: string;
-  channel?: string;
-};
 
 type CommentInsight = {
   painPoint: string;
@@ -30,7 +15,7 @@ type CommentInsight = {
 /**
  * POST /api/inspiration/comments
  * Body: { niche: string }
- * Scrapes top YouTube videos in the niche, extracts audience pain points via Claude.
+ * Searches YouTube via Brave for top videos in the niche, extracts audience pain points via Claude.
  */
 export async function POST(req: Request) {
   const session = await auth();
@@ -54,15 +39,12 @@ export async function POST(req: Request) {
   }
 
   try {
-    // youtube-scraper: use searches + videosSearch:true for keyword search mode.
-    // waitForFinish=50 blocks until the actor finishes — no polling loop needed.
-    const runId = await startRunAndWait("youtube", {
-      searches: [`${niche} tips questions`],
-      videosSearch: true,
-      maxResults: 12,
-    }, 50);
-
-    const items = await getDatasetItems<YTVideo>(runId);
+    // Brave Search: restrict to YouTube, past year, up to 10 results
+    const items = await braveSearch({
+      query: `site:youtube.com ${niche} tips questions`,
+      count: 10,
+      freshness: "py",
+    });
 
     if (items.length === 0) {
       return NextResponse.json(
@@ -72,12 +54,7 @@ export async function POST(req: Request) {
     }
 
     const videoData = items
-      .slice(0, 10)
-      .map((v) => {
-        const desc = (v.description ?? "").slice(0, 300);
-        const views = v.viewCount ?? v.views ?? "?";
-        return `Title: "${v.title}" | Views: ${views} | Description: ${desc}`;
-      })
+      .map((v) => `Title: "${v.title}"\nDescription: ${v.description ?? ""}`)
       .join("\n\n");
 
     const msg = await claude().messages.create({

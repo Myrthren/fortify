@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Sparkles, ArrowUp, MessageSquare, Lock } from "lucide-react";
+import { Loader2, Sparkles, ArrowUp, Lock } from "lucide-react";
 import type { Tier } from "@prisma/client";
 import Link from "next/link";
 
@@ -9,7 +9,7 @@ type InspirationPost = {
   hook: string;
   angle: string;
   format: string;
-  source: { title: string; url: string; score: number };
+  source: { title: string; url: string; score?: number };
 };
 
 type CommentInsight = {
@@ -166,7 +166,7 @@ export function ContentInspiration({
                   className="flex items-center gap-2 text-[11px] text-text-dim hover:text-text-muted transition"
                 >
                   <ArrowUp className="h-3 w-3" />
-                  {p.source.score.toLocaleString()} · {p.source.title}
+                  {p.source.score != null ? `${p.source.score.toLocaleString()} · ` : ""}{p.source.title}
                 </a>
               )}
             </div>
