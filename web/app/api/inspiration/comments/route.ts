@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
-import { startRun, getRunStatus, getDatasetItems } from "@/lib/apify";
+import { startRunAndWait, getDatasetItems } from "@/lib/apify";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
+
+// Allow up to 55 s — Apify waitForFinish=50 + buffer (Netlify Pro: 60 s max)
+export const maxDuration = 55;
 
 // Fields returned by streamers/youtube-scraper (search mode)
 type YTVideo = {
@@ -51,25 +54,23 @@ export async function POST(req: Request) {
   }
 
   try {
-    // youtube-scraper: use searches + videosSearch:true for keyword search mode
-    const runId = await startRun("youtube", {
+    // youtube-scraper: use searches + videosSearch:true for keyword search mode.
+    // waitForFinish=50 blocks until the actor finishes — no polling loop needed.
+    const runId = await startRunAndWait("youtube", {
       searches: [`${niche} tips questions`],
       videosSearch: true,
       maxResults: 12,
-    });
-
-    const deadline = Date.now() + 90_000;
-    let status = "RUNNING";
-    while (status === "RUNNING" && Date.now() < deadline) {
-      await new Promise((r) => setTimeout(r, 4000));
-      status = await getRunStatus(runId);
-    }
-
-    if (status !== "SUCCEEDED") {
-      return new NextResponse(`Apify run ${status}`, { status: 500 });
-    }
+    }, 50);
 
     const items = await getDatasetItems<YTVideo>(runId);
+
+    if (items.length === 0) {
+      return NextResponse.json(
+        { error: "No YouTube videos found for that niche. Try a broader term." },
+        { status: 422 }
+      );
+    }
+
     const videoData = items
       .slice(0, 10)
       .map((v) => {
