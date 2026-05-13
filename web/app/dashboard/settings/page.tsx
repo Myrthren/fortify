@@ -8,9 +8,10 @@ export default async function SettingsPage() {
   if (!session?.user) redirect("/login");
   const userId = (session.user as any).id;
 
-  const [user, metaConn] = await Promise.all([
+  const [user, metaConn, googleConn] = await Promise.all([
     db.user.findUnique({ where: { id: userId } }),
     db.metaConnection.findUnique({ where: { userId }, select: { accountName: true } }),
+    db.googleConnection.findUnique({ where: { userId }, select: { gaPropertyName: true, scSiteUrl: true } }),
   ]);
   if (!user) redirect("/login");
 
@@ -18,6 +19,11 @@ export default async function SettingsPage() {
     <SettingsClient
       user={{ email: user.email, tier: user.tier, discordId: user.discordId }}
       meta={{ connected: !!metaConn, accountName: metaConn?.accountName ?? null }}
+      google={{
+        connected: !!googleConn,
+        gaPropertyName: googleConn?.gaPropertyName ?? null,
+        scSiteUrl: googleConn?.scSiteUrl ?? null,
+      }}
     />
   );
 }

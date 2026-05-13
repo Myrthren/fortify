@@ -78,6 +78,7 @@ model User {
   pods               PodMember[]
   creditTransactions CreditTransaction[]
   metaConnection     MetaConnection?
+  googleConnection   GoogleConnection?
 }
 
 model Announcement {
@@ -177,6 +178,21 @@ model MetaConnection {
   accountName String?
   connectedAt DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model GoogleConnection {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  accessToken     String   @db.Text
+  refreshToken    String   @db.Text
+  tokenExpiresAt  DateTime
+  gaPropertyId    String?  // e.g. "properties/123456789"
+  gaPropertyName  String?
+  scSiteUrl       String?  // e.g. "https://example.com/"
+  ytChannelId     String?
+  ytChannelName   String?
+  connectedAt     DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model NotificationPrefs {

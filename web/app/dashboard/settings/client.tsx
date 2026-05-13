@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { MetaConnectSection } from "@/components/meta-connect";
+import { GoogleConnectSection } from "@/components/google-connect";
 import type { Tier } from "@prisma/client";
 
 type Prefs = {
@@ -49,9 +50,11 @@ const OWNER_TOGGLES: { key: keyof Prefs; label: string; desc: string }[] = [
 export function SettingsClient({
   user,
   meta,
+  google,
 }: {
   user: { email: string | null; tier: Tier; discordId: string | null };
   meta: { connected: boolean; accountName: string | null };
+  google: { connected: boolean; gaPropertyName: string | null; scSiteUrl: string | null };
 }) {
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -92,6 +95,13 @@ export function SettingsClient({
             Manage connected accounts and notification preferences.
           </p>
         </div>
+
+        {/* Google connection */}
+        <GoogleConnectSection
+          connected={google.connected}
+          gaPropertyName={google.gaPropertyName}
+          scSiteUrl={google.scSiteUrl}
+        />
 
         {/* Meta Ads connection */}
         <MetaConnectSection connected={meta.connected} accountName={meta.accountName} />
