@@ -161,25 +161,18 @@ export function AnalyticsDashboard({ conn }: { conn: GoogleConn }) {
   // ── Not connected ──────────────────────────────────────────────────────────
   if (!localConn.connected) {
     return (
-      <div className="space-y-4">
-        {oauthError && (
-          <div className="flex items-center gap-2 rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            OAuth error: {decodeURIComponent(oauthError)}
-          </div>
-        )}
-        <div className="card p-8 text-center space-y-4">
-          <BarChart2 className="mx-auto h-8 w-8 text-text-muted" />
-          <div>
-            <p className="font-semibold">Connect your Google account</p>
-            <p className="mt-1 text-sm text-text-muted">
-              One connection unlocks Google Analytics 4, Search Console, and YouTube Analytics.
-            </p>
-          </div>
-          <a href="/api/google/connect" className="btn-primary inline-flex w-fit mx-auto">
-            Connect Google
-          </a>
+      <div className="card p-8 text-center space-y-4">
+        <BarChart2 className="mx-auto h-8 w-8 text-text-muted" />
+        <div>
+          <p className="font-semibold">Google Analytics — coming soon</p>
+          <p className="mt-1 text-sm text-text-muted">
+            GA4, Search Console, and YouTube Analytics in one dashboard.
+            Launching once our Google app passes verification.
+          </p>
         </div>
+        <span className="inline-block rounded-md border border-bg-border bg-white/[0.04] px-3 py-1.5 text-xs text-text-muted">
+          Pending Google app review
+        </span>
       </div>
     );
   }

@@ -26,16 +26,16 @@ type ActiveKey =
   | "credits";
 
 const TOOLS = [
-  { key: "voice",       href: "/dashboard/voice",       label: "Brand Voice" },
-  { key: "outreach",    href: "/dashboard/outreach",    label: "Outreach" },
-  { key: "audit",       href: "/dashboard/audit",       label: "Funnel Audit" },
-  { key: "trends",      href: "/dashboard/trends",      label: "Trend Radar" },
-  { key: "competitors", href: "/dashboard/competitors", label: "Competitors" },
-  { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing" },
-  { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration" },
-  { key: "ads",         href: "/dashboard/ads",         label: "Meta Ads" },
-  { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics" },
-  { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking" },
+  { key: "voice",       href: "/dashboard/voice",       label: "Brand Voice",  badge: null },
+  { key: "outreach",    href: "/dashboard/outreach",    label: "Outreach",     badge: null },
+  { key: "audit",       href: "/dashboard/audit",       label: "Funnel Audit", badge: null },
+  { key: "trends",      href: "/dashboard/trends",      label: "Trend Radar",  badge: null },
+  { key: "competitors", href: "/dashboard/competitors", label: "Competitors",  badge: null },
+  { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing",badge: null },
+  { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration",  badge: null },
+  { key: "ads",         href: "/dashboard/ads",         label: "Meta Ads",     badge: null },
+  { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics",    badge: "Soon" },
+  { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking",  badge: null },
 ] as const;
 
 const COMMUNITY = [
@@ -153,7 +153,14 @@ export function DashboardNav({
                 <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl">
                   {TOOLS.map((item) => (
                     <DropdownLink key={item.key} href={item.href} active={active === item.key}>
-                      {item.label}
+                      <span className="flex w-full items-center justify-between gap-2">
+                        {item.label}
+                        {item.badge && (
+                          <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-text-muted">
+                            {item.badge}
+                          </span>
+                        )}
+                      </span>
                     </DropdownLink>
                   ))}
                 </div>

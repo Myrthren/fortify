@@ -74,7 +74,7 @@ export default async function DashboardPage() {
                 <ToolLink href="/dashboard/leads" name="Lead Sourcing" desc="Find + score prospects against your ICP" />
                 <ToolLink href="/dashboard/inspiration" name="Content Inspiration" desc="Mine Reddit + YouTube for content angles" />
                 <ToolLink href="/dashboard/ads" name="Meta Ads" desc="Real campaign performance + competitor ad intel" />
-                <ToolLink href="/dashboard/analytics" name="Analytics" desc="GA4, Search Console, and YouTube in one view" />
+                <ToolLink href="/dashboard/analytics" name="Analytics" desc="GA4, Search Console, and YouTube — coming soon" />
                 <ToolLink href="/dashboard/members" name="Member Directory" desc="Find founders, operators, creators" />
                 <ToolLink href="/dashboard/matchmaking" name="AI Matchmaking" desc="Top members worth talking to" />
                 <ToolLink href="/dashboard/profile" name="Your profile" desc="Set niche, skills, what you offer" />

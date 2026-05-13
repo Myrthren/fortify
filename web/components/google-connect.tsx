@@ -45,9 +45,7 @@ export function GoogleConnectSection({
               </div>
             ) : (
               <p className="mt-0.5 text-xs text-text-muted">
-                Connect to unlock{" "}
-                <a href="/dashboard/analytics" className="underline">Analytics</a>,
-                Search Console, and YouTube data.
+                GA4, Search Console, and YouTube — pending Google app verification.
               </p>
             )}
           </div>
@@ -67,9 +65,9 @@ export function GoogleConnectSection({
               </button>
             </div>
           ) : (
-            <a href="/api/google/connect" className="btn-primary text-sm">
-              Connect
-            </a>
+            <span className="rounded-md bg-white/[0.06] px-2 py-1 text-xs text-text-muted">
+              Coming soon
+            </span>
           )}
         </div>
       </div>
