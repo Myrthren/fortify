@@ -177,5 +177,5 @@ Return ONLY a JSON array of 6 objects: [{ "hook": string, "angle": string, "ctaP
     data: { userId, type: "inspiration-ads", input: niche, output: JSON.stringify(insights) },
   });
 
-  return NextResponse.json({ status: "succeeded", niche, insights });
+  return NextResponse.json({ status: "succeeded", niche, frames: insights });
 }
