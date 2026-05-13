@@ -23,8 +23,8 @@ export async function POST(
   const platform = body.platform as Platform | undefined;
   const handle = (body.handle ?? "").trim().replace(/^@/, "");
 
-  if (!platform || !["youtube", "tiktok"].includes(platform)) {
-    return NextResponse.json({ error: "platform must be youtube or tiktok" }, { status: 400 });
+  if (!platform || !["youtube", "tiktok", "instagram", "twitter"].includes(platform)) {
+    return NextResponse.json({ error: "platform must be youtube, tiktok, instagram, or twitter" }, { status: 400 });
   }
   if (!handle) {
     return NextResponse.json({ error: "handle required" }, { status: 400 });
@@ -50,6 +50,20 @@ export async function POST(
     input = {
       startUrls: [url],
       maxResults: 15,
+    };
+  } else if (platform === "instagram") {
+    const url = handle.startsWith("http") ? handle : `https://www.instagram.com/${handle}/`;
+    input = {
+      directUrls: [url],
+      resultsType: "posts",
+      resultsLimit: 20,
+      addParentData: false,
+    };
+  } else if (platform === "twitter") {
+    input = {
+      handles: [handle],
+      tweetsDesired: 30,
+      includeUserInfo: true,
     };
   } else {
     input = {
@@ -84,7 +98,10 @@ export async function POST(
     db.competitor.update({
       where: { id },
       data: {
-        [platform === "youtube" ? "youtubeHandle" : "tiktokHandle"]: handle,
+        ...(platform === "youtube"   && { youtubeHandle:   handle }),
+        ...(platform === "tiktok"    && { tiktokHandle:    handle }),
+        ...(platform === "instagram" && { instagramHandle: handle }),
+        ...(platform === "twitter"   && { twitterHandle:   handle }),
       },
     }),
   ]);
@@ -151,37 +168,21 @@ export async function GET(
   const truncated = items.slice(0, 15);
   const dataStr = JSON.stringify(truncated, null, 2).slice(0, 12000);
 
-  const prompt = platform === "youtube"
-    ? `You are a social media analyst. Analyse this YouTube channel data for competitor "${competitor.name}" and return ONLY valid JSON (no markdown, no prose) in this exact shape:
-{
-  "channelName": "string",
-  "subscriberCount": "string",
-  "postingFrequency": "string",
-  "topTopics": ["string", "string", "string"],
-  "contentStyle": "string",
-  "topVideos": [{ "title": "string", "views": "string", "url": "string" }],
-  "viralFormats": ["string"],
-  "opportunities": ["string", "string", "string"],
-  "summary": "string"
-}
-
-Data:
-${dataStr}`
-    : `You are a social media analyst. Analyse this TikTok profile data for competitor "${competitor.name}" and return ONLY valid JSON (no markdown, no prose) in this exact shape:
-{
-  "username": "string",
-  "followerCount": "string",
-  "postingFrequency": "string",
-  "topTopics": ["string", "string", "string"],
-  "contentStyle": "string",
-  "topPosts": [{ "description": "string", "likes": "string", "url": "string" }],
-  "viralFormats": ["string"],
-  "opportunities": ["string", "string", "string"],
-  "summary": "string"
-}
-
-Data:
-${dataStr}`;
+  const PROMPTS: Record<string, string> = {
+    youtube: `You are a social media analyst. Analyse this YouTube channel data for competitor "${competitor.name}" and return ONLY valid JSON (no markdown, no prose) in this exact shape:
+{"channelName":"string","subscriberCount":"string","postingFrequency":"string","topTopics":["string"],"contentStyle":"string","topVideos":[{"title":"string","views":"string","url":"string"}],"viralFormats":["string"],"opportunities":["string"],"summary":"string"}
+Data:\n${dataStr}`,
+    tiktok: `You are a social media analyst. Analyse this TikTok profile data for competitor "${competitor.name}" and return ONLY valid JSON (no markdown, no prose) in this exact shape:
+{"username":"string","followerCount":"string","postingFrequency":"string","topTopics":["string"],"contentStyle":"string","topPosts":[{"description":"string","likes":"string","url":"string"}],"viralFormats":["string"],"opportunities":["string"],"summary":"string"}
+Data:\n${dataStr}`,
+    instagram: `You are a social media analyst. Analyse this Instagram profile data for competitor "${competitor.name}" and return ONLY valid JSON (no markdown, no prose) in this exact shape:
+{"username":"string","followerCount":"string","postingFrequency":"string","topTopics":["string"],"contentStyle":"string","topPosts":[{"caption":"string","likes":"string","type":"string","url":"string"}],"viralFormats":["string"],"opportunities":["string"],"summary":"string"}
+Data:\n${dataStr}`,
+    twitter: `You are a social media analyst. Analyse this Twitter/X profile data for competitor "${competitor.name}" and return ONLY valid JSON (no markdown, no prose) in this exact shape:
+{"username":"string","followerCount":"string","postingFrequency":"string","topTopics":["string"],"contentStyle":"string","topTweets":[{"text":"string","likes":"string","retweets":"string"}],"viralFormats":["string"],"opportunities":["string"],"summary":"string"}
+Data:\n${dataStr}`,
+  };
+  const prompt = PROMPTS[platform] ?? PROMPTS.tiktok;
 
   const msg = await claude().messages.create({
     model: CLAUDE_MODELS.fast,
@@ -205,17 +206,12 @@ ${dataStr}`;
 
   // Persist
   const now = new Date();
-  if (platform === "youtube") {
-    await db.competitor.update({
-      where: { id },
-      data: { youtubeReport: report as any, youtubeScanAt: now },
-    });
-  } else {
-    await db.competitor.update({
-      where: { id },
-      data: { tiktokReport: report as any, tiktokScanAt: now },
-    });
-  }
+  const persistData =
+    platform === "youtube"   ? { youtubeReport:   report as any, youtubeScanAt:   now } :
+    platform === "tiktok"    ? { tiktokReport:    report as any, tiktokScanAt:    now } :
+    platform === "instagram" ? { instagramReport: report as any, instagramScanAt: now } :
+                               { twitterReport:   report as any, twitterScanAt:   now };
+  await db.competitor.update({ where: { id }, data: persistData });
 
   return NextResponse.json({ status: "succeeded", report });
 }

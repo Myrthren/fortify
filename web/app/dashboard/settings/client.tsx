@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { MetaConnectSection } from "@/components/meta-connect";
 import { GoogleConnectSection } from "@/components/google-connect";
+import { ShopifyConnectSection } from "@/components/shopify-connect";
+import { StripeConnectSection } from "@/components/stripe-connect";
 import type { Tier } from "@prisma/client";
 
 type Prefs = {
@@ -51,10 +53,14 @@ export function SettingsClient({
   user,
   meta,
   google,
+  shopify,
+  stripe,
 }: {
   user: { email: string | null; tier: Tier; discordId: string | null };
   meta: { connected: boolean; accountName: string | null };
   google: { connected: boolean; gaPropertyName: string | null; scSiteUrl: string | null };
+  shopify: { connected: boolean; shop: string | null };
+  stripe: { connected: boolean };
 }) {
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -102,6 +108,12 @@ export function SettingsClient({
           gaPropertyName={google.gaPropertyName}
           scSiteUrl={google.scSiteUrl}
         />
+
+        {/* Shopify connection */}
+        <ShopifyConnectSection connected={shopify.connected} shop={shopify.shop} />
+
+        {/* Stripe connection */}
+        <StripeConnectSection connected={stripe.connected} />
 
         {/* Meta Ads connection */}
         <MetaConnectSection connected={meta.connected} accountName={meta.accountName} />

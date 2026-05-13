@@ -4,6 +4,7 @@ import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Loader2, Plus, Trash2, RefreshCw, ExternalLink, Target, Youtube, Play, Star, TrendingUp,
+  Instagram, Twitter, Search,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -41,6 +42,41 @@ type TiktokReport = {
   summary?: string;
 };
 
+type InstagramReport = {
+  username?: string;
+  followerCount?: string;
+  postingFrequency?: string;
+  topTopics?: string[];
+  contentStyle?: string;
+  topPosts?: { caption: string; likes: string; type: string; url: string }[];
+  viralFormats?: string[];
+  opportunities?: string[];
+  summary?: string;
+};
+
+type TwitterReport = {
+  username?: string;
+  followerCount?: string;
+  postingFrequency?: string;
+  topTopics?: string[];
+  contentStyle?: string;
+  topTweets?: { text: string; likes: string; retweets: string }[];
+  viralFormats?: string[];
+  opportunities?: string[];
+  summary?: string;
+};
+
+type SerpReport = {
+  organicPositions?: { position: number; title: string; url: string; description: string }[];
+  paidAds?: { title: string; url: string; description: string }[];
+  relatedQueries?: string[];
+  isRanking?: boolean;
+  highestPosition?: number | null;
+  totalAds?: number;
+  opportunities?: string[];
+  summary?: string;
+};
+
 type Competitor = {
   id: string;
   name: string;
@@ -49,20 +85,28 @@ type Competitor = {
   lastScanned: string | null;
   youtubeHandle: string | null;
   tiktokHandle: string | null;
+  instagramHandle: string | null;
+  twitterHandle: string | null;
   youtubeReport: YoutubeReport | null;
   tiktokReport: TiktokReport | null;
+  instagramReport: InstagramReport | null;
+  twitterReport: TwitterReport | null;
   youtubeScanAt: string | null;
   tiktokScanAt: string | null;
+  instagramScanAt: string | null;
+  twitterScanAt: string | null;
   changeReport: ChangeReport | null;
   changeDetectedAt: string | null;
   reviewReport: ReviewReport | null;
   reviewScannedAt: string | null;
   metaAdReport: MetaAdReport | null;
   metaAdScanAt: string | null;
+  serpReport: SerpReport | null;
+  serpScanAt: string | null;
   createdAt: string;
 };
 
-type Tab = "website" | "youtube" | "tiktok" | "reviews" | "metaads";
+type Tab = "website" | "youtube" | "tiktok" | "instagram" | "twitter" | "serp" | "reviews" | "metaads";
 
 type ChangeReport = {
   changes: string[];
@@ -136,16 +180,24 @@ export function CompetitorScanner({
         lastScanned: null,
         youtubeHandle: null,
         tiktokHandle: null,
+        instagramHandle: null,
+        twitterHandle: null,
         youtubeReport: null,
         tiktokReport: null,
+        instagramReport: null,
+        twitterReport: null,
         youtubeScanAt: null,
         tiktokScanAt: null,
+        instagramScanAt: null,
+        twitterScanAt: null,
         changeReport: null,
         changeDetectedAt: null,
         reviewReport: null,
         reviewScannedAt: null,
         metaAdReport: null,
         metaAdScanAt: null,
+        serpReport: null,
+        serpScanAt: null,
         createdAt: new Date(data.competitor.createdAt).toISOString(),
       };
       setList((prev) => [c, ...prev]);
@@ -352,9 +404,59 @@ function CompetitorDetail({
   // Social scan
   const [ytHandle, setYtHandle] = useState(competitor.youtubeHandle ?? "");
   const [ttHandle, setTtHandle] = useState(competitor.tiktokHandle ?? "");
-  const [scanningPlatform, setScanningPlatform] = useState<"youtube" | "tiktok" | null>(null);
+  const [igHandle, setIgHandle] = useState(competitor.instagramHandle ?? "");
+  const [twHandle, setTwHandle] = useState(competitor.twitterHandle ?? "");
+  const [scanningPlatform, setScanningPlatform] = useState<"youtube" | "tiktok" | "instagram" | "twitter" | null>(null);
   const [socialError, setSocialError] = useState<string | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // SERP scan
+  const [serpScanning, setSerpScanning] = useState(false);
+  const [serpError, setSerpError] = useState<string | null>(null);
+  const serpPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function doSerpScan() {
+    setSerpScanning(true);
+    setSerpError(null);
+    try {
+      const res = await fetch(`/api/competitors/${competitor.id}/scan-serp`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setSerpError(data.error ?? "Failed to start SERP scan");
+        setSerpScanning(false);
+        return;
+      }
+      const { runId } = data as { runId: string };
+
+      if (serpPollRef.current) clearInterval(serpPollRef.current);
+      serpPollRef.current = setInterval(async () => {
+        try {
+          const pollRes = await fetch(`/api/competitors/${competitor.id}/scan-serp?runId=${runId}`);
+          const pollData = await pollRes.json();
+
+          if (pollData.status === "running") return;
+
+          clearInterval(serpPollRef.current!);
+          serpPollRef.current = null;
+          setSerpScanning(false);
+
+          if (pollData.status === "succeeded" && pollData.report) {
+            onPatch({ serpReport: pollData.report, serpScanAt: new Date().toISOString() });
+          } else {
+            setSerpError(pollData.error ?? "SERP scan failed. Try again.");
+          }
+        } catch {
+          clearInterval(serpPollRef.current!);
+          serpPollRef.current = null;
+          setSerpScanning(false);
+          setSerpError("Lost connection while polling. Refresh and try again.");
+        }
+      }, 5000);
+    } catch (e: any) {
+      setSerpScanning(false);
+      setSerpError(e.message ?? "Failed");
+    }
+  }
 
   async function doWebsiteScan() {
     setWebsiteScanning(true);
@@ -379,8 +481,9 @@ function CompetitorDetail({
     }
   }
 
-  async function doSocialScan(platform: "youtube" | "tiktok") {
-    const handle = (platform === "youtube" ? ytHandle : ttHandle).trim().replace(/^@/, "");
+  async function doSocialScan(platform: "youtube" | "tiktok" | "instagram" | "twitter") {
+    const handleMap = { youtube: ytHandle, tiktok: ttHandle, instagram: igHandle, twitter: twHandle };
+    const handle = handleMap[platform].trim().replace(/^@/, "");
     if (!handle) { setSocialError("Enter a handle first"); return; }
 
     setSocialError(null);
@@ -422,8 +525,12 @@ function CompetitorDetail({
             const now = new Date().toISOString();
             if (platform === "youtube") {
               onPatch({ youtubeReport: pollData.report, youtubeScanAt: now, youtubeHandle: handle });
-            } else {
+            } else if (platform === "tiktok") {
               onPatch({ tiktokReport: pollData.report, tiktokScanAt: now, tiktokHandle: handle });
+            } else if (platform === "instagram") {
+              onPatch({ instagramReport: pollData.report, instagramScanAt: now, instagramHandle: handle });
+            } else {
+              onPatch({ twitterReport: pollData.report, twitterScanAt: now, twitterHandle: handle });
             }
           } else {
             setSocialError(pollData.error ?? "Scan failed. Check the handle and try again.");
@@ -442,11 +549,14 @@ function CompetitorDetail({
   }
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: "website",  label: "Website Intel", icon: <Target className="h-3.5 w-3.5" /> },
-    { key: "youtube",  label: "YouTube",       icon: <Youtube className="h-3.5 w-3.5" /> },
-    { key: "tiktok",   label: "TikTok",        icon: <Play className="h-3.5 w-3.5" /> },
-    { key: "reviews",  label: "Reviews",       icon: <Star className="h-3.5 w-3.5" /> },
-    { key: "metaads",  label: "Meta Ads",      icon: <TrendingUp className="h-3.5 w-3.5" /> },
+    { key: "website",   label: "Website",   icon: <Target className="h-3.5 w-3.5" /> },
+    { key: "youtube",   label: "YouTube",   icon: <Youtube className="h-3.5 w-3.5" /> },
+    { key: "tiktok",    label: "TikTok",    icon: <Play className="h-3.5 w-3.5" /> },
+    { key: "instagram", label: "Instagram", icon: <Instagram className="h-3.5 w-3.5" /> },
+    { key: "twitter",   label: "X / Twitter", icon: <Twitter className="h-3.5 w-3.5" /> },
+    { key: "serp",      label: "SERP",      icon: <Search className="h-3.5 w-3.5" /> },
+    { key: "reviews",   label: "Reviews",   icon: <Star className="h-3.5 w-3.5" /> },
+    { key: "metaads",   label: "Meta Ads",  icon: <TrendingUp className="h-3.5 w-3.5" /> },
   ];
 
   return (
@@ -585,6 +695,94 @@ function CompetitorDetail({
           placeholder="e.g. nike  (no @)"
           creditCost={50}
         />
+      )}
+
+      {/* ── Instagram tab ── */}
+      {tab === "instagram" && (
+        <SocialTab
+          platform="instagram"
+          handle={igHandle}
+          setHandle={setIgHandle}
+          report={competitor.instagramReport}
+          scanAt={competitor.instagramScanAt}
+          scanning={scanningPlatform === "instagram"}
+          credits={credits}
+          error={socialError}
+          onScan={() => doSocialScan("instagram")}
+          renderReport={(r) => <InstagramReportView report={r as InstagramReport} />}
+          placeholder="e.g. nike  (no @)"
+          creditCost={50}
+        />
+      )}
+
+      {/* ── Twitter tab ── */}
+      {tab === "twitter" && (
+        <SocialTab
+          platform="twitter"
+          handle={twHandle}
+          setHandle={setTwHandle}
+          report={competitor.twitterReport}
+          scanAt={competitor.twitterScanAt}
+          scanning={scanningPlatform === "twitter"}
+          credits={credits}
+          error={socialError}
+          onScan={() => doSocialScan("twitter")}
+          renderReport={(r) => <TwitterReportView report={r as TwitterReport} />}
+          placeholder="e.g. elonmusk  (no @)"
+          creditCost={50}
+        />
+      )}
+
+      {/* ── SERP tab ── */}
+      {tab === "serp" && (
+        <div className="space-y-4">
+          <div className="card flex flex-wrap items-center justify-between gap-3 p-4">
+            <div>
+              {competitor.serpScanAt && (
+                <p className="text-xs text-text-muted">
+                  Last scanned {new Date(competitor.serpScanAt).toLocaleString()}
+                </p>
+              )}
+              <p className="text-xs text-text-muted mt-0.5">
+                Google rankings, paid ads, and SEO opportunities
+              </p>
+            </div>
+            <button
+              onClick={doSerpScan}
+              disabled={serpScanning}
+              className="btn-secondary text-xs"
+            >
+              {serpScanning
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <RefreshCw className="h-3.5 w-3.5" />}
+              {competitor.serpReport ? "Re-scan" : "Scan SERP"}
+            </button>
+          </div>
+
+          {serpError && (
+            <div className="rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
+              {serpError}
+            </div>
+          )}
+
+          {serpScanning && (
+            <div className="flex flex-col items-center gap-2 py-6 text-sm text-text-muted">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Scanning Google — usually 20-40 seconds…</span>
+            </div>
+          )}
+
+          {competitor.serpReport && !serpScanning && (
+            <SerpReportView report={competitor.serpReport} />
+          )}
+
+          {!competitor.serpReport && !serpScanning && !serpError && (
+            <div className="card p-8 text-center text-sm text-text-muted">
+              <Search className="mx-auto h-5 w-5" />
+              <p className="mt-3">Click "Scan SERP" to see how this competitor ranks on Google and what keywords they target.</p>
+            </div>
+          )}
+        </div>
       )}
 
       {/* ── Reviews tab ── */}
@@ -727,7 +925,7 @@ function SocialTab({
     <div className="space-y-4">
       <div className="card p-4">
         <p className="mb-2 text-xs font-medium uppercase tracking-wide text-text-muted">
-          {platform === "youtube" ? "YouTube" : "TikTok"} handle
+          {{ youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", twitter: "X / Twitter" }[platform] ?? platform} handle
         </p>
         <div className="flex gap-2">
           <input
@@ -770,7 +968,7 @@ function SocialTab({
         <div className="flex flex-col items-center gap-2 py-8 text-sm text-text-muted">
           <Loader2 className="h-5 w-5 animate-spin" />
           <span>
-            Scraping {platform === "youtube" ? "YouTube" : "TikTok"} — usually 30-90 seconds…
+            Scraping {{ youtube: "YouTube", tiktok: "TikTok", instagram: "Instagram", twitter: "X / Twitter" }[platform] ?? platform} — usually 30-90 seconds…
           </span>
         </div>
       )}
@@ -790,9 +988,7 @@ function SocialTab({
         <div className="card p-8 text-center text-sm text-text-muted">
           <Play className="mx-auto h-5 w-5" />
           <p className="mt-3">
-            Enter the{" "}
-            {platform === "youtube" ? "YouTube channel handle" : "TikTok username"} and
-            click Scan to generate an analysis.
+            Enter the handle and click Scan to generate an AI analysis.
           </p>
         </div>
       )}
@@ -1120,6 +1316,262 @@ function MetaAdReportView({ report }: { report: MetaAdReport }) {
               </div>
             ))}
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Instagram report ─────────────────────────────────────────────────────────
+
+function InstagramReportView({ report }: { report: InstagramReport }) {
+  return (
+    <div className="space-y-4">
+      {(report.username || report.followerCount || report.postingFrequency) && (
+        <div className="card flex flex-wrap items-center gap-6 p-5">
+          {report.username && (
+            <div>
+              <p className="text-xs text-text-muted">Username</p>
+              <p className="font-semibold">@{report.username}</p>
+            </div>
+          )}
+          {report.followerCount && (
+            <div>
+              <p className="text-xs text-text-muted">Followers</p>
+              <p className="font-semibold">{report.followerCount}</p>
+            </div>
+          )}
+          {report.postingFrequency && (
+            <div>
+              <p className="text-xs text-text-muted">Posting frequency</p>
+              <p className="font-semibold">{report.postingFrequency}</p>
+            </div>
+          )}
+        </div>
+      )}
+      {report.summary && (
+        <div className="card p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Summary</p>
+          <p className="mt-1 text-sm leading-relaxed">{report.summary}</p>
+        </div>
+      )}
+      {report.contentStyle && (
+        <div className="card p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Content style</p>
+          <p className="mt-1 text-sm leading-relaxed">{report.contentStyle}</p>
+        </div>
+      )}
+      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-pink-300" />
+      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-purple-300" />
+      {(report.topPosts ?? []).length > 0 && (
+        <div className="card p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Top Posts</p>
+          <div className="mt-2 space-y-2">
+            {report.topPosts!.map((p, i) => (
+              <div key={i} className="flex items-start gap-3 text-sm">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="line-clamp-2">{p.caption}</p>
+                  <p className="text-xs text-text-muted">{p.likes} likes · {p.type}</p>
+                </div>
+                {p.url && (
+                  <a href={p.url} target="_blank" rel="noreferrer" className="shrink-0 text-text-muted hover:text-text">
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {(report.opportunities ?? []).length > 0 && (
+        <div className="card-elevated ring-1 ring-white/10 p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Opportunities for you</p>
+          <ol className="mt-2 space-y-2 text-sm">
+            {report.opportunities!.map((o, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
+                  {i + 1}
+                </span>
+                <span>{o}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Twitter report ───────────────────────────────────────────────────────────
+
+function TwitterReportView({ report }: { report: TwitterReport }) {
+  return (
+    <div className="space-y-4">
+      {(report.username || report.followerCount || report.postingFrequency) && (
+        <div className="card flex flex-wrap items-center gap-6 p-5">
+          {report.username && (
+            <div>
+              <p className="text-xs text-text-muted">Username</p>
+              <p className="font-semibold">@{report.username}</p>
+            </div>
+          )}
+          {report.followerCount && (
+            <div>
+              <p className="text-xs text-text-muted">Followers</p>
+              <p className="font-semibold">{report.followerCount}</p>
+            </div>
+          )}
+          {report.postingFrequency && (
+            <div>
+              <p className="text-xs text-text-muted">Posting frequency</p>
+              <p className="font-semibold">{report.postingFrequency}</p>
+            </div>
+          )}
+        </div>
+      )}
+      {report.summary && (
+        <div className="card p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Summary</p>
+          <p className="mt-1 text-sm leading-relaxed">{report.summary}</p>
+        </div>
+      )}
+      {report.contentStyle && (
+        <div className="card p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Content style</p>
+          <p className="mt-1 text-sm leading-relaxed">{report.contentStyle}</p>
+        </div>
+      )}
+      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-sky-300" />
+      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-purple-300" />
+      {(report.topTweets ?? []).length > 0 && (
+        <div className="card p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Top Tweets</p>
+          <div className="mt-2 space-y-3">
+            {report.topTweets!.map((t, i) => (
+              <div key={i} className="rounded-lg border border-bg-border bg-bg-elevated p-3 text-sm">
+                <p className="leading-relaxed">{t.text}</p>
+                <p className="mt-1.5 text-xs text-text-muted">{t.likes} likes · {t.retweets} retweets</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {(report.opportunities ?? []).length > 0 && (
+        <div className="card-elevated ring-1 ring-white/10 p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Opportunities for you</p>
+          <ol className="mt-2 space-y-2 text-sm">
+            {report.opportunities!.map((o, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
+                  {i + 1}
+                </span>
+                <span>{o}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── SERP report ──────────────────────────────────────────────────────────────
+
+function SerpReportView({ report }: { report: SerpReport }) {
+  return (
+    <div className="space-y-4">
+      {/* Overview */}
+      <div className="card flex flex-wrap items-center gap-6 p-5">
+        <div>
+          <p className="text-xs text-text-muted">Ranking on Google?</p>
+          <p className={`font-semibold ${report.isRanking ? "text-green-400" : "text-red-400"}`}>
+            {report.isRanking ? "Yes" : "No"}
+          </p>
+        </div>
+        {report.highestPosition != null && (
+          <div>
+            <p className="text-xs text-text-muted">Highest position</p>
+            <p className="font-semibold">#{report.highestPosition}</p>
+          </div>
+        )}
+        {report.totalAds != null && (
+          <div>
+            <p className="text-xs text-text-muted">Paid ads running</p>
+            <p className="font-semibold">{report.totalAds}</p>
+          </div>
+        )}
+      </div>
+
+      {report.summary && (
+        <div className="card p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Summary</p>
+          <p className="mt-1 text-sm leading-relaxed">{report.summary}</p>
+        </div>
+      )}
+
+      {(report.organicPositions ?? []).length > 0 && (
+        <div className="card overflow-hidden">
+          <div className="px-5 py-3 border-b border-bg-border">
+            <p className="text-xs font-medium uppercase tracking-wide text-text-muted">Organic results</p>
+          </div>
+          <div className="divide-y divide-bg-border">
+            {report.organicPositions!.map((r, i) => (
+              <div key={i} className="px-5 py-3">
+                <div className="flex items-start gap-3">
+                  <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded bg-white/10 text-xs font-medium">
+                    {r.position}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{r.title}</p>
+                    <p className="text-xs text-text-muted truncate">{r.url}</p>
+                    {r.description && (
+                      <p className="mt-1 text-xs text-text-muted line-clamp-2">{r.description}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(report.paidAds ?? []).length > 0 && (
+        <div className="card overflow-hidden">
+          <div className="px-5 py-3 border-b border-bg-border">
+            <p className="text-xs font-medium uppercase tracking-wide text-amber-300">Paid ads</p>
+          </div>
+          <div className="divide-y divide-bg-border">
+            {report.paidAds!.map((ad, i) => (
+              <div key={i} className="px-5 py-3">
+                <p className="text-sm font-medium">{ad.title}</p>
+                <p className="text-xs text-text-muted truncate">{ad.url}</p>
+                {ad.description && (
+                  <p className="mt-1 text-xs text-text-muted">{ad.description}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Section title="Related queries" items={report.relatedQueries ?? []} accent="text-blue-300" />
+
+      {(report.opportunities ?? []).length > 0 && (
+        <div className="card-elevated ring-1 ring-white/10 p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">SEO opportunities for you</p>
+          <ol className="mt-2 space-y-2 text-sm">
+            {report.opportunities!.map((o, i) => (
+              <li key={i} className="flex gap-3">
+                <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
+                  {i + 1}
+                </span>
+                <span>{o}</span>
+              </li>
+            ))}
+          </ol>
         </div>
       )}
     </div>

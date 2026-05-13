@@ -17,6 +17,8 @@ type ActiveKey =
   | "leads"
   | "ads"
   | "analytics"
+  | "shopify"
+  | "revenue"
   | "members"
   | "deals"
   | "pods"
@@ -34,6 +36,8 @@ const TOOLS = [
   { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing",badge: null },
   { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration",  badge: null },
   { key: "ads",         href: "/dashboard/ads",         label: "Meta Ads",     badge: null },
+  { key: "shopify",     href: "/dashboard/shopify",     label: "Shopify",      badge: null },
+  { key: "revenue",     href: "/dashboard/revenue",     label: "Revenue",      badge: null },
   { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics",    badge: "Soon" },
   { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking",  badge: null },
 ] as const;

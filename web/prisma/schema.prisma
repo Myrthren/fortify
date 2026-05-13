@@ -79,6 +79,8 @@ model User {
   creditTransactions CreditTransaction[]
   metaConnection     MetaConnection?
   googleConnection   GoogleConnection?
+  shopifyConnection  ShopifyConnection?
+  stripeConnection   StripeConnection?
 }
 
 model Announcement {
@@ -162,9 +164,17 @@ model Competitor {
   changeDetectedAt DateTime?
   reviewReport     Json?
   reviewScannedAt  DateTime?
-  metaAdReport     Json?
-  metaAdScanAt     DateTime?
-  createdAt        DateTime  @default(now())
+  metaAdReport      Json?
+  metaAdScanAt      DateTime?
+  instagramHandle   String?
+  instagramReport   Json?
+  instagramScanAt   DateTime?
+  twitterHandle     String?
+  twitterReport     Json?
+  twitterScanAt     DateTime?
+  serpReport        Json?
+  serpScanAt        DateTime?
+  createdAt         DateTime  @default(now())
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
@@ -176,6 +186,23 @@ model MetaConnection {
   accessToken String   @db.Text
   accountId   String?  // primary ad account ID e.g. act_123456
   accountName String?
+  connectedAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ShopifyConnection {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  shop        String   // e.g. "mystore.myshopify.com"
+  accessToken String   @db.Text
+  connectedAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model StripeConnection {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  apiKey      String   @db.Text
   connectedAt DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -8,10 +8,12 @@ export default async function SettingsPage() {
   if (!session?.user) redirect("/login");
   const userId = (session.user as any).id;
 
-  const [user, metaConn, googleConn] = await Promise.all([
+  const [user, metaConn, googleConn, shopifyConn, stripeConn] = await Promise.all([
     db.user.findUnique({ where: { id: userId } }),
     db.metaConnection.findUnique({ where: { userId }, select: { accountName: true } }),
     db.googleConnection.findUnique({ where: { userId }, select: { gaPropertyName: true, scSiteUrl: true } }),
+    db.shopifyConnection.findUnique({ where: { userId }, select: { shop: true } }),
+    db.stripeConnection.findUnique({ where: { userId }, select: { id: true } }),
   ]);
   if (!user) redirect("/login");
 
@@ -24,6 +26,8 @@ export default async function SettingsPage() {
         gaPropertyName: googleConn?.gaPropertyName ?? null,
         scSiteUrl: googleConn?.scSiteUrl ?? null,
       }}
+      shopify={{ connected: !!shopifyConn, shop: shopifyConn?.shop ?? null }}
+      stripe={{ connected: !!stripeConn }}
     />
   );
 }
