@@ -15,6 +15,7 @@ type ActiveKey =
   | "matchmaking"
   | "inspiration"
   | "leads"
+  | "ads"
   | "members"
   | "deals"
   | "pods"
@@ -31,6 +32,7 @@ const TOOLS = [
   { key: "competitors", href: "/dashboard/competitors", label: "Competitors" },
   { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing" },
   { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration" },
+  { key: "ads",         href: "/dashboard/ads",         label: "Meta Ads" },
   { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking" },
 ] as const;
 

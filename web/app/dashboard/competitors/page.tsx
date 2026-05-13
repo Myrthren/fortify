@@ -69,6 +69,8 @@ export default async function CompetitorsPage() {
               changeDetectedAt: c.changeDetectedAt ? c.changeDetectedAt.toISOString() : null,
               reviewReport: c.reviewReport as any ?? null,
               reviewScannedAt: c.reviewScannedAt ? c.reviewScannedAt.toISOString() : null,
+              metaAdReport: c.metaAdReport as any ?? null,
+              metaAdScanAt: c.metaAdScanAt ? c.metaAdScanAt.toISOString() : null,
               createdAt: c.createdAt.toISOString(),
             }))}
             limit={limit === Infinity ? -1 : limit}

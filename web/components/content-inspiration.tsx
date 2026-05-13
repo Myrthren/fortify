@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Loader2, Sparkles, ArrowUp, Lock } from "lucide-react";
+import { useState, useRef } from "react";
+import { Loader2, Sparkles, ArrowUp, Lock, TrendingUp } from "lucide-react";
 import type { Tier } from "@prisma/client";
 import Link from "next/link";
 
@@ -19,7 +19,15 @@ type CommentInsight = {
   evidence: string;
 };
 
-type Tab = "posts" | "comments";
+type AdFrame = {
+  hook: string;
+  angle: string;
+  ctaPattern: string;
+  format: string;
+  spendSignal: string;
+};
+
+type Tab = "posts" | "comments" | "ads";
 
 export function ContentInspiration({
   defaultNiche,
@@ -34,8 +42,11 @@ export function ContentInspiration({
   const [error, setError] = useState<string | null>(null);
   const [posts, setPosts] = useState<InspirationPost[] | null>(null);
   const [comments, setComments] = useState<CommentInsight[] | null>(null);
+  const [adFrames, setAdFrames] = useState<AdFrame[] | null>(null);
+  const adsPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const canComments = tier === "ELITE" || tier === "APEX";
+  const canAds = tier === "ELITE" || tier === "APEX";
 
   async function run() {
     if (!niche.trim() || niche.trim().length < 2) {
@@ -43,6 +54,12 @@ export function ContentInspiration({
       return;
     }
     setError(null);
+
+    if (tab === "ads") {
+      runAdIntel();
+      return;
+    }
+
     setLoading(true);
     if (tab === "posts") setPosts(null);
     else setComments(null);
@@ -61,6 +78,50 @@ export function ContentInspiration({
     } catch {
       setError("Request failed. Try again.");
     } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runAdIntel() {
+    setLoading(true);
+    setAdFrames(null);
+    try {
+      const res = await fetch("/api/inspiration/ads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ niche: niche.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Something went wrong."); setLoading(false); return; }
+
+      const { runId } = data as { runId: string };
+
+      if (adsPollRef.current) clearInterval(adsPollRef.current);
+      adsPollRef.current = setInterval(async () => {
+        try {
+          const pollRes = await fetch(`/api/inspiration/ads?runId=${runId}`);
+          const pollData = await pollRes.json();
+
+          if (pollData.status === "running") return;
+
+          clearInterval(adsPollRef.current!);
+          adsPollRef.current = null;
+          setLoading(false);
+
+          if (pollData.status === "succeeded" && pollData.frames) {
+            setAdFrames(pollData.frames);
+          } else {
+            setError(pollData.error ?? "Ad Intel scan failed. Try again.");
+          }
+        } catch {
+          clearInterval(adsPollRef.current!);
+          adsPollRef.current = null;
+          setLoading(false);
+          setError("Lost connection while polling. Try again.");
+        }
+      }, 5000);
+    } catch {
+      setError("Request failed. Try again.");
       setLoading(false);
     }
   }
@@ -128,6 +189,22 @@ export function ContentInspiration({
             Elite+
           </span>
         </button>
+        <button
+          onClick={() => canAds && setTab("ads")}
+          className={`px-4 py-2 text-sm font-medium transition border-b-2 -mb-px flex items-center gap-1.5 ${
+            tab === "ads"
+              ? "border-white text-text"
+              : canAds
+              ? "border-transparent text-text-muted hover:text-text"
+              : "border-transparent text-text-dim cursor-default"
+          }`}
+        >
+          {!canAds && <Lock className="h-3 w-3" />}
+          Ad Intel
+          <span className="rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] text-text-muted">
+            Elite+
+          </span>
+        </button>
       </div>
 
       {/* Upgrade notice for Comment Intel */}
@@ -136,6 +213,17 @@ export function ContentInspiration({
           <p className="text-sm font-medium">Comment Intel is an Elite+ feature</p>
           <p className="mt-1 text-xs text-text-muted">
             Analyse YouTube video data to surface what your audience is really struggling with.
+          </p>
+          <Link href="/pricing" className="btn-primary mt-4 w-fit text-sm">Upgrade to Elite</Link>
+        </div>
+      )}
+
+      {/* Upgrade notice for Ad Intel */}
+      {tab === "ads" && !canAds && (
+        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-5">
+          <p className="text-sm font-medium">Ad Intel is an Elite+ feature</p>
+          <p className="mt-1 text-xs text-text-muted">
+            Extract winning ad frameworks from Meta's Ad Library — hooks, angles, CTA patterns, and spend signals.
           </p>
           <Link href="/pricing" className="btn-primary mt-4 w-fit text-sm">Upgrade to Elite</Link>
         </div>
@@ -197,6 +285,45 @@ export function ContentInspiration({
         </div>
       )}
 
+      {/* Ad Intel loading */}
+      {tab === "ads" && canAds && loading && (
+        <div className="flex flex-col items-center gap-2 py-8 text-sm text-text-muted">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Scraping Meta Ad Library — usually 30-60 seconds…</span>
+        </div>
+      )}
+
+      {/* Ad Intel results */}
+      {tab === "ads" && canAds && adFrames && !loading && (
+        <div className="space-y-3">
+          <p className="text-xs text-text-muted">
+            {adFrames.length} winning ad frameworks in <span className="text-text">{niche}</span> from Meta Ad Library
+          </p>
+          {adFrames.map((f, i) => (
+            <div key={i} className="card p-4 space-y-2">
+              <p className="text-sm font-semibold text-text">"{f.hook}"</p>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <span className="rounded-md border border-bg-border bg-bg-elevated px-2 py-0.5 text-text-muted">
+                  {f.angle}
+                </span>
+                <span className="rounded-md border border-bg-border bg-bg-elevated px-2 py-0.5 text-text-muted">
+                  {f.format}
+                </span>
+                <span className="rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-purple-300">
+                  CTA: {f.ctaPattern}
+                </span>
+              </div>
+              {f.spendSignal && (
+                <p className="text-[11px] text-amber-300/80 flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  {f.spendSignal}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Empty states */}
       {tab === "posts" && !loading && !posts && (
         <p className="text-center text-sm text-text-muted py-6">
@@ -206,6 +333,11 @@ export function ContentInspiration({
       {tab === "comments" && canComments && !loading && !comments && (
         <p className="text-center text-sm text-text-muted py-6">
           Enter your niche and hit Find inspiration to surface audience pain points from YouTube.
+        </p>
+      )}
+      {tab === "ads" && canAds && !loading && !adFrames && (
+        <p className="text-center text-sm text-text-muted py-6">
+          Enter your niche and hit Find inspiration to extract winning ad frameworks from Meta.
         </p>
       )}
     </div>

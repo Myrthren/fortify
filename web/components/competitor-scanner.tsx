@@ -3,7 +3,7 @@
 import { useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Loader2, Plus, Trash2, RefreshCw, ExternalLink, Target, Youtube, Play, Star,
+  Loader2, Plus, Trash2, RefreshCw, ExternalLink, Target, Youtube, Play, Star, TrendingUp,
 } from "lucide-react";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -57,10 +57,12 @@ type Competitor = {
   changeDetectedAt: string | null;
   reviewReport: ReviewReport | null;
   reviewScannedAt: string | null;
+  metaAdReport: MetaAdReport | null;
+  metaAdScanAt: string | null;
   createdAt: string;
 };
 
-type Tab = "website" | "youtube" | "tiktok" | "reviews";
+type Tab = "website" | "youtube" | "tiktok" | "reviews" | "metaads";
 
 type ChangeReport = {
   changes: string[];
@@ -73,6 +75,18 @@ type ReviewReport = {
   topPraises: string[];
   opportunities: string[];
   summary: string;
+};
+
+type MetaAdReport = {
+  totalAds?: number;
+  activeAds?: number;
+  adAngles?: string[];
+  topCtaPatterns?: string[];
+  offerFrameworks?: string[];
+  spendLevel?: string;
+  platforms?: string[];
+  topAds?: { headline?: string; body?: string; format?: string; cta?: string; url?: string }[];
+  summary?: string;
 };
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -130,6 +144,8 @@ export function CompetitorScanner({
         changeDetectedAt: null,
         reviewReport: null,
         reviewScannedAt: null,
+        metaAdReport: null,
+        metaAdScanAt: null,
         createdAt: new Date(data.competitor.createdAt).toISOString(),
       };
       setList((prev) => [c, ...prev]);
@@ -285,6 +301,54 @@ function CompetitorDetail({
     }
   }
 
+  // Meta Ads scan
+  const [adsScanning, setAdsScanning] = useState(false);
+  const [adsError, setAdsError] = useState<string | null>(null);
+  const adsPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function doAdsScan() {
+    setAdsScanning(true);
+    setAdsError(null);
+    try {
+      const res = await fetch(`/api/competitors/${competitor.id}/scan-ads`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) {
+        setAdsError(data.error ?? "Failed to start scan");
+        setAdsScanning(false);
+        return;
+      }
+      const { runId } = data as { runId: string };
+
+      if (adsPollRef.current) clearInterval(adsPollRef.current);
+      adsPollRef.current = setInterval(async () => {
+        try {
+          const pollRes = await fetch(`/api/competitors/${competitor.id}/scan-ads?runId=${runId}`);
+          const pollData = await pollRes.json();
+
+          if (pollData.status === "running") return;
+
+          clearInterval(adsPollRef.current!);
+          adsPollRef.current = null;
+          setAdsScanning(false);
+
+          if (pollData.status === "succeeded" && pollData.report) {
+            onPatch({ metaAdReport: pollData.report, metaAdScanAt: new Date().toISOString() });
+          } else {
+            setAdsError(pollData.error ?? "Scan failed. Try again.");
+          }
+        } catch {
+          clearInterval(adsPollRef.current!);
+          adsPollRef.current = null;
+          setAdsScanning(false);
+          setAdsError("Lost connection while polling. Refresh and try again.");
+        }
+      }, 5000);
+    } catch (e: any) {
+      setAdsScanning(false);
+      setAdsError(e.message ?? "Failed");
+    }
+  }
+
   // Social scan
   const [ytHandle, setYtHandle] = useState(competitor.youtubeHandle ?? "");
   const [ttHandle, setTtHandle] = useState(competitor.tiktokHandle ?? "");
@@ -378,10 +442,11 @@ function CompetitorDetail({
   }
 
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
-    { key: "website", label: "Website Intel", icon: <Target className="h-3.5 w-3.5" /> },
-    { key: "youtube", label: "YouTube",       icon: <Youtube className="h-3.5 w-3.5" /> },
-    { key: "tiktok",  label: "TikTok",        icon: <Play className="h-3.5 w-3.5" /> },
-    { key: "reviews", label: "Reviews",       icon: <Star className="h-3.5 w-3.5" /> },
+    { key: "website",  label: "Website Intel", icon: <Target className="h-3.5 w-3.5" /> },
+    { key: "youtube",  label: "YouTube",       icon: <Youtube className="h-3.5 w-3.5" /> },
+    { key: "tiktok",   label: "TikTok",        icon: <Play className="h-3.5 w-3.5" /> },
+    { key: "reviews",  label: "Reviews",       icon: <Star className="h-3.5 w-3.5" /> },
+    { key: "metaads",  label: "Meta Ads",      icon: <TrendingUp className="h-3.5 w-3.5" /> },
   ];
 
   return (
@@ -569,6 +634,58 @@ function CompetitorDetail({
             <div className="card p-8 text-center text-sm text-text-muted">
               <Star className="mx-auto h-5 w-5" />
               <p className="mt-3">Click "Scan reviews" to pull customer sentiment from review sites.</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Meta Ads tab ── */}
+      {tab === "metaads" && (
+        <div className="space-y-4">
+          <div className="card flex flex-wrap items-center justify-between gap-3 p-4">
+            <div>
+              {competitor.metaAdScanAt && (
+                <p className="text-xs text-text-muted">
+                  Last scanned {new Date(competitor.metaAdScanAt).toLocaleString()}
+                </p>
+              )}
+              <p className="text-xs text-text-muted mt-0.5">
+                Pulls active ads from Meta Ad Library — AI-analysed
+              </p>
+            </div>
+            <button
+              onClick={doAdsScan}
+              disabled={adsScanning}
+              className="btn-secondary text-xs"
+            >
+              {adsScanning
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <RefreshCw className="h-3.5 w-3.5" />}
+              {competitor.metaAdReport ? "Re-scan" : "Scan ads"}
+            </button>
+          </div>
+
+          {adsError && (
+            <div className="rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
+              {adsError}
+            </div>
+          )}
+
+          {adsScanning && (
+            <div className="flex flex-col items-center gap-2 py-6 text-sm text-text-muted">
+              <Loader2 className="h-5 w-5 animate-spin" />
+              <span>Scraping Meta Ad Library — usually 30-60 seconds…</span>
+            </div>
+          )}
+
+          {competitor.metaAdReport && !adsScanning && (
+            <MetaAdReportView report={competitor.metaAdReport} />
+          )}
+
+          {!competitor.metaAdReport && !adsScanning && !adsError && (
+            <div className="card p-8 text-center text-sm text-text-muted">
+              <TrendingUp className="mx-auto h-5 w-5" />
+              <p className="mt-3">Click "Scan ads" to analyse your competitor's active Meta ad campaigns.</p>
             </div>
           )}
         </div>
@@ -915,6 +1032,96 @@ function ReviewReportView({ report }: { report: ReviewReport }) {
           ))}
         </ol>
       </div>
+    </div>
+  );
+}
+
+// ─── Meta Ads report ──────────────────────────────────────────────────────────
+
+function MetaAdReportView({ report }: { report: MetaAdReport }) {
+  return (
+    <div className="space-y-4">
+      {/* Stats row */}
+      {(report.totalAds != null || report.spendLevel) && (
+        <div className="card flex flex-wrap items-center gap-6 p-5">
+          {report.totalAds != null && (
+            <div>
+              <p className="text-xs text-text-muted">Total ads found</p>
+              <p className="font-semibold">{report.totalAds}</p>
+            </div>
+          )}
+          {report.activeAds != null && (
+            <div>
+              <p className="text-xs text-text-muted">Active ads</p>
+              <p className="font-semibold">{report.activeAds}</p>
+            </div>
+          )}
+          {report.spendLevel && (
+            <div>
+              <p className="text-xs text-text-muted">Estimated spend level</p>
+              <p className="font-semibold capitalize">{report.spendLevel}</p>
+            </div>
+          )}
+          {(report.platforms ?? []).length > 0 && (
+            <div>
+              <p className="text-xs text-text-muted">Platforms</p>
+              <p className="font-semibold">{report.platforms!.join(", ")}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {report.summary && (
+        <div className="card p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Summary</p>
+          <p className="mt-1 text-sm leading-relaxed">{report.summary}</p>
+        </div>
+      )}
+
+      <Section title="Ad angles being used" items={report.adAngles ?? []} accent="text-blue-300" />
+      <Section title="Top CTA patterns" items={report.topCtaPatterns ?? []} accent="text-purple-300" />
+      <Section title="Offer frameworks" items={report.offerFrameworks ?? []} accent="text-amber-300" />
+
+      {(report.topAds ?? []).length > 0 && (
+        <div className="card p-5">
+          <p className="text-xs uppercase tracking-wide text-text-muted">Top ads</p>
+          <div className="mt-3 space-y-4">
+            {report.topAds!.map((ad, i) => (
+              <div key={i} className="rounded-lg border border-bg-border bg-bg-elevated p-4 space-y-1.5">
+                {ad.headline && (
+                  <p className="text-sm font-semibold">{ad.headline}</p>
+                )}
+                {ad.body && (
+                  <p className="text-xs text-text-muted leading-relaxed line-clamp-3">{ad.body}</p>
+                )}
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {ad.format && (
+                    <span className="rounded border border-bg-border bg-bg px-2 py-0.5 text-[10px] text-text-muted">
+                      {ad.format}
+                    </span>
+                  )}
+                  {ad.cta && (
+                    <span className="rounded border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] text-purple-300">
+                      {ad.cta}
+                    </span>
+                  )}
+                </div>
+                {ad.url && (
+                  <a
+                    href={ad.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="inline-flex items-center gap-1 text-[11px] text-text-dim hover:text-text-muted transition pt-0.5"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    View ad
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

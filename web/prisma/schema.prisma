@@ -77,6 +77,7 @@ model User {
   dealPosts          DealPost[]
   pods               PodMember[]
   creditTransactions CreditTransaction[]
+  metaConnection     MetaConnection?
 }
 
 model Announcement {
@@ -160,10 +161,22 @@ model Competitor {
   changeDetectedAt DateTime?
   reviewReport     Json?
   reviewScannedAt  DateTime?
+  metaAdReport     Json?
+  metaAdScanAt     DateTime?
   createdAt        DateTime  @default(now())
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+model MetaConnection {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  accessToken String   @db.Text
+  accountId   String?  // primary ad account ID e.g. act_123456
+  accountName String?
+  connectedAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model NotificationPrefs {
@@ -181,6 +194,7 @@ model NotificationPrefs {
   dmMatchmaking     Boolean @default(true)
   dmOwnerNewSub     Boolean @default(true)
   dmOwnerChurn      Boolean @default(true)
+  dmAdReport        Boolean @default(true)
 }
 
 model Generation {
