@@ -86,6 +86,31 @@ export async function getShopifyData(shop: string, token: string, days = 30): Pr
   return { shop, revenue, orderCount, avgOrderValue, topProducts, customerCount, productCount, currency };
 }
 
+/** Get total revenue (paid orders) between two dates */
+export async function getRevenueForPeriod(
+  shop: string,
+  token: string,
+  since: Date,
+  until?: Date
+): Promise<{ revenue: number; orderCount: number; currency: string }> {
+  type Order = { total_price: string; currency: string };
+  const params = new URLSearchParams({
+    status: "any",
+    financial_status: "paid",
+    created_at_min: since.toISOString(),
+    limit: "250",
+    fields: "total_price,currency",
+  });
+  if (until) params.set("created_at_max", until.toISOString());
+
+  const data = await shopifyFetch<{ orders: Order[] }>(
+    shop, token, `/orders.json?${params.toString()}`
+  );
+  const orders = data.orders ?? [];
+  const revenue = orders.reduce((s, o) => s + Number(o.total_price), 0);
+  return { revenue, orderCount: orders.length, currency: orders[0]?.currency ?? "USD" };
+}
+
 /** Verify credentials by hitting the shop endpoint */
 export async function verifyShopifyCredentials(shop: string, token: string): Promise<string> {
   const data = await shopifyFetch<{ shop: { name: string } }>(shop, token, "/shop.json");
@@ -100,6 +125,45 @@ export type LowStockProduct = {
   quantity: number;
   productId: number;
 };
+
+export async function getOutOfStockProducts(
+  shop: string,
+  token: string
+): Promise<LowStockProduct[]> {
+  type ShopifyVariant = {
+    title: string;
+    inventory_quantity: number;
+    inventory_management: string | null;
+  };
+  type ShopifyProduct = {
+    id: number;
+    title: string;
+    variants: ShopifyVariant[];
+  };
+
+  const data = await shopifyFetch<{ products: ShopifyProduct[] }>(
+    shop, token,
+    `/products.json?limit=250&fields=id,title,variants`
+  );
+
+  const out: LowStockProduct[] = [];
+  for (const product of data.products ?? []) {
+    for (const variant of product.variants ?? []) {
+      if (
+        variant.inventory_management === "shopify" &&
+        variant.inventory_quantity <= 0
+      ) {
+        out.push({
+          title: product.title,
+          variant: variant.title !== "Default Title" ? variant.title : null,
+          quantity: 0,
+          productId: product.id,
+        });
+      }
+    }
+  }
+  return out;
+}
 
 export async function getLowStockProducts(
   shop: string,

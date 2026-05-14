@@ -19,6 +19,11 @@ const TOGGLEABLE_KEYS: PrefKey[] = [
   "dmOwnerChurn",
   "dmAdReport",
   "dmShopifyLowStock",
+  "dmShopifyOutOfStock",
+  "dmShopifyWeeklyRevenue",
+  "dmShopifyMilestone",
+  "dmStripeMrrDrop",
+  "dmContentBrief",
 ];
 
 export async function GET() {

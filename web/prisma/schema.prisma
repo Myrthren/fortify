@@ -191,18 +191,20 @@ model MetaConnection {
 }
 
 model ShopifyConnection {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  shop        String   // e.g. "mystore.myshopify.com"
-  accessToken String   @db.Text
-  connectedAt DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  shop                String   // e.g. "mystore.myshopify.com"
+  accessToken         String   @db.Text
+  lastMilestoneAmount Float    @default(0) // last revenue milestone crossed (monthly), for dedup
+  connectedAt         DateTime @default(now())
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model StripeConnection {
   id          String   @id @default(cuid())
   userId      String   @unique
   apiKey      String   @db.Text
+  lastMrr     Float    @default(0) // last recorded MRR for change detection
   connectedAt DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -235,10 +237,15 @@ model NotificationPrefs {
   dmOnboarding      Boolean @default(true)
   dmMilestones      Boolean @default(true)
   dmMatchmaking     Boolean @default(true)
-  dmOwnerNewSub     Boolean @default(true)
-  dmOwnerChurn      Boolean @default(true)
-  dmAdReport        Boolean @default(true)
-  dmShopifyLowStock Boolean @default(true)
+  dmOwnerNewSub          Boolean @default(true)
+  dmOwnerChurn           Boolean @default(true)
+  dmAdReport             Boolean @default(true)
+  dmShopifyLowStock      Boolean @default(true)
+  dmShopifyOutOfStock    Boolean @default(true)
+  dmShopifyWeeklyRevenue Boolean @default(true)
+  dmShopifyMilestone     Boolean @default(true)
+  dmStripeMrrDrop        Boolean @default(true)
+  dmContentBrief         Boolean @default(true)
 }
 
 model Generation {

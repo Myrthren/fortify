@@ -22,6 +22,11 @@ type Prefs = {
   dmOwnerChurn: boolean;
   dmAdReport: boolean;
   dmShopifyLowStock: boolean;
+  dmShopifyOutOfStock: boolean;
+  dmShopifyWeeklyRevenue: boolean;
+  dmShopifyMilestone: boolean;
+  dmStripeMrrDrop: boolean;
+  dmContentBrief: boolean;
 };
 
 const OWNER_ID = "731207920007643167";
@@ -36,7 +41,12 @@ const TOGGLES: { key: keyof Prefs; label: string; desc: string; comingSoon?: boo
   { key: "dmPaymentFailed",    label: "Payment failed",        desc: "When a billing payment fails on your subscription." },
   { key: "dmAdReport",         label: "Meta Ads report",       desc: "Weekly AI analysis of your Meta ad performance." },
   { key: "dmCompetitorDone",   label: "Competitor scan done",  desc: "When a competitor intel report finishes." },
-  { key: "dmShopifyLowStock",  label: "Shopify low stock",     desc: "Daily alert when any product hits 5 units or fewer." },
+  { key: "dmShopifyLowStock",      label: "Shopify — low stock",        desc: "Daily alert when any product drops to 5 units or fewer." },
+  { key: "dmShopifyOutOfStock",    label: "Shopify — out of stock",     desc: "Daily alert when a tracked product hits zero inventory." },
+  { key: "dmShopifyWeeklyRevenue", label: "Shopify — weekly revenue",   desc: "Every Monday: last 7 days revenue vs the week before." },
+  { key: "dmShopifyMilestone",     label: "Shopify — revenue milestone",desc: "When your store crosses $500, $1k, $5k, $10k… this month." },
+  { key: "dmStripeMrrDrop",        label: "Stripe — MRR change",        desc: "Alert when MRR drops >10% or spikes >25% week over week." },
+  { key: "dmContentBrief",         label: "Weekly content brief",       desc: "3 content ideas based on trending Reddit posts in your niche." },
   { key: "dmWeeklyReport",    label: "Weekly strategy report",desc: "Your weekly AI digest delivered straight to DMs." },
   { key: "dmRenewalReminder", label: "Renewal reminder",      desc: "3 days before your next billing date.", comingSoon: true },
   { key: "dmLimitWarning",    label: "Usage limit warning",   desc: "When you hit 80% of your monthly quota.", comingSoon: true },
