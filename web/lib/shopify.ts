@@ -1,5 +1,5 @@
 // Shopify Admin REST API helpers
-// Requires a Custom App access token with read_orders, read_products, read_customers
+// Requires a Custom App access token with read_orders, read_products, read_customers, read_inventory
 
 const API_VERSION = "2024-01";
 
@@ -90,4 +90,55 @@ export async function getShopifyData(shop: string, token: string, days = 30): Pr
 export async function verifyShopifyCredentials(shop: string, token: string): Promise<string> {
   const data = await shopifyFetch<{ shop: { name: string } }>(shop, token, "/shop.json");
   return data.shop.name;
+}
+
+// ── Low stock ──────────────────────────────────────────────────────────────────
+
+export type LowStockProduct = {
+  title: string;
+  variant: string | null; // variant title if not "Default Title"
+  quantity: number;
+  productId: number;
+};
+
+export async function getLowStockProducts(
+  shop: string,
+  token: string,
+  threshold = 5
+): Promise<LowStockProduct[]> {
+  type ShopifyVariant = {
+    title: string;
+    inventory_quantity: number;
+    inventory_management: string | null;
+  };
+  type ShopifyProduct = {
+    id: number;
+    title: string;
+    variants: ShopifyVariant[];
+  };
+
+  const data = await shopifyFetch<{ products: ShopifyProduct[] }>(
+    shop, token,
+    `/products.json?limit=250&fields=id,title,variants`
+  );
+
+  const low: LowStockProduct[] = [];
+  for (const product of data.products ?? []) {
+    for (const variant of product.variants ?? []) {
+      // Only alert on tracked inventory that's low but not fully out of stock (0 = separate alert)
+      if (
+        variant.inventory_management === "shopify" &&
+        variant.inventory_quantity > 0 &&
+        variant.inventory_quantity <= threshold
+      ) {
+        low.push({
+          title: product.title,
+          variant: variant.title !== "Default Title" ? variant.title : null,
+          quantity: variant.inventory_quantity,
+          productId: product.id,
+        });
+      }
+    }
+  }
+  return low;
 }

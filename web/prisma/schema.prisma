@@ -238,6 +238,7 @@ model NotificationPrefs {
   dmOwnerNewSub     Boolean @default(true)
   dmOwnerChurn      Boolean @default(true)
   dmAdReport        Boolean @default(true)
+  dmShopifyLowStock Boolean @default(true)
 }
 
 model Generation {

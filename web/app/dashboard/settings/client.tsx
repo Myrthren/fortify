@@ -21,6 +21,7 @@ type Prefs = {
   dmOwnerNewSub: boolean;
   dmOwnerChurn: boolean;
   dmAdReport: boolean;
+  dmShopifyLowStock: boolean;
 };
 
 const OWNER_ID = "731207920007643167";
@@ -32,9 +33,10 @@ const MANDATORY = [
 ];
 
 const TOGGLES: { key: keyof Prefs; label: string; desc: string; comingSoon?: boolean }[] = [
-  { key: "dmPaymentFailed",   label: "Payment failed",        desc: "When a billing payment fails on your subscription." },
-  { key: "dmAdReport",        label: "Meta Ads report",       desc: "Weekly AI analysis of your Meta ad performance." },
-  { key: "dmCompetitorDone",  label: "Competitor scan done",  desc: "When a competitor intel report finishes." },
+  { key: "dmPaymentFailed",    label: "Payment failed",        desc: "When a billing payment fails on your subscription." },
+  { key: "dmAdReport",         label: "Meta Ads report",       desc: "Weekly AI analysis of your Meta ad performance." },
+  { key: "dmCompetitorDone",   label: "Competitor scan done",  desc: "When a competitor intel report finishes." },
+  { key: "dmShopifyLowStock",  label: "Shopify low stock",     desc: "Daily alert when any product hits 5 units or fewer." },
   { key: "dmWeeklyReport",    label: "Weekly strategy report",desc: "Your weekly AI digest delivered straight to DMs." },
   { key: "dmRenewalReminder", label: "Renewal reminder",      desc: "3 days before your next billing date.", comingSoon: true },
   { key: "dmLimitWarning",    label: "Usage limit warning",   desc: "When you hit 80% of your monthly quota.", comingSoon: true },
