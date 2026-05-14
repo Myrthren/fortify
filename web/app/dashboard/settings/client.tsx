@@ -6,6 +6,7 @@ import { MetaConnectSection } from "@/components/meta-connect";
 import { GoogleConnectSection } from "@/components/google-connect";
 import { ShopifyConnectSection } from "@/components/shopify-connect";
 import { StripeConnectSection } from "@/components/stripe-connect";
+import { NotionConnectSection } from "@/components/notion-connect";
 import type { Tier } from "@prisma/client";
 
 type Prefs = {
@@ -67,12 +68,14 @@ export function SettingsClient({
   google,
   shopify,
   stripe,
+  notion,
 }: {
   user: { email: string | null; tier: Tier; discordId: string | null };
   meta: { connected: boolean; accountName: string | null };
   google: { connected: boolean; gaPropertyName: string | null; scSiteUrl: string | null };
   shopify: { connected: boolean; shop: string | null };
   stripe: { connected: boolean };
+  notion: { connected: boolean; workspaceName: string | null; rootPageId: string | null };
 }) {
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -126,6 +129,13 @@ export function SettingsClient({
 
         {/* Stripe connection */}
         <StripeConnectSection connected={stripe.connected} />
+
+        {/* Notion connection */}
+        <NotionConnectSection
+          connected={notion.connected}
+          workspaceName={notion.workspaceName}
+          rootPageId={notion.rootPageId}
+        />
 
         {/* Meta Ads connection */}
         <MetaConnectSection connected={meta.connected} accountName={meta.accountName} />

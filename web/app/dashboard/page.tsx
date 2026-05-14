@@ -76,6 +76,7 @@ export default async function DashboardPage() {
                 <ToolLink href="/dashboard/ads" name="Meta Ads" desc="Real campaign performance + competitor ad intel" />
                 <ToolLink href="/dashboard/shopify" name="Shopify" desc="Revenue, orders, and product performance" />
                 <ToolLink href="/dashboard/revenue" name="Revenue" desc="MRR, subscriptions, and charges from Stripe" />
+                <ToolLink href="/dashboard/virality" name="Virality Engine" desc="AI video scoring, trend analysis, and social publishing" />
                 <ToolLink href="/dashboard/analytics" name="Analytics" desc="GA4, Search Console, and YouTube — coming soon" />
                 <ToolLink href="/dashboard/members" name="Member Directory" desc="Find founders, operators, creators" />
                 <ToolLink href="/dashboard/matchmaking" name="AI Matchmaking" desc="Top members worth talking to" />
