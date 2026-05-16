@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isOwner } from "@/lib/owner";
 import { BanType } from "@prisma/client";
+import { sendBanDm } from "@/lib/discord-dm";
 
 // GET — list all active bans
 export async function GET() {
@@ -37,6 +38,12 @@ export async function POST(req: Request) {
 
   const expiresAt = permanent ? null : durationDays ? new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000) : null;
 
+  // Fetch admin display name + target user's discordId in parallel
+  const [adminUser, targetUser] = await Promise.all([
+    db.user.findUnique({ where: { id: adminId }, select: { username: true, name: true } }),
+    db.user.findUnique({ where: { id: userId }, select: { discordId: true } }),
+  ]);
+
   const ban = await db.banRecord.create({
     data: { userId, type: type as BanType, reason: reason ?? null, permanent: !!permanent, expiresAt },
   });
@@ -46,6 +53,22 @@ export async function POST(req: Request) {
     await db.user.update({ where: { id: userId }, data: { softwareBanned: true, platformBanned: true } });
   } else {
     await db.user.update({ where: { id: userId }, data: { platformBanned: true } });
+  }
+
+  // DM the banned user on Discord (fire-and-forget — don't block the response)
+  if (targetUser?.discordId) {
+    const issuedBy = adminUser?.username
+      ? `@${adminUser.username}`
+      : adminUser?.name ?? "Fortify Admin";
+
+    sendBanDm({
+      discordUserId: targetUser.discordId,
+      banType: type as "PLATFORM" | "SOFTWARE",
+      permanent: !!permanent,
+      durationDays: durationDays ?? null,
+      reason: reason ?? null,
+      issuedBy,
+    }).catch((e) => console.error("[ban-dm]", e));
   }
 
   return NextResponse.json({ ban }, { status: 201 });

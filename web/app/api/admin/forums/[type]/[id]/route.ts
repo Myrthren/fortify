@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isOwner } from "@/lib/owner";
+import { sendBanDm } from "@/lib/discord-dm";
 
 export async function PATCH(
   req: Request,
@@ -55,6 +56,21 @@ export async function PATCH(
             where: { id: post.userId },
             data: { platformBanned: true },
           });
+          // DM the user about their automatic 7-day platform ban
+          const bannedUser = await db.user.findUnique({
+            where: { id: post.userId },
+            select: { discordId: true },
+          });
+          if (bannedUser?.discordId) {
+            sendBanDm({
+              discordUserId: bannedUser.discordId,
+              banType: "PLATFORM",
+              permanent: false,
+              durationDays: 7,
+              reason: "3 forum posts deleted for inappropriate content within 30 days",
+              issuedBy: "Fortify (automated)",
+            }).catch((e) => console.error("[auto-ban-dm]", e));
+          }
         }
       }
     }
@@ -92,6 +108,21 @@ export async function PATCH(
             where: { id: comment.userId },
             data: { platformBanned: true },
           });
+          // DM the user about their automatic 7-day platform ban
+          const bannedUser = await db.user.findUnique({
+            where: { id: comment.userId },
+            select: { discordId: true },
+          });
+          if (bannedUser?.discordId) {
+            sendBanDm({
+              discordUserId: bannedUser.discordId,
+              banType: "PLATFORM",
+              permanent: false,
+              durationDays: 7,
+              reason: "3 forum comments deleted for inappropriate content within 30 days",
+              issuedBy: "Fortify (automated)",
+            }).catch((e) => console.error("[auto-ban-dm]", e));
+          }
         }
       }
     }
