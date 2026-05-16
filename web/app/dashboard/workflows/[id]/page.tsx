@@ -31,7 +31,9 @@ export default async function WorkflowDetailPage({ params }: { params: { id: str
             name: workflow.name,
             description: workflow.description,
             active: workflow.active,
-            nodes: workflow.nodes as any[],
+            // nodes field may be { nodes: [], connections: [] } or a plain array
+            nodes: (workflow.nodes as any)?.nodes ?? (Array.isArray(workflow.nodes) ? workflow.nodes : []),
+            connections: (workflow.nodes as any)?.connections ?? [],
             runs: workflow.runs.map((r) => ({
               id: r.id,
               status: r.status,

@@ -31,7 +31,12 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
   if (typeof body.name        === "string") data.name        = body.name.trim().slice(0, 100);
   if (typeof body.description === "string") data.description = body.description.trim().slice(0, 300);
   if (typeof body.active      === "boolean") data.active     = body.active;
-  if (Array.isArray(body.nodes)) data.nodes = body.nodes;
+  // Store nodes + connections together in the nodes JSON field
+  if (Array.isArray(body.nodes) && Array.isArray(body.connections)) {
+    data.nodes = { nodes: body.nodes, connections: body.connections };
+  } else if (Array.isArray(body.nodes)) {
+    data.nodes = body.nodes;
+  }
 
   const updated = await db.workflow.update({ where: { id: params.id }, data });
   return NextResponse.json({ workflow: updated });
