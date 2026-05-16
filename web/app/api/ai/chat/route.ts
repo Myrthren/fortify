@@ -304,7 +304,29 @@ export async function POST(req: Request) {
       (dna.entries as any[]).map((e: any) => `**${e.label}**: ${e.content}`).join("\n");
   }
 
-  const systemPrompt = FORTIFY_KNOWLEDGE + dnaContext;
+  // ── Inject past chat memory ──
+  let memoryContext = "";
+  const pastSessions = await db.chatSession.findMany({
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+    take: 5, // last 5 sessions for context
+    select: { title: true, messages: true, createdAt: true },
+  });
+  if (pastSessions.length > 0) {
+    memoryContext = "\n\n## Your memory from past conversations with this user:\n";
+    for (const s of pastSessions.reverse()) { // oldest first
+      const msgs = s.messages as any[];
+      // Take first user message and last assistant message as summary
+      const firstUser = msgs.find((m) => m.role === "user")?.content?.slice(0, 200) ?? "";
+      const lastAssist = [...msgs].reverse().find((m) => m.role === "assistant")?.content?.slice(0, 300) ?? "";
+      if (firstUser || lastAssist) {
+        memoryContext += `\n**Session: "${s.title}"** (${new Date(s.createdAt).toLocaleDateString()})\n`;
+        if (firstUser) memoryContext += `User asked: ${firstUser}\n`;
+        if (lastAssist) memoryContext += `You replied: ${lastAssist}\n`;
+      }
+    }
+  }
+  const systemPrompt = FORTIFY_KNOWLEDGE + dnaContext + memoryContext;
 
   // ── First Claude call (may use tools) ──
   const resp1 = await claude().messages.create({

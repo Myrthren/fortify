@@ -103,6 +103,8 @@ model User {
   receivedConnections  UserConnection[] @relation("ReceivedConnections")
   bans                 BanRecord[]
   paypalConnections    PaypalConnection[]
+  chatSessions         ChatSession[]
+  notifications        Notification[]
 }
 
 model Announcement {
@@ -523,4 +525,33 @@ model PodMember {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([podId, userId])
+}
+
+// ─── Chat sessions (Fortify AI history) ─────────────────
+model ChatSession {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  messages  Json     // {role, content, actions?}[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+}
+
+// ─── In-app notifications ─────────────────────────────────
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // "connection_request" | "connection_accepted" | "new_message" | "system"
+  title     String
+  body      String?
+  link      String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }

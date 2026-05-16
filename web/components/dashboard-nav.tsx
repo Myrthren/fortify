@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { MessageSquare, Users } from "lucide-react";
+import { Lock, MessageSquare, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { TIERS } from "@/lib/tiers";
 import { isOwner } from "@/lib/owner";
 import { handleSignOut } from "@/app/actions/auth";
+import { NotificationBell } from "@/components/notification-bell";
 import type { Tier } from "@prisma/client";
 
 type ActiveKey =
@@ -22,33 +23,60 @@ type ActiveKey =
   | "revenue"
   | "virality"
   | "dna"
+  | "logo"
   | "members"
   | "deals"
   | "pods"
   | "forums"
   | "messages"
   | "connections"
+  | "notifications"
   | "profile"
   | "settings"
   | "support"
   | "credits";
 
-const TOOLS = [
-  { key: "voice",       href: "/dashboard/voice",       label: "Brand Voice",  badge: null },
-  { key: "outreach",    href: "/dashboard/outreach",    label: "Outreach",     badge: null },
-  { key: "audit",       href: "/dashboard/audit",       label: "Funnel Audit", badge: null },
-  { key: "trends",      href: "/dashboard/trends",      label: "Trend Radar",  badge: null },
-  { key: "competitors", href: "/dashboard/competitors", label: "Competitors",  badge: null },
-  { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing",badge: null },
-  { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration",  badge: null },
-  { key: "ads",         href: "/dashboard/ads",         label: "Meta Ads",     badge: null },
-  { key: "shopify",     href: "/dashboard/shopify",     label: "Shopify",      badge: null },
-  { key: "revenue",     href: "/dashboard/revenue",     label: "Revenue",      badge: null },
-  { key: "virality",    href: "/dashboard/virality",    label: "Virality",     badge: null },
-  { key: "dna",         href: "/dashboard/company-dna", label: "Company DNA",  badge: null },
-  { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics",    badge: "Soon" },
-  { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking",  badge: null },
-] as const;
+type ToolItem = { key: string; href: string; label: string; badge?: string | null; minTier?: "ELITE" | "APEX" };
+
+const TOOL_GROUPS: { heading: string; items: ToolItem[] }[] = [
+  {
+    heading: "Content",
+    items: [
+      { key: "voice",       href: "/dashboard/voice",       label: "Brand Voice" },
+      { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration" },
+      { key: "virality",    href: "/dashboard/virality",    label: "Virality Engine", minTier: "ELITE" },
+      { key: "logo",        href: "/dashboard/logo",        label: "Logo Intelligence" },
+    ],
+  },
+  {
+    heading: "Growth",
+    items: [
+      { key: "outreach",    href: "/dashboard/outreach",    label: "Outreach" },
+      { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing" },
+      { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking" },
+    ],
+  },
+  {
+    heading: "Research",
+    items: [
+      { key: "audit",       href: "/dashboard/audit",       label: "Funnel Audit" },
+      { key: "trends",      href: "/dashboard/trends",      label: "Trend Radar" },
+      { key: "competitors", href: "/dashboard/competitors", label: "Competitors" },
+    ],
+  },
+  {
+    heading: "Business",
+    items: [
+      { key: "ads",         href: "/dashboard/ads",         label: "Meta Ads" },
+      { key: "shopify",     href: "/dashboard/shopify",     label: "Shopify" },
+      { key: "revenue",     href: "/dashboard/revenue",     label: "Revenue" },
+      { key: "dna",         href: "/dashboard/company-dna", label: "Company DNA" },
+      { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics", badge: "Soon" },
+    ],
+  },
+];
+
+const TOOLS_KEYS = TOOL_GROUPS.flatMap((g) => g.items.map((i) => i.key));
 
 const COMMUNITY = [
   { key: "members",     href: "/dashboard/members",     label: "Members" },
@@ -65,17 +93,17 @@ const ACCOUNT = [
 ] as const;
 
 const ALL_MOBILE = [
-  { key: "dashboard",   href: "/dashboard",            label: "Dashboard" },
-  ...TOOLS,
+  { key: "dashboard",     href: "/dashboard",                label: "Dashboard" },
+  ...TOOL_GROUPS.flatMap((g) => g.items),
   ...COMMUNITY,
-  { key: "messages",    href: "/dashboard/messages",    label: "Messages" },
-  { key: "connections", href: "/dashboard/connections", label: "Connections" },
+  { key: "messages",      href: "/dashboard/messages",       label: "Messages" },
+  { key: "connections",   href: "/dashboard/connections",    label: "Connections" },
+  { key: "notifications", href: "/dashboard/notifications",  label: "Notifications" },
   ...ACCOUNT,
 ];
 
-const TOOLS_KEYS      = TOOLS.map((t) => t.key);
 const COMMUNITY_KEYS  = [...COMMUNITY.map((t) => t.key), "messages", "connections"] as string[];
-const ACCOUNT_KEYS    = ACCOUNT.map((t) => t.key);
+const ACCOUNT_KEYS    = ACCOUNT.map((t) => t.key) as string[];
 
 function ChevronDown() {
   return (
@@ -133,9 +161,9 @@ export function DashboardNav({
 }) {
   const tierMeta        = TIERS[user.tier];
   const userIsOwner     = isOwner(user.discordId);
-  const toolsActive     = TOOLS_KEYS.includes(active as any);
+  const toolsActive     = TOOLS_KEYS.includes(active as string);
   const communityActive = COMMUNITY_KEYS.includes(active as string);
-  const accountActive   = ACCOUNT_KEYS.includes(active as any);
+  const accountActive   = ACCOUNT_KEYS.includes(active as string);
 
   const displayName = user.username ? `@${user.username}` : user.email;
 
@@ -172,19 +200,37 @@ export function DashboardNav({
                 AI Tools
                 <ChevronDown />
               </button>
-              <div className="pointer-events-none absolute left-0 top-full w-44 pt-1 opacity-0 transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100">
-                <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl">
-                  {TOOLS.map((item) => (
-                    <DropdownLink key={item.key} href={item.href} active={active === item.key}>
-                      <span className="flex w-full items-center justify-between gap-2">
-                        {item.label}
-                        {item.badge && (
-                          <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-text-muted">
-                            {item.badge}
-                          </span>
-                        )}
-                      </span>
-                    </DropdownLink>
+              <div className="pointer-events-none absolute left-0 top-full w-52 pt-1 opacity-0 transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100">
+                <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl w-52">
+                  {TOOL_GROUPS.map((group, gi) => (
+                    <div key={group.heading}>
+                      {gi > 0 && <div className="my-1 border-t border-bg-border" />}
+                      <p className="px-3 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
+                        {group.heading}
+                      </p>
+                      {group.items.map((item) => {
+                        const locked = item.minTier === "ELITE"
+                          ? (user.tier === "FREE" || user.tier === "PRO")
+                          : item.minTier === "APEX"
+                          ? (user.tier !== "APEX")
+                          : false;
+                        return (
+                          <DropdownLink key={item.key} href={item.href} active={active === item.key}>
+                            <span className="flex w-full items-center justify-between gap-2">
+                              {item.label}
+                              <span className="flex items-center gap-1">
+                                {item.badge && (
+                                  <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-text-muted">
+                                    {item.badge}
+                                  </span>
+                                )}
+                                {locked && <Lock className="h-3 w-3 text-text-dim opacity-60" />}
+                              </span>
+                            </span>
+                          </DropdownLink>
+                        );
+                      })}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -217,6 +263,9 @@ export function DashboardNav({
 
         {/* ── Right: icons + meta + account dropdown ── */}
         <div className="flex items-center gap-2 text-sm">
+
+          {/* Notifications bell */}
+          <NotificationBell active={active === "notifications"} />
 
           {/* Connections icon */}
           <Link

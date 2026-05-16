@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, Paperclip, X, ShoppingCart, CheckCircle2, XCircle } from "lucide-react";
+import { Send, Loader2, Paperclip, X, ShoppingCart, CheckCircle2, XCircle, History, SquarePen, Trash2 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -78,16 +78,21 @@ function renderContent(text: string): React.ReactNode {
 // ── Main component ─────────────────────────────────────────────────────────────
 
 export function FortifyAI() {
-  const [open,       setOpen]       = useState(false);
-  const [launching,  setLaunching]  = useState(false);
-  const [btnHovered, setBtnHovered] = useState(false);
-  const [messages,   setMessages]   = useState<Msg[]>([]);
-  const [input,      setInput]      = useState("");
-  const [file,       setFile]       = useState<File | null>(null);
-  const [sending,    setSending]    = useState(false);
-  const [usage,      setUsage]      = useState<Usage | null>(null);
-  const [showPacks,  setShowPacks]  = useState(false);
-  const [buyingPack, setBuyingPack] = useState<number | null>(null);
+  const [open,             setOpen]             = useState(false);
+  const [launching,        setLaunching]        = useState(false);
+  const [btnHovered,       setBtnHovered]       = useState(false);
+  const [messages,         setMessages]         = useState<Msg[]>([]);
+  const [input,            setInput]            = useState("");
+  const [file,             setFile]             = useState<File | null>(null);
+  const [sending,          setSending]          = useState(false);
+  const [usage,            setUsage]            = useState<Usage | null>(null);
+  const [showPacks,        setShowPacks]        = useState(false);
+  const [buyingPack,       setBuyingPack]       = useState<number | null>(null);
+  const [showHistory,      setShowHistory]      = useState(false);
+  const [chatSessions,     setChatSessions]     = useState<{ id: string; title: string; updatedAt: string }[]>([]);
+  const [loadingHistory,   setLoadingHistory]   = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [savingSession,    setSavingSession]    = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
 
@@ -103,6 +108,64 @@ export function FortifyAI() {
   async function fetchUsage() {
     const r = await fetch("/api/ai/chat/usage");
     setUsage(await r.json());
+  }
+
+  async function loadHistory() {
+    setLoadingHistory(true);
+    try {
+      const r = await fetch("/api/ai/chat/sessions");
+      if (r.ok) {
+        const d = await r.json();
+        setChatSessions(d.sessions ?? []);
+      }
+    } finally {
+      setLoadingHistory(false);
+    }
+  }
+
+  async function saveCurrentSession() {
+    if (messages.length < 2) return; // Need at least 1 user + 1 assistant msg
+    setSavingSession(true);
+    try {
+      const firstUserMsg = messages.find((m) => m.role === "user");
+      const title = (firstUserMsg?.content ?? "Chat").slice(0, 60);
+      await fetch("/api/ai/chat/sessions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, messages: messages.map((m) => ({ role: m.role, content: m.content, actions: m.actions })) }),
+      });
+    } finally {
+      setSavingSession(false);
+    }
+  }
+
+  async function startNewChat() {
+    await saveCurrentSession();
+    setMessages([]);
+    setCurrentSessionId(null);
+    setShowHistory(false);
+  }
+
+  async function loadSession(id: string) {
+    try {
+      const r = await fetch(`/api/ai/chat/sessions/${id}`);
+      if (!r.ok) return;
+      const d = await r.json();
+      const msgs = (d.session.messages as any[]).map((m: any) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content as string,
+        actions: m.actions,
+      }));
+      setMessages(msgs);
+      setCurrentSessionId(id);
+      setShowHistory(false);
+    } catch {}
+  }
+
+  async function deleteSession(id: string) {
+    await fetch(`/api/ai/chat/sessions/${id}`, { method: "DELETE" });
+    setChatSessions((prev) => prev.filter((s) => s.id !== id));
+    if (currentSessionId === id) { setMessages([]); setCurrentSessionId(null); }
   }
 
   async function send() {
@@ -251,10 +314,70 @@ export function FortifyAI() {
                   <span className="text-[10px] text-amber-300">{getTimeUntilReset()}</span>
                 )}
               </div>
-              <button onClick={() => setOpen(false)} className="text-text-muted hover:text-text transition">
-                <X className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => { setShowHistory(!showHistory); if (!showHistory) loadHistory(); }}
+                  className={`p-1 rounded transition text-xs flex items-center gap-1 ${showHistory ? "text-text" : "text-text-muted hover:text-text"}`}
+                  title="Chat history"
+                >
+                  <History className="h-3.5 w-3.5" />
+                </button>
+                {messages.length > 0 && (
+                  <button
+                    onClick={startNewChat}
+                    disabled={savingSession}
+                    className="p-1 rounded transition text-xs text-text-muted hover:text-text flex items-center gap-1"
+                    title="New chat"
+                  >
+                    <SquarePen className="h-3.5 w-3.5" />
+                  </button>
+                )}
+                <button onClick={() => setOpen(false)} className="p-1 text-text-muted hover:text-text transition">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
             </div>
+
+            {/* History panel */}
+            {showHistory && (
+              <div className="border-b border-bg-border bg-bg-panel flex-shrink-0 overflow-y-auto max-h-64">
+                <div className="p-3">
+                  <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-2">Past chats</p>
+                  {loadingHistory ? (
+                    <div className="flex items-center gap-2 py-2 text-xs text-text-muted">
+                      <Loader2 className="h-3 w-3 animate-spin" /> Loading…
+                    </div>
+                  ) : chatSessions.length === 0 ? (
+                    <p className="text-xs text-text-dim py-2">No saved chats yet.</p>
+                  ) : (
+                    <div className="space-y-1">
+                      {chatSessions.map((s) => (
+                        <div
+                          key={s.id}
+                          className={`group flex items-center gap-2 rounded-lg px-2.5 py-2 cursor-pointer transition ${
+                            currentSessionId === s.id ? "bg-white/[0.08]" : "hover:bg-white/[0.04]"
+                          }`}
+                          onClick={() => loadSession(s.id)}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{s.title}</p>
+                            <p className="text-[10px] text-text-dim">
+                              {new Date(s.updatedAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }}
+                            className="opacity-0 group-hover:opacity-100 text-text-dim hover:text-red-300 transition"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">

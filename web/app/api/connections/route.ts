@@ -58,5 +58,19 @@ export async function POST(req: Request) {
     data: { fromUserId: userId, toUserId },
   });
 
+  // Notify the target user of the new connection request
+  try {
+    const sender = await db.user.findUnique({ where: { id: userId }, select: { username: true, name: true } });
+    const senderName = sender?.username ? `@${sender.username}` : (sender?.name ?? "Someone");
+    await db.notification.create({
+      data: {
+        userId: toUserId,
+        type: "connection_request",
+        title: `${senderName} sent you a connection request`,
+        link: "/dashboard/connections",
+      },
+    });
+  } catch {}
+
   return NextResponse.json({ connection: conn }, { status: 201 });
 }

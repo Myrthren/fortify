@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Loader2, Plus, Trash2, Zap, Youtube, Play, Facebook, RefreshCw,
-  CheckCircle, Clock, XCircle, ExternalLink, Unplug, Calendar,
+  CheckCircle, Clock, XCircle, ExternalLink, Unplug, Calendar, Sparkles,
 } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -101,6 +101,8 @@ export function ViralityEngine({
   const [addPlatforms, setAddPlatforms] = useState<Platform[]>([]);
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestError, setSuggestError] = useState<string | null>(null);
 
   useEffect(() => { loadItems(); }, []);
 
@@ -160,6 +162,52 @@ export function ViralityEngine({
     setAddPlatforms((prev) =>
       prev.includes(p) ? prev.filter((x) => x !== p) : [...prev, p]
     );
+  }
+
+  function extractVideoFrame(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement("video");
+      const canvas = document.createElement("canvas");
+      const url = URL.createObjectURL(file);
+
+      video.onloadedmetadata = () => {
+        video.currentTime = Math.min(2, video.duration * 0.15);
+      };
+
+      video.onseeked = () => {
+        canvas.width = 480;
+        canvas.height = Math.round(480 * (video.videoHeight / video.videoWidth)) || 270;
+        const ctx = canvas.getContext("2d")!;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        URL.revokeObjectURL(url);
+        resolve(canvas.toDataURL("image/jpeg", 0.8));
+      };
+
+      video.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Video load failed")); };
+      video.src = url;
+      video.preload = "metadata";
+      video.load();
+    });
+  }
+
+  async function autoSuggest() {
+    if (!videoFile || !addPlatforms.length) return;
+    setSuggestError(null);
+    setSuggesting(true);
+    try {
+      const frame = await extractVideoFrame(videoFile);
+      const res = await fetch("/api/media/suggest", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ frame, platforms: addPlatforms, filename: videoFile.name }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setSuggestError(data.error ?? "Suggest failed"); return; }
+      if (data.title) setAddTitle(data.title);
+      if (data.description) setAddDesc(data.description);
+      if (data.category) setAddCategory(data.category);
+    } catch { setSuggestError("Frame extraction failed"); }
+    finally { setSuggesting(false); }
   }
 
   async function disconnectPlatform(platform: Platform) {
@@ -286,6 +334,21 @@ export function ViralityEngine({
                   ))}
                 </div>
               </div>
+              {/* Auto suggest */}
+              {videoFile && addPlatforms.length > 0 && (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={autoSuggest}
+                    disabled={suggesting || addLoading}
+                    className="flex items-center gap-1.5 rounded-md border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-medium text-text-muted hover:border-white/20 hover:bg-white/[0.08] hover:text-text transition disabled:opacity-50"
+                  >
+                    {suggesting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                    {suggesting ? "Analysing video…" : "✦ Auto Suggest  —  25 credits"}
+                  </button>
+                  {suggestError && <span className="text-xs text-red-300">{suggestError}</span>}
+                </div>
+              )}
               {addError && <p className="text-xs text-red-300">{addError}</p>}
               <div className="flex gap-2 justify-end">
                 <button onClick={() => setShowAdd(false)} className="btn-secondary text-sm">Cancel</button>

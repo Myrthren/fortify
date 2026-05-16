@@ -17,6 +17,23 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (!["ACCEPTED", "DECLINED"].includes(status)) return NextResponse.json({ error: "Invalid status" }, { status: 400 });
 
   await db.userConnection.update({ where: { id }, data: { status: status as ConnectionStatus } });
+
+  // Notify the requester when their request is accepted
+  if (status === "ACCEPTED") {
+    try {
+      const accepter = await db.user.findUnique({ where: { id: userId }, select: { username: true, name: true } });
+      const accepterName = accepter?.username ? `@${accepter.username}` : (accepter?.name ?? "Someone");
+      await db.notification.create({
+        data: {
+          userId: conn.fromUserId,
+          type: "connection_accepted",
+          title: `${accepterName} accepted your connection request`,
+          link: "/dashboard/connections",
+        },
+      });
+    } catch {}
+  }
+
   return NextResponse.json({ ok: true });
 }
 
