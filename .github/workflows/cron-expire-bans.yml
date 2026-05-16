@@ -1,0 +1,18 @@
+name: Expire Bans (hourly)
+
+on:
+  schedule:
+    - cron: "0 * * * *"   # every hour on the hour
+  workflow_dispatch:        # lets you trigger it manually from GitHub Actions tab
+
+jobs:
+  expire-bans:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call expire-bans endpoint
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -H "x-cron-secret: ${{ secrets.CRON_SECRET }}" \
+            "${{ secrets.APP_URL }}/api/cron/expire-bans" \
+          | grep -qE "^2" && echo "✅ expire-bans OK" || (echo "❌ expire-bans failed" && exit 1)
