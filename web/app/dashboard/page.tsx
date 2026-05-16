@@ -78,6 +78,9 @@ export default async function DashboardPage() {
                 <ToolLink href="/dashboard/revenue" name="Revenue" desc="MRR, subscriptions, and charges from Stripe" />
                 <ToolLink href="/dashboard/virality" name="Virality Engine" desc="AI video scoring, trend analysis, and social publishing" />
                 <ToolLink href="/dashboard/company-dna" name="Company DNA" desc="Business memory — give AI context about your company" />
+                <ToolLink href="/dashboard/recon" name="Fortify Recon" desc="Find local businesses by location and category" />
+                <ToolLink href="/dashboard/competitor-tracking" name="Competitor Watch" desc="Monitor competitor pages for content changes" />
+                <ToolLink href="/dashboard/workflows" name="Workflows" desc="Automate tasks with multi-step AI workflows" />
                 <ToolLink href="/dashboard/analytics" name="Analytics" desc="GA4, Search Console, and YouTube — coming soon" />
                 <ToolLink href="/dashboard/forums" name="Forums" desc="Community discussion boards" />
                 <ToolLink href="/dashboard/members" name="Member Directory" desc="Find founders, operators, creators" />
