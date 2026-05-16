@@ -95,9 +95,21 @@ export async function POST(req: Request) {
     scanned++;
     if (watchHasChange) {
       changesDetected++;
-      // Notify user via Discord DM
+      const changedLinks = newScans.filter((s) => s.hasChange).map((s) => `• ${s.summary}`).join("\n");
+
+      // In-app notification
+      await db.notification.create({
+        data: {
+          userId: user.id,
+          type: "competitor_change",
+          title: `Competitor change: ${watch.name}`,
+          body: changedLinks || "Content changed on one or more tracked pages.",
+          link: "/dashboard/competitor-tracking",
+        },
+      }).catch(() => {});
+
+      // Discord DM
       if (user.discordId) {
-        const changedLinks = newScans.filter((s) => s.hasChange).map((s) => `• ${s.summary}`).join("\n");
         await sendDMConditional(
           user.discordId,
           user.id,

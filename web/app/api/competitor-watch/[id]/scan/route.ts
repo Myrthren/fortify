@@ -108,5 +108,19 @@ export async function POST(
     }),
   ]);
 
+  // Create in-app notification for any changed pages
+  const changed = scansCreated.filter((s) => s.hasChange);
+  if (changed.length > 0) {
+    await db.notification.create({
+      data: {
+        userId,
+        type: "competitor_change",
+        title: `Competitor change: ${watch.name}`,
+        body: changed.map((s) => `• ${s.summary}`).join("\n"),
+        link: "/dashboard/competitor-tracking",
+      },
+    }).catch(() => {});
+  }
+
   return NextResponse.json({ scans: scansCreated, creditsUsed: COST });
 }
