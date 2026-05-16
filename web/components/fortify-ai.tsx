@@ -31,6 +31,7 @@ export function FortifyAI() {
   const [usage, setUsage] = useState<Usage | null>(null);
   const [showPacks, setShowPacks] = useState(false);
   const [buyingPack, setBuyingPack] = useState<number | null>(null);
+  const [btnHovered, setBtnHovered] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -95,7 +96,6 @@ export function FortifyAI() {
 
   async function buyPack(pack: number) {
     setBuyingPack(pack);
-    // In production this would go through PayPal. For now just record it.
     await fetch("/api/ai/chat/buy-pack", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -119,28 +119,45 @@ export function FortifyAI() {
 
   return (
     <>
-      {/* Floating button */}
-      <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold shadow-2xl transition hover:scale-105"
-        style={{
-          background: "linear-gradient(135deg, #c0c0c0, #e8e8e8, #a8a8a8, #d4d4d4)",
-          backgroundSize: "200% 200%",
-          animation: "silverShift 3s ease infinite",
-          color: "#1a1a1a",
-        }}
-      >
-        <span>✦</span>
-        Fortify AI
-      </button>
-
       <style>{`
-        @keyframes silverShift {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
+        @keyframes fortifyBtnGlow {
+          0%, 100% {
+            box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12);
+          }
+          50% {
+            box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.55), 0 0 20px rgba(255,255,255,0.12);
+          }
+        }
+        @keyframes fortifyTextGlow {
+          0%, 100% { text-shadow: none; }
+          50% { text-shadow: 0 0 10px rgba(255,255,255,0.95), 0 0 20px rgba(255,255,255,0.4); }
+        }
+        .fortify-btn-hovered {
+          animation: fortifyBtnGlow 1.6s ease infinite !important;
+        }
+        .fortify-btn-hovered .fortify-btn-text {
+          animation: fortifyTextGlow 1.6s ease infinite;
         }
       `}</style>
+
+      {/* Floating button — hidden while panel is open */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          onMouseEnter={() => setBtnHovered(true)}
+          onMouseLeave={() => setBtnHovered(false)}
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold transition-transform hover:scale-105 ${btnHovered ? "fortify-btn-hovered" : ""}`}
+          style={{
+            background: "linear-gradient(135deg, #0a0a0a 0%, #1e1e1e 50%, #111111 100%)",
+            color: "#ffffff",
+            border: "1px solid rgba(255,255,255,0.14)",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06)",
+          }}
+        >
+          <span className="fortify-btn-text">✦</span>
+          <span className="fortify-btn-text">Fortify AI</span>
+        </button>
+      )}
 
       {/* Chat panel */}
       {open && (

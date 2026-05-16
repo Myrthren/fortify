@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageSquare, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { TIERS } from "@/lib/tiers";
 import { isOwner } from "@/lib/owner";
@@ -54,8 +55,6 @@ const COMMUNITY = [
   { key: "deals",       href: "/dashboard/deals",       label: "Deal Board" },
   { key: "pods",        href: "/dashboard/pods",        label: "Mastermind Pods" },
   { key: "forums",      href: "/dashboard/forums",      label: "Forums" },
-  { key: "messages",    href: "/dashboard/messages",    label: "Messages" },
-  { key: "connections", href: "/dashboard/connections", label: "Connections" },
 ] as const;
 
 const ACCOUNT = [
@@ -69,11 +68,13 @@ const ALL_MOBILE = [
   { key: "dashboard",   href: "/dashboard",            label: "Dashboard" },
   ...TOOLS,
   ...COMMUNITY,
+  { key: "messages",    href: "/dashboard/messages",    label: "Messages" },
+  { key: "connections", href: "/dashboard/connections", label: "Connections" },
   ...ACCOUNT,
 ];
 
 const TOOLS_KEYS      = TOOLS.map((t) => t.key);
-const COMMUNITY_KEYS  = COMMUNITY.map((t) => t.key);
+const COMMUNITY_KEYS  = [...COMMUNITY.map((t) => t.key), "messages", "connections"] as string[];
 const ACCOUNT_KEYS    = ACCOUNT.map((t) => t.key);
 
 function ChevronDown() {
@@ -121,14 +122,22 @@ export function DashboardNav({
   user,
   active,
 }: {
-  user: { email: string | null; tier: Tier; discordId: string | null; credits?: number };
+  user: {
+    email: string | null;
+    username?: string | null;
+    tier: Tier;
+    discordId: string | null;
+    credits?: number;
+  };
   active: ActiveKey;
 }) {
-  const tierMeta      = TIERS[user.tier];
-  const userIsOwner   = isOwner(user.discordId);
-  const toolsActive   = TOOLS_KEYS.includes(active as any);
-  const communityActive = COMMUNITY_KEYS.includes(active as any);
-  const accountActive = ACCOUNT_KEYS.includes(active as any);
+  const tierMeta        = TIERS[user.tier];
+  const userIsOwner     = isOwner(user.discordId);
+  const toolsActive     = TOOLS_KEYS.includes(active as any);
+  const communityActive = COMMUNITY_KEYS.includes(active as string);
+  const accountActive   = ACCOUNT_KEYS.includes(active as any);
+
+  const displayName = user.username ? `@${user.username}` : user.email;
 
   return (
     <header className="sticky top-0 z-40 border-b border-bg-border bg-bg/80 backdrop-blur">
@@ -206,10 +215,38 @@ export function DashboardNav({
           </nav>
         </div>
 
-        {/* ── Right: meta + account dropdown ── */}
+        {/* ── Right: icons + meta + account dropdown ── */}
         <div className="flex items-center gap-2 text-sm">
+
+          {/* Connections icon */}
+          <Link
+            href="/dashboard/connections"
+            title="Connections"
+            className={`hidden rounded-md p-1.5 transition md:flex ${
+              active === "connections"
+                ? "text-text"
+                : "text-text-muted hover:bg-white/[0.04] hover:text-text"
+            }`}
+          >
+            <Users className="h-4 w-4" />
+          </Link>
+
+          {/* Messages icon */}
+          <Link
+            href="/dashboard/messages"
+            title="Messages"
+            className={`hidden rounded-md p-1.5 transition md:flex ${
+              active === "messages"
+                ? "text-text"
+                : "text-text-muted hover:bg-white/[0.04] hover:text-text"
+            }`}
+          >
+            <MessageSquare className="h-4 w-4" />
+          </Link>
+
+          {/* Username / email display */}
           <span className="hidden max-w-[160px] truncate text-text-muted md:inline">
-            {user.email}
+            {displayName}
           </span>
 
           <span className="rounded-md border border-bg-border bg-bg-panel px-2 py-1 text-xs font-medium">
@@ -261,7 +298,7 @@ export function DashboardNav({
             </div>
           </div>
 
-          {/* Mobile sign out (fallback, only when Account dropdown is hidden) */}
+          {/* Mobile sign out */}
           <form action={handleSignOut} className="sm:hidden">
             <button className="btn-ghost text-xs">Sign out</button>
           </form>
