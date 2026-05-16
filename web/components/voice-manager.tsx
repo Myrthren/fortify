@@ -26,6 +26,8 @@ export function VoiceManager({
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [samples, setSamples] = useState("");
+  const [scanUrl, setScanUrl] = useState("");
+  const [scanning, setScanning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const router = useRouter();
@@ -36,8 +38,31 @@ export function VoiceManager({
   function reset() {
     setName("");
     setSamples("");
+    setScanUrl("");
     setError(null);
     setCreating(false);
+  }
+
+  async function scanProfile() {
+    setScanning(true);
+    try {
+      const res = await fetch("/api/ai/voice/scan-profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: scanUrl }),
+      });
+      if (!res.ok) {
+        setError(await res.text());
+        return;
+      }
+      const data = await res.json();
+      setSamples((prev) => (prev ? prev + "\n---\n" + data.samples : data.samples));
+      setScanUrl("");
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setScanning(false);
+    }
   }
 
   async function create() {
@@ -130,6 +155,32 @@ export function VoiceManager({
                   onChange={(e) => setName(e.target.value)}
                   disabled={pending}
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-medium uppercase tracking-wide text-text-muted">
+                  Import from TikTok / YouTube (optional)
+                </label>
+                <p className="mt-1 mb-2 text-xs text-text-muted">
+                  Paste a TikTok or YouTube channel URL to auto-extract recent content as samples.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    className="input flex-1"
+                    placeholder="https://tiktok.com/@handle or https://youtube.com/@channel"
+                    value={scanUrl}
+                    onChange={(e) => setScanUrl(e.target.value)}
+                    disabled={pending || scanning}
+                  />
+                  <button
+                    type="button"
+                    onClick={scanProfile}
+                    disabled={pending || scanning || !scanUrl.trim()}
+                    className="btn-secondary text-xs whitespace-nowrap"
+                  >
+                    {scanning ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                    {scanning ? "Scanning…" : "Scan profile"}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="block text-xs font-medium uppercase tracking-wide text-text-muted">

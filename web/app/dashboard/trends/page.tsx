@@ -44,7 +44,7 @@ export default async function TrendsPage() {
           <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
             <h3 className="font-semibold">Trend Radar is a Pro+ feature</h3>
             <p className="mt-1 text-sm text-text-muted">
-              Track 3 topics on Pro (web), 10 on Elite (web + Reddit), unlimited on Apex.
+              Track 10 topics on Pro (web), unlimited on Elite (web + Reddit) and Apex.
             </p>
             <Link href="/pricing" className="btn-primary mt-4 w-fit">Upgrade</Link>
           </div>

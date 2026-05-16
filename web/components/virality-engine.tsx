@@ -95,7 +95,7 @@ export function ViralityEngine({
   // Add video form
   const [showAdd, setShowAdd] = useState(false);
   const [addTitle, setAddTitle] = useState("");
-  const [addUrl, setAddUrl] = useState("");
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [addDesc, setAddDesc] = useState("");
   const [addCategory, setAddCategory] = useState("");
   const [addPlatforms, setAddPlatforms] = useState<Platform[]>([]);
@@ -117,26 +117,22 @@ export function ViralityEngine({
   async function addItem() {
     setAddError(null);
     if (!addTitle.trim()) { setAddError("Title required"); return; }
-    if (!addUrl.trim()) { setAddError("Video URL required"); return; }
+    if (!videoFile) { setAddError("Video file required"); return; }
     if (!addPlatforms.length) { setAddError("Select at least one platform"); return; }
 
     setAddLoading(true);
     try {
-      const res = await fetch("/api/media", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: addTitle,
-          videoUrl: addUrl,
-          description: addDesc || null,
-          category: addCategory || null,
-          targetPlatforms: addPlatforms,
-        }),
-      });
+      const fd = new FormData();
+      fd.append("title", addTitle);
+      fd.append("description", addDesc);
+      fd.append("category", addCategory);
+      fd.append("targetPlatforms", JSON.stringify(addPlatforms));
+      fd.append("file", videoFile);
+      const res = await fetch("/api/media", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) { setAddError(data.error ?? "Failed"); return; }
       setItems((prev) => [data.item, ...prev]);
-      setAddTitle(""); setAddUrl(""); setAddDesc(""); setAddCategory(""); setAddPlatforms([]);
+      setAddTitle(""); setVideoFile(null); setAddDesc(""); setAddCategory(""); setAddPlatforms([]);
       setShowAdd(false);
       openItem(data.item);
     } catch { setAddError("Request failed"); }
@@ -254,10 +250,19 @@ export function ViralityEngine({
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-text-muted mb-1">
-                  Video URL <span className="text-text-dim">(direct link — Dropbox, Drive, etc.)</span>
+                <label className="block text-xs font-medium uppercase tracking-wide text-text-muted mb-1">
+                  Video file
                 </label>
-                <input className="input w-full font-mono text-xs" placeholder="https://..." value={addUrl} onChange={(e) => setAddUrl(e.target.value)} />
+                <input
+                  type="file"
+                  accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,video/mpeg"
+                  onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
+                  className="block w-full text-sm text-text-muted file:mr-3 file:rounded-md file:border-0 file:bg-bg-elevated file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-text hover:file:bg-white/10"
+                  disabled={addLoading}
+                />
+                {videoFile && (
+                  <p className="mt-1 text-xs text-text-muted">{videoFile.name} ({(videoFile.size / 1024 / 1024).toFixed(1)} MB)</p>
+                )}
               </div>
               <div>
                 <label className="block text-xs text-text-muted mb-1">Description <span className="text-text-dim">(optional)</span></label>

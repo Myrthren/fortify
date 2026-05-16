@@ -42,10 +42,9 @@ export default async function ViralityPage() {
   }
 
   const connections = socialConnections.map((c) => ({
-    id: c.id,
-    platform: c.platform,
-    handle: c.handle,
-    pageId: c.pageId,
+    platform: c.platform as "tiktok" | "youtube" | "facebook",
+    channelName: c.channelName ?? null,
+    pageId: c.pageId ?? null,
   }));
 
   return (

@@ -56,6 +56,8 @@ export function TrendRadar({
   const [redditPosts, setRedditPosts] = useState<RedditPost[] | null>(null);
   const [resultsLoading, setResultsLoading] = useState(false);
   const [pending, startTransition] = useTransition();
+  const [dnaInsight, setDnaInsight] = useState<string | null>(null);
+  const [loadingInsight, setLoadingInsight] = useState(false);
 
   const atCapacity = limit !== -1 && terms.length >= limit;
   const canReddit = tier === "ELITE" || tier === "APEX";
@@ -90,6 +92,7 @@ export function TrendRadar({
 
   useEffect(() => {
     if (!activeTermId) return;
+    setDnaInsight(null);
     if (source === "web") loadWebResults(activeTermId, freshness);
     else loadRedditPosts(activeTermId, freshness);
   }, [activeTermId, source, freshness, loadWebResults, loadRedditPosts]);
@@ -144,6 +147,28 @@ export function TrendRadar({
     if (!activeTermId) return;
     if (source === "web") loadWebResults(activeTermId, freshness);
     else loadRedditPosts(activeTermId, freshness);
+  }
+
+  async function loadInsight() {
+    if (!activeTermId) return;
+    setLoadingInsight(true);
+    setDnaInsight(null);
+    const results =
+      source === "web"
+        ? (webResults ?? [])
+        : (redditPosts ?? []).map((p) => ({ title: p.title, description: `r/${p.subreddit}` }));
+    const activeTerm = terms.find((t) => t.id === activeTermId);
+    try {
+      const res = await fetch("/api/trends/dna-insight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ term: activeTerm?.term ?? "", results }),
+      });
+      const data = await res.json();
+      setDnaInsight(data.insight ?? null);
+    } finally {
+      setLoadingInsight(false);
+    }
   }
 
   return (
@@ -344,6 +369,28 @@ export function TrendRadar({
               </div>
             </a>
           ))}
+
+          {/* Company DNA Insight (Elite+) */}
+          {canReddit && (webResults?.length || redditPosts?.length) && (
+            <div className="card p-4 mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-text-muted flex items-center gap-1.5">
+                  <span>🧬</span> Company DNA Insight
+                </p>
+                <button
+                  onClick={loadInsight}
+                  disabled={loadingInsight}
+                  className="btn-ghost text-xs"
+                >
+                  {loadingInsight ? <Loader2 className="h-3 w-3 animate-spin" /> : "Get insight"}
+                </button>
+              </div>
+              {dnaInsight && <p className="text-sm text-text leading-relaxed">{dnaInsight}</p>}
+              {!dnaInsight && !loadingInsight && (
+                <p className="text-xs text-text-muted">Get AI analysis of how this trend applies to your business.</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

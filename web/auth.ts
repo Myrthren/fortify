@@ -25,11 +25,19 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
   },
   events: {
-    async signIn({ user, account }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === "discord" && account.providerAccountId) {
+        const avatarHash = (profile as any)?.avatar;
+        const avatarUrl = avatarHash
+          ? `https://cdn.discordapp.com/avatars/${account.providerAccountId}/${avatarHash}.${avatarHash.startsWith("a_") ? "gif" : "png"}?size=128`
+          : null;
+
         await db.user.update({
           where: { id: user.id },
-          data: { discordId: account.providerAccountId },
+          data: {
+            discordId: account.providerAccountId,
+            ...(avatarUrl ? { avatarUrl, image: avatarUrl } : {}),
+          },
         });
       }
     },

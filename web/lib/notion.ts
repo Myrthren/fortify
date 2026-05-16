@@ -116,7 +116,7 @@ export async function exportCompetitorReport(
   return notion.pages.create({
     parent: { page_id: parentPageId },
     properties: {
-      title: [{ type: "text", text: { content: `Competitor Intel: ${competitor.name}` } }],
+      title: [{ type: "text", text: { content: `Competitor Intel: ${competitor.name}` } }] as any,
     },
     children,
   });
@@ -145,7 +145,7 @@ export async function exportContentIdeas(
   return notion.pages.create({
     parent: { page_id: parentPageId },
     properties: {
-      title: [{ type: "text", text: { content: `Content Ideas: ${niche}` } }],
+      title: [{ type: "text", text: { content: `Content Ideas: ${niche}` } }] as any,
     },
     children,
   });
@@ -185,7 +185,7 @@ export async function exportViralityReport(
   return notion.pages.create({
     parent: { page_id: parentPageId },
     properties: {
-      title: [{ type: "text", text: { content: `Virality Analysis: ${item.title}` } }],
+      title: [{ type: "text", text: { content: `Virality Analysis: ${item.title}` } }] as any,
     },
     children,
   });

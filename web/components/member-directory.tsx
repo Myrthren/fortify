@@ -2,8 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { Search, ExternalLink, Lock } from "lucide-react";
+import { Search, ExternalLink } from "lucide-react";
 
 type Member = {
   id: string;
@@ -130,7 +129,7 @@ function MemberModal({
   isPaid: boolean;
   onClose: () => void;
 }) {
-  const socials = isPaid ? member.socials ?? {} : {};
+  const socials = member.socials ?? {};
   return (
     <div
       onClick={onClose}
@@ -169,17 +168,7 @@ function MemberModal({
 
         <div className="mt-6">
           <h3 className="mb-2 text-xs uppercase tracking-wide text-text-muted">Contact</h3>
-          {!isPaid ? (
-            <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-4 text-sm">
-              <div className="flex items-center gap-2 font-medium">
-                <Lock className="h-4 w-4" /> Pro feature
-              </div>
-              <p className="mt-1 text-text-muted">
-                Upgrade to see member contact info + AI-powered matchmaking.
-              </p>
-              <Link href="/pricing" className="btn-primary mt-3 w-fit">Upgrade</Link>
-            </div>
-          ) : Object.keys(socials).length === 0 ? (
+          {Object.keys(socials).length === 0 ? (
             <p className="text-sm text-text-muted">No socials shared.</p>
           ) : (
             <ul className="space-y-1 text-sm">

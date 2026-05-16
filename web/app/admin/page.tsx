@@ -57,6 +57,17 @@ export default async function AdminPage() {
       </header>
 
       <main className="mx-auto max-w-4xl space-y-10 px-6 py-12">
+
+        {/* Quick links */}
+        <div className="flex flex-wrap gap-3">
+          <Link href="/admin/bans" className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-300 hover:bg-red-500/20 transition">
+            🔨 Ban Manager
+          </Link>
+          <Link href="/admin/moderation" className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-300 hover:bg-amber-500/20 transition">
+            🚩 Forum Moderation
+          </Link>
+        </div>
+
         {/* Tier switcher */}
         <section>
           <h2 className="text-lg font-semibold tracking-tight">Your tier</h2>

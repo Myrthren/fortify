@@ -88,14 +88,17 @@ export function LeadSourcer() {
             />
           </div>
         </div>
-        <button
-          onClick={search}
-          disabled={loading || !icp.trim()}
-          className="btn-primary"
-        >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-          {loading ? "Finding leads…" : "Find leads"}
-        </button>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={search}
+            disabled={loading || !icp.trim()}
+            className="btn-primary"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            {loading ? "Finding leads…" : "Find leads"}
+          </button>
+          <p className="text-xs text-text-muted">Costs 50 credits per search</p>
+        </div>
         {error && (
           <div className="rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
             {error}

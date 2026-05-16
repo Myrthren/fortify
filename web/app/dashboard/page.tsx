@@ -77,12 +77,16 @@ export default async function DashboardPage() {
                 <ToolLink href="/dashboard/shopify" name="Shopify" desc="Revenue, orders, and product performance" />
                 <ToolLink href="/dashboard/revenue" name="Revenue" desc="MRR, subscriptions, and charges from Stripe" />
                 <ToolLink href="/dashboard/virality" name="Virality Engine" desc="AI video scoring, trend analysis, and social publishing" />
+                <ToolLink href="/dashboard/company-dna" name="Company DNA" desc="Business memory — give AI context about your company" />
                 <ToolLink href="/dashboard/analytics" name="Analytics" desc="GA4, Search Console, and YouTube — coming soon" />
+                <ToolLink href="/dashboard/forums" name="Forums" desc="Community discussion boards" />
                 <ToolLink href="/dashboard/members" name="Member Directory" desc="Find founders, operators, creators" />
                 <ToolLink href="/dashboard/matchmaking" name="AI Matchmaking" desc="Top members worth talking to" />
                 <ToolLink href="/dashboard/profile" name="Your profile" desc="Set niche, skills, what you offer" />
                 <ToolLink href="/dashboard/deals" name="Deal Board" desc="Post and browse community deals" />
                 <ToolLink href="/dashboard/pods" name="Mastermind Pods" desc="Apex accountability circles" />
+                <ToolLink href="/dashboard/messages" name="Messages" desc="Chat with other Fortify members" />
+                <ToolLink href="/dashboard/connections" name="Connections" desc="Your network of Fortify members" />
               </ul>
             </Card>
 

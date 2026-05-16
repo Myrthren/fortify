@@ -86,7 +86,7 @@ export async function POST() {
 
     // Hydrate with member display info (paid users see contact info)
     const idToMember = new Map(candidates.map((c) => [c.id, c]));
-    const isPaid = me.tier !== "FREE";
+    const isPaid = true; // tier !== FREE already checked above
     const hydrated = matches
       .map((m) => {
         const c = idToMember.get(m.userId);

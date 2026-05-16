@@ -12,10 +12,17 @@ const CHANNELS: { value: Channel; label: string }[] = [
   { value: "cold-email", label: "Cold sales" },
 ];
 
-export function OutreachGenerator() {
+export function OutreachGenerator({
+  voices = [],
+}: {
+  voices?: { id: string; name: string; isActive: boolean }[];
+}) {
   const [channel, setChannel] = useState<Channel>("dm");
   const [prospect, setProspect] = useState("");
   const [offer, setOffer] = useState("");
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>(
+    () => voices.find((v) => v.isActive)?.id ?? ""
+  );
   const [message, setMessage] = useState<string | null>(null);
   const [voice, setVoice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -30,7 +37,12 @@ export function OutreachGenerator() {
       const res = await fetch("/api/ai/outreach", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ channel, prospect, offer }),
+        body: JSON.stringify({
+          channel,
+          prospect,
+          offer,
+          voiceId: selectedVoiceId || undefined,
+        }),
       });
       if (!res.ok) {
         const data = await res
@@ -107,6 +119,40 @@ export function OutreachGenerator() {
           disabled={loading}
         />
       </div>
+
+      {voices.length > 0 && (
+        <div>
+          <label className="block text-xs font-medium uppercase tracking-wide text-text-muted">
+            Brand voice (optional)
+          </label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedVoiceId("")}
+              className={`rounded-md border px-3 py-1.5 text-sm transition ${
+                selectedVoiceId === ""
+                  ? "border-white/40 bg-white/10 text-white"
+                  : "border-bg-border bg-bg-elevated text-text-muted hover:text-text"
+              }`}
+            >
+              No voice
+            </button>
+            {voices.map((v) => (
+              <button
+                key={v.id}
+                onClick={() => setSelectedVoiceId(v.id)}
+                className={`rounded-md border px-3 py-1.5 text-sm transition ${
+                  selectedVoiceId === v.id
+                    ? "border-white/40 bg-white/10 text-white"
+                    : "border-bg-border bg-bg-elevated text-text-muted hover:text-text"
+                }`}
+              >
+                {v.name}
+                {v.isActive && <span className="ml-1 text-[10px] opacity-60">(active)</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <button
         onClick={generate}

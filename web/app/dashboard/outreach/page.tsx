@@ -12,7 +12,14 @@ export default async function OutreachPage() {
   if (!session?.user) redirect("/login");
   const userId = (session.user as any).id;
 
-  const user = await db.user.findUnique({ where: { id: userId } });
+  const [user, voices] = await Promise.all([
+    db.user.findUnique({ where: { id: userId } }),
+    db.brandVoice.findMany({
+      where: { userId },
+      select: { id: true, name: true, isActive: true },
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
   if (!user) redirect("/login");
 
   const limit = TIER_LIMITS[user.tier].monthlyOutreach;
@@ -46,7 +53,7 @@ export default async function OutreachPage() {
           </div>
         ) : (
           <div className="card p-5 sm:p-6">
-            <OutreachGenerator />
+            <OutreachGenerator voices={voices} />
           </div>
         )}
       </main>

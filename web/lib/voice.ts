@@ -49,7 +49,7 @@ export async function generateInVoice(opts: {
         type: "text",
         text: opts.systemPrompt,
         cache_control: { type: "ephemeral" },
-      },
+      } as any,
     ],
     messages: [{ role: "user", content: opts.userPrompt }],
   });

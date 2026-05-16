@@ -16,7 +16,7 @@ export async function GET() {
   return NextResponse.json({ items });
 }
 
-// POST — add a video to the pool
+// POST — add a video to the pool (accepts multipart/form-data)
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
@@ -27,20 +27,33 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Virality Engine is an Elite/Apex feature." }, { status: 403 });
   }
 
-  const body = await req.json();
-  const title = (body.title ?? "").trim();
-  const videoUrl = (body.videoUrl ?? "").trim();
-  const description = (body.description ?? "").trim() || null;
-  const thumbnailUrl = (body.thumbnailUrl ?? "").trim() || null;
-  const category = (body.category ?? "").trim() || null;
-  const targetPlatforms: string[] = body.targetPlatforms ?? [];
+  const formData = await req.formData();
+  const title = (formData.get("title") as string ?? "").trim();
+  const description = (formData.get("description") as string ?? "").trim() || null;
+  const category = (formData.get("category") as string ?? "").trim() || null;
+  const targetPlatformsRaw = formData.get("targetPlatforms") as string ?? "[]";
+  const targetPlatforms: string[] = JSON.parse(targetPlatformsRaw);
+  const file = formData.get("file") as File | null;
 
   if (!title) return NextResponse.json({ error: "title required" }, { status: 400 });
-  if (!videoUrl) return NextResponse.json({ error: "videoUrl required" }, { status: 400 });
+  if (!file) return NextResponse.json({ error: "video file required" }, { status: 400 });
   if (!targetPlatforms.length) return NextResponse.json({ error: "select at least one platform" }, { status: 400 });
 
+  // Validate file type
+  const allowed = ["video/mp4", "video/quicktime", "video/x-msvideo", "video/webm", "video/mpeg"];
+  if (!allowed.includes(file.type)) {
+    return NextResponse.json(
+      { error: "Unsupported file type. Upload MP4, MOV, AVI, WebM, or MPEG." },
+      { status: 400 }
+    );
+  }
+
+  // TODO: In production, upload to Cloudflare R2 and store the CDN URL instead.
+  // For now, store a placeholder reference with filename and size.
+  const videoUrl = `[uploaded:${file.name}:${file.size}]`;
+
   const item = await db.mediaItem.create({
-    data: { userId, title, videoUrl, description, thumbnailUrl, category, targetPlatforms },
+    data: { userId, title, videoUrl, description, category, targetPlatforms },
   });
 
   return NextResponse.json({ item }, { status: 201 });

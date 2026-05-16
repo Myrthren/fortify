@@ -20,9 +20,13 @@ type ActiveKey =
   | "shopify"
   | "revenue"
   | "virality"
+  | "dna"
   | "members"
   | "deals"
   | "pods"
+  | "forums"
+  | "messages"
+  | "connections"
   | "profile"
   | "settings"
   | "support"
@@ -40,14 +44,18 @@ const TOOLS = [
   { key: "shopify",     href: "/dashboard/shopify",     label: "Shopify",      badge: null },
   { key: "revenue",     href: "/dashboard/revenue",     label: "Revenue",      badge: null },
   { key: "virality",    href: "/dashboard/virality",    label: "Virality",     badge: null },
+  { key: "dna",         href: "/dashboard/company-dna", label: "Company DNA",  badge: null },
   { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics",    badge: "Soon" },
   { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking",  badge: null },
 ] as const;
 
 const COMMUNITY = [
-  { key: "members", href: "/dashboard/members", label: "Members" },
-  { key: "deals",   href: "/dashboard/deals",   label: "Deal Board" },
-  { key: "pods",    href: "/dashboard/pods",    label: "Mastermind Pods" },
+  { key: "members",     href: "/dashboard/members",     label: "Members" },
+  { key: "deals",       href: "/dashboard/deals",       label: "Deal Board" },
+  { key: "pods",        href: "/dashboard/pods",        label: "Mastermind Pods" },
+  { key: "forums",      href: "/dashboard/forums",      label: "Forums" },
+  { key: "messages",    href: "/dashboard/messages",    label: "Messages" },
+  { key: "connections", href: "/dashboard/connections", label: "Connections" },
 ] as const;
 
 const ACCOUNT = [

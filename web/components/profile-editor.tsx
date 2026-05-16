@@ -5,6 +5,53 @@ import { useRouter } from "next/navigation";
 import { Loader2, Check } from "lucide-react";
 import { TagInput } from "./tag-input";
 
+const SKILLS_SUGGESTIONS = [
+  "Cold email", "SEO", "Paid ads", "Content marketing", "Copywriting",
+  "No-code", "Product design", "UX/UI", "Web development", "Mobile development",
+  "Python", "JavaScript", "TypeScript", "React", "Next.js", "Node.js",
+  "Data analysis", "Machine learning", "AI/LLM integration", "Prompt engineering",
+  "Sales", "Business development", "B2B sales", "Account management",
+  "Growth hacking", "Community building", "Brand strategy", "PR",
+  "Financial modelling", "Fundraising", "Pitch decks", "VC networks",
+  "Operations", "Project management", "Recruiting", "HR",
+  "Video editing", "Graphic design", "3D modelling", "Motion graphics",
+  "Podcast production", "YouTube", "TikTok content", "Instagram growth",
+  "Shopify", "E-commerce", "Dropshipping", "Amazon FBA",
+  "Real estate", "Trading", "Crypto", "DeFi",
+  "Public speaking", "Coaching", "Consulting",
+];
+
+const LOOKING_FOR_SUGGESTIONS = [
+  "Co-founder", "Technical co-founder", "Business co-founder",
+  "CTO", "Fractional CTO", "Lead developer", "Designer",
+  "Marketing partner", "Sales partner", "Growth consultant",
+  "Investors", "Angel investors", "VCs", "Pre-seed funding",
+  "Advisors", "Mentors", "Industry experts",
+  "Distribution partners", "Affiliate partners", "Integration partners",
+  "Early customers", "Beta testers", "Product feedback",
+  "Content creators", "Influencers", "Brand ambassadors",
+  "Accountant", "Lawyer", "CFO", "Operations manager",
+  "Community managers", "Customer support",
+  "Design feedback", "Code review", "Copy review",
+  "Social media help", "SEO help", "Paid ads help",
+];
+
+const CAN_OFFER_SUGGESTIONS = [
+  "SEO audits", "Landing page reviews", "Funnel analysis",
+  "Copywriting feedback", "Pitch deck review", "Business strategy calls",
+  "Introductions to VCs", "Introductions to founders", "Warm intros",
+  "Code review", "Technical advice", "Architecture review",
+  "Design critique", "Brand feedback", "UX review",
+  "Content strategy", "Social media advice", "Paid ads audits",
+  "Cold email templates", "Sales process review", "CRM setup help",
+  "Financial modelling", "Pricing strategy", "Go-to-market advice",
+  "Community building advice", "Discord setup", "Notion templates",
+  "Shopify setup", "E-commerce advice", "Amazon FBA guidance",
+  "Recruiting advice", "Hiring frameworks", "Interview help",
+  "Accountability partnership", "Weekly check-ins", "Mastermind group",
+  "Product roadmap review", "Market research", "Competitor analysis",
+];
+
 const SOCIAL_FIELDS: { key: string; label: string; placeholder: string }[] = [
   { key: "twitter", label: "Twitter / X", placeholder: "@yourhandle" },
   { key: "linkedin", label: "LinkedIn", placeholder: "linkedin.com/in/you" },
@@ -78,6 +125,7 @@ export function ProfileEditor({ initial }: { initial: Profile | null }) {
           value={skills}
           onChange={setSkills}
           placeholder="e.g. cold email, no-code, growth loops"
+          suggestions={SKILLS_SUGGESTIONS}
         />
       </div>
 
@@ -88,6 +136,7 @@ export function ProfileEditor({ initial }: { initial: Profile | null }) {
           value={lookingFor}
           onChange={setLookingFor}
           placeholder="e.g. fractional CTO, design feedback, distribution partners"
+          suggestions={LOOKING_FOR_SUGGESTIONS}
         />
       </div>
 
@@ -98,13 +147,14 @@ export function ProfileEditor({ initial }: { initial: Profile | null }) {
           value={canOffer}
           onChange={setCanOffer}
           placeholder="e.g. SEO audits, intros to VCs, copywriting reviews"
+          suggestions={CAN_OFFER_SUGGESTIONS}
         />
       </div>
 
       <div>
         <Label>Socials</Label>
         <p className="mb-2 text-xs text-text-muted">
-          Visible to Pro+ members in the directory.
+          Visible to all members with an account.
         </p>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {SOCIAL_FIELDS.map((f) => (

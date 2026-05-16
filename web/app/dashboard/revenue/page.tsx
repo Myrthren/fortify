@@ -10,9 +10,10 @@ export default async function RevenuePage() {
   if (!session?.user) redirect("/login");
   const userId = (session.user as any).id;
 
-  const [user, stripeConn] = await Promise.all([
+  const [user, stripeConn, paypalConn] = await Promise.all([
     db.user.findUnique({ where: { id: userId } }),
     db.stripeConnection.findUnique({ where: { userId } }),
+    db.paypalConnection.findUnique({ where: { userId } }),
   ]);
   if (!user) redirect("/login");
 
@@ -32,7 +33,7 @@ export default async function RevenuePage() {
             </Link>
           )}
         </div>
-        <RevenueDashboard connected={!!stripeConn} />
+        <RevenueDashboard connected={!!stripeConn} paypalConnected={!!paypalConn} />
       </main>
     </div>
   );

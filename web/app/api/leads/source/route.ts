@@ -32,6 +32,20 @@ export async function POST(req: Request) {
     );
   }
 
+  // Check credits
+  if (user.credits < 50) {
+    return NextResponse.json(
+      { error: "Lead sourcing costs 50 credits. You don't have enough credits.", upgrade: true },
+      { status: 402 }
+    );
+  }
+
+  // Deduct credits
+  await db.user.update({ where: { id: userId }, data: { credits: { decrement: 50 } } });
+  await db.creditTransaction.create({
+    data: { userId, amount: -50, source: "spend_leads" },
+  });
+
   const body = await req.json().catch(() => ({}));
   const icp: string = (body.icp ?? "").trim();
   const location: string = (body.location ?? "").trim();

@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { AnnouncementBar } from "@/components/announcement-bar";
+import { FortifyAI } from "@/components/fortify-ai";
 
 export default async function DashboardLayout({
   children,
@@ -19,6 +20,7 @@ export default async function DashboardLayout({
     <>
       <AnnouncementBar announcements={announcements} />
       {children}
+      <FortifyAI />
     </>
   );
 }

@@ -46,10 +46,11 @@ export function FunnelAuditor() {
         body: JSON.stringify({ url }),
       });
       if (!res.ok) {
-        const data = await res
-          .json()
-          .catch(async () => ({ error: await res.text() }));
-        throw new Error(data.error ?? "Audit failed");
+        let errText = "";
+        try { errText = await res.text(); } catch {}
+        let parsed: any = {};
+        try { parsed = JSON.parse(errText); } catch {}
+        throw new Error(parsed.error ?? errText ?? "Audit failed");
       }
       const data = await res.json();
       setAudit(data.audit);

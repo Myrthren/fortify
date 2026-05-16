@@ -44,10 +44,12 @@ export async function POST(req: Request) {
     prospect?: string;
     offer?: string;
     channel?: OutreachChannel;
+    voiceId?: string;
   };
   const prospect = body.prospect?.trim();
   const offer = body.offer?.trim();
   const channel = body.channel ?? "dm";
+  const voiceId = body.voiceId;
 
   if (!prospect || prospect.length < 20) {
     return new NextResponse("Need at least 20 chars describing the prospect", {
@@ -63,10 +65,9 @@ export async function POST(req: Request) {
     return new NextResponse("Invalid channel", { status: 400 });
   }
 
-  const activeVoice = await db.brandVoice.findFirst({
-    where: { userId, isActive: true },
-    select: { systemPrompt: true, name: true },
-  });
+  const activeVoice = voiceId
+    ? await db.brandVoice.findFirst({ where: { id: voiceId, userId }, select: { systemPrompt: true, name: true } })
+    : await db.brandVoice.findFirst({ where: { userId, isActive: true }, select: { systemPrompt: true, name: true } });
 
   let message: string;
   try {

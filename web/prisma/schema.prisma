@@ -52,38 +52,57 @@ enum Tier {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  discordId     String?   @unique
-  tier          Tier      @default(FREE)
-  xp            Int       @default(0)
-  streak        Int       @default(0)
-  credits       Int       @default(0)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id                  String    @id @default(cuid())
+  name                String?
+  email               String?   @unique
+  emailVerified       DateTime?
+  image               String?
+  discordId           String?   @unique
+  avatarUrl           String?
+  username            String?   @unique
+  usernameChangesUsed Int       @default(0)
+  showDiscordUsername Boolean   @default(false)
+  allowMessages       Boolean   @default(true)
+  allowConnections    Boolean   @default(true)
+  softwareBanned      Boolean   @default(false)
+  platformBanned      Boolean   @default(false)
+  tier                Tier      @default(FREE)
+  xp                  Int       @default(0)
+  streak              Int       @default(0)
+  credits             Int       @default(0)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  accounts           Account[]
-  sessions           Session[]
-  subscription       Subscription?
-  brandVoices        BrandVoice[]
-  watchTerms         WatchTerm[]
-  competitors        Competitor[]
-  generations        Generation[]
-  profile            Profile?
-  notificationPrefs  NotificationPrefs?
-  dealPosts          DealPost[]
-  pods               PodMember[]
-  creditTransactions CreditTransaction[]
-  metaConnection     MetaConnection?
-  googleConnection   GoogleConnection?
-  shopifyConnection  ShopifyConnection?
-  stripeConnection   StripeConnection?
-  notionConnection   NotionConnection?
-  socialConnections  SocialConnection[]
-  mediaItems         MediaItem[]
+  accounts             Account[]
+  sessions             Session[]
+  subscription         Subscription?
+  brandVoices          BrandVoice[]
+  watchTerms           WatchTerm[]
+  competitors          Competitor[]
+  generations          Generation[]
+  profile              Profile?
+  notificationPrefs    NotificationPrefs?
+  dealPosts            DealPost[]
+  pods                 PodMember[]
+  creditTransactions   CreditTransaction[]
+  metaConnection       MetaConnection?
+  googleConnection     GoogleConnection?
+  shopifyConnection    ShopifyConnection?
+  stripeConnection     StripeConnection?
+  notionConnection     NotionConnection?
+  socialConnections    SocialConnection[]
+  mediaItems           MediaItem[]
+  companyDna           CompanyDna?
+  aiSessions           AiSession[]
+  aiCreditPacks        AiCreditPack[]
+  forumPosts           ForumPost[]
+  forumComments        ForumComment[]
+  sentMessages         UserMessage[]    @relation("SentMessages")
+  receivedMessages     UserMessage[]    @relation("ReceivedMessages")
+  sentConnections      UserConnection[] @relation("SentConnections")
+  receivedConnections  UserConnection[] @relation("ReceivedConnections")
+  bans                 BanRecord[]
+  paypalConnections    PaypalConnection[]
 }
 
 model Announcement {
@@ -308,6 +327,153 @@ model NotificationPrefs {
   dmShopifyMilestone     Boolean @default(true)
   dmStripeMrrDrop        Boolean @default(true)
   dmContentBrief         Boolean @default(true)
+}
+
+// ─── Company DNA ─────────────────────────────────────────
+model CompanyDna {
+  id         String   @id @default(cuid())
+  userId     String   @unique
+  entries    Json     @default("[]") // {id,label,content,chars,createdAt}[]
+  totalChars Int      @default(0)
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Fortify AI sessions ──────────────────────────────────
+model AiSession {
+  id          String   @id @default(cuid())
+  userId      String
+  startedAt   DateTime @default(now())
+  expiresAt   DateTime // startedAt + 24h
+  usedCostGbp Float    @default(0)
+  budgetGbp   Float
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AiCreditPack {
+  id          String    @id @default(cuid())
+  userId      String
+  pack        Int       // 1 | 2 | 3
+  budgetGbp   Float
+  usedCostGbp Float     @default(0)
+  purchasedAt DateTime  @default(now())
+  exhaustedAt DateTime?
+  orderId     String?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── Forums ───────────────────────────────────────────────
+model Forum {
+  id          String      @id @default(cuid())
+  title       String
+  description String?
+  createdById String
+  pinned      Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  posts       ForumPost[]
+}
+
+model ForumPost {
+  id        String         @id @default(cuid())
+  forumId   String
+  userId    String
+  title     String
+  body      String         @db.Text
+  pinned    Boolean        @default(false)
+  flagged   Boolean        @default(false)
+  deleted   Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  forum     Forum          @relation(fields: [forumId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments  ForumComment[]
+
+  @@index([forumId, createdAt])
+}
+
+model ForumComment {
+  id        String    @id @default(cuid())
+  postId    String
+  userId    String
+  body      String    @db.Text
+  flagged   Boolean   @default(false)
+  deleted   Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  post      ForumPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId, createdAt])
+}
+
+// ─── User messaging ───────────────────────────────────────
+model UserMessage {
+  id         String   @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  body       String   @db.Text
+  read       Boolean  @default(false)
+  flagged    Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  from       User     @relation("SentMessages", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to         User     @relation("ReceivedMessages", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@index([toUserId, read])
+  @@index([fromUserId])
+}
+
+// ─── Connections (LinkedIn-style) ────────────────────────
+enum ConnectionStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+model UserConnection {
+  id         String           @id @default(cuid())
+  fromUserId String
+  toUserId   String
+  status     ConnectionStatus @default(PENDING)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  from       User             @relation("SentConnections", fields: [fromUserId], references: [id], onDelete: Cascade)
+  to         User             @relation("ReceivedConnections", fields: [toUserId], references: [id], onDelete: Cascade)
+
+  @@unique([fromUserId, toUserId])
+}
+
+// ─── Ban records ──────────────────────────────────────────
+enum BanType {
+  PLATFORM
+  SOFTWARE
+}
+
+model BanRecord {
+  id          String    @id @default(cuid())
+  userId      String
+  type        BanType
+  reason      String?
+  permanent   Boolean   @default(false)
+  expiresAt   DateTime?
+  createdAt   DateTime  @default(now())
+  unbannedAt  DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─── PayPal connection (for Revenue feature) ─────────────
+model PaypalConnection {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  merchantId  String
+  clientId    String
+  accessToken String   @db.Text
+  expiresAt   DateTime
+  connectedAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Generation {

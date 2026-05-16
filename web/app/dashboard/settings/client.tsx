@@ -30,6 +30,12 @@ type Prefs = {
   dmContentBrief: boolean;
 };
 
+type UserPrefs = {
+  showDiscordUsername: boolean;
+  allowMessages: boolean;
+  allowConnections: boolean;
+};
+
 const OWNER_ID = "731207920007643167";
 
 const MANDATORY = [
@@ -62,6 +68,40 @@ const OWNER_TOGGLES: { key: keyof Prefs; label: string; desc: string }[] = [
   { key: "dmOwnerChurn",  label: "Churn alert",          desc: "Who cancelled or failed payment and their tier." },
 ];
 
+const SOCIAL_TOGGLES: { key: keyof UserPrefs; label: string; desc: string }[] = [
+  { key: "showDiscordUsername", label: "Show Discord username in search", desc: "When others search for you, your Discord username will be shown." },
+  { key: "allowMessages",       label: "Allow message requests",         desc: "Other members can send you direct messages." },
+  { key: "allowConnections",    label: "Allow connection requests",      desc: "Other members can send you connection requests." },
+];
+
+function Toggle({
+  enabled,
+  busy,
+  onChange,
+}: {
+  enabled: boolean;
+  busy: boolean;
+  onChange: (v: boolean) => void;
+}) {
+  return (
+    <button
+      disabled={busy}
+      onClick={() => onChange(!enabled)}
+      className={`ml-4 shrink-0 relative inline-flex h-5 w-9 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50 ${
+        enabled ? "bg-white" : "bg-white/20"
+      }`}
+      role="switch"
+      aria-checked={enabled}
+    >
+      <span
+        className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-bg shadow-sm transition-transform ${
+          enabled ? "translate-x-4" : "translate-x-0"
+        }`}
+      />
+    </button>
+  );
+}
+
 export function SettingsClient({
   user,
   meta,
@@ -69,6 +109,9 @@ export function SettingsClient({
   shopify,
   stripe,
   notion,
+  username: initialUsername,
+  usernameChangesUsed,
+  credits,
 }: {
   user: { email: string | null; tier: Tier; discordId: string | null };
   meta: { connected: boolean; accountName: string | null };
@@ -76,12 +119,34 @@ export function SettingsClient({
   shopify: { connected: boolean; shop: string | null };
   stripe: { connected: boolean };
   notion: { connected: boolean; workspaceName: string | null; rootPageId: string | null };
+  username: string | null;
+  usernameChangesUsed: number;
+  credits: number;
 }) {
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
 
+  // User prefs (social/privacy)
+  const [userPrefs, setUserPrefs] = useState<UserPrefs | null>(null);
+  const [savingPref, setSavingPref] = useState<string | null>(null);
+
+  // Username state
+  const [username, setUsername] = useState(initialUsername ?? "");
+  const [usernameInput, setUsernameInput] = useState(initialUsername ?? "");
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [savingUsername, setSavingUsername] = useState(false);
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameSuccess, setUsernameSuccess] = useState(false);
+
   useEffect(() => {
     fetch("/api/notifications/prefs").then((r) => r.json()).then((d) => setPrefs(d));
+    fetch("/api/user/prefs").then((r) => r.json()).then((d) => {
+      setUserPrefs({
+        showDiscordUsername: d.showDiscordUsername ?? false,
+        allowMessages: d.allowMessages ?? true,
+        allowConnections: d.allowConnections ?? true,
+      });
+    });
   }, []);
 
   async function toggle(key: keyof Prefs, value: boolean) {
@@ -103,7 +168,50 @@ export function SettingsClient({
     }
   }
 
+  async function toggleUserPref(key: keyof UserPrefs, value: boolean) {
+    if (!userPrefs) return;
+    setSavingPref(key);
+    const optimistic = { ...userPrefs, [key]: value };
+    setUserPrefs(optimistic);
+    try {
+      const res = await fetch("/api/user/prefs", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ [key]: value }),
+      });
+      if (!res.ok) setUserPrefs(userPrefs);
+    } catch {
+      setUserPrefs(userPrefs);
+    } finally {
+      setSavingPref(null);
+    }
+  }
+
+  async function saveUsername() {
+    setSavingUsername(true);
+    setUsernameError(null);
+    setUsernameSuccess(false);
+    try {
+      const res = await fetch("/api/user/username", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: usernameInput }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setUsernameError(data.error ?? "Failed to save username.");
+      } else {
+        setUsername(data.username);
+        setUsernameSuccess(true);
+        setEditingUsername(false);
+      }
+    } finally {
+      setSavingUsername(false);
+    }
+  }
+
   const isOwner = user.discordId === OWNER_ID;
+  const isFreeUsername = usernameChangesUsed === 0 || !username;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -139,6 +247,93 @@ export function SettingsClient({
 
         {/* Meta Ads connection */}
         <MetaConnectSection connected={meta.connected} accountName={meta.accountName} />
+
+        {/* Username */}
+        <section className="mb-8">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Username
+          </h2>
+          <div className="card p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">
+                  {username ? `@${username}` : <span className="text-text-muted">No username set</span>}
+                </p>
+                <p className="mt-0.5 text-xs text-text-muted">
+                  {isFreeUsername
+                    ? "Your first username change is free."
+                    : `Each change costs 1,000 credits. You have ${credits.toLocaleString()} credits.`}
+                </p>
+              </div>
+              {!editingUsername && (
+                <button
+                  onClick={() => { setEditingUsername(true); setUsernameInput(username); setUsernameError(null); setUsernameSuccess(false); }}
+                  className="shrink-0 rounded-md border border-bg-border px-3 py-1.5 text-sm text-text-muted transition hover:border-white/20 hover:text-text"
+                >
+                  {username ? "Change" : "Set username"}
+                </button>
+              )}
+            </div>
+
+            {editingUsername && (
+              <div className="mt-4 space-y-3">
+                <div>
+                  <input
+                    type="text"
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value)}
+                    placeholder="Enter username (3-20 chars, a-z 0-9 _)"
+                    className="input w-full"
+                    maxLength={20}
+                  />
+                  {usernameError && <p className="mt-1.5 text-xs text-red-400">{usernameError}</p>}
+                  {usernameSuccess && <p className="mt-1.5 text-xs text-green-400">Username saved successfully.</p>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={saveUsername}
+                    disabled={savingUsername || !usernameInput.trim()}
+                    className="rounded-md bg-white px-4 py-1.5 text-sm font-medium text-bg transition hover:bg-white/90 disabled:opacity-50"
+                  >
+                    {savingUsername ? "Saving..." : "Save"}
+                  </button>
+                  <button
+                    onClick={() => { setEditingUsername(false); setUsernameError(null); }}
+                    className="rounded-md border border-bg-border px-4 py-1.5 text-sm text-text-muted transition hover:border-white/20 hover:text-text"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Privacy & Social */}
+        <section className="mb-8">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Privacy &amp; Social
+          </h2>
+          <div className="card divide-y divide-bg-border">
+            {SOCIAL_TOGGLES.map((item) => {
+              const enabled = userPrefs ? userPrefs[item.key] : true;
+              const busy = savingPref === item.key;
+              return (
+                <div key={item.key} className="flex items-center justify-between px-5 py-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">{item.label}</p>
+                    <p className="mt-0.5 text-xs text-text-muted">{item.desc}</p>
+                  </div>
+                  <Toggle
+                    enabled={enabled}
+                    busy={busy || !userPrefs}
+                    onChange={(v) => toggleUserPref(item.key, v)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </section>
 
         {/* Mandatory notifications */}
         <section className="mb-8">
@@ -184,21 +379,7 @@ export function SettingsClient({
                     </div>
                     <p className="mt-0.5 text-xs text-text-muted">{item.desc}</p>
                   </div>
-                  <button
-                    disabled={busy || !prefs}
-                    onClick={() => toggle(item.key, !enabled)}
-                    className={`ml-4 shrink-0 relative inline-flex h-5 w-9 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50 ${
-                      enabled ? "bg-white" : "bg-white/20"
-                    }`}
-                    role="switch"
-                    aria-checked={enabled}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-bg shadow-sm transition-transform ${
-                        enabled ? "translate-x-4" : "translate-x-0"
-                      }`}
-                    />
-                  </button>
+                  <Toggle enabled={enabled} busy={busy || !prefs} onChange={(v) => toggle(item.key, v)} />
                 </div>
               );
             })}
@@ -221,21 +402,7 @@ export function SettingsClient({
                       <p className="text-sm font-medium">{item.label}</p>
                       <p className="mt-0.5 text-xs text-text-muted">{item.desc}</p>
                     </div>
-                    <button
-                      disabled={busy || !prefs}
-                      onClick={() => toggle(item.key, !enabled)}
-                      className={`ml-4 shrink-0 relative inline-flex h-5 w-9 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none disabled:opacity-50 ${
-                        enabled ? "bg-white" : "bg-white/20"
-                      }`}
-                      role="switch"
-                      aria-checked={enabled}
-                    >
-                      <span
-                        className={`pointer-events-none inline-block h-4 w-4 rounded-full bg-bg shadow-sm transition-transform ${
-                          enabled ? "translate-x-4" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
+                    <Toggle enabled={enabled} busy={busy || !prefs} onChange={(v) => toggle(item.key, v)} />
                   </div>
                 );
               })}

@@ -34,6 +34,9 @@ export default async function SettingsPage() {
         workspaceName: notionConn?.workspaceName ?? null,
         rootPageId: notionConn?.rootPageId ?? null,
       }}
+      username={user.username ?? null}
+      usernameChangesUsed={user.usernameChangesUsed}
+      credits={user.credits}
     />
   );
 }
