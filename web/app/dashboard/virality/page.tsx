@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { ViralityEngine } from "@/components/virality-engine";
+import { AutoSlideshow } from "@/components/auto-slideshow";
 import { TIER_LIMITS } from "@/lib/tiers";
 import Link from "next/link";
 
@@ -77,6 +78,10 @@ export default async function ViralityPage() {
           initialConnections={connections}
           canAutoPublish={canAutoPublish}
         />
+
+        <div className="mt-6">
+          <AutoSlideshow credits={user.credits} />
+        </div>
       </main>
     </div>
   );

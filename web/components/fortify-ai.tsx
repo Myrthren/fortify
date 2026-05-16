@@ -11,6 +11,7 @@ type Msg = {
   role: "user" | "assistant";
   content: string;
   hasFile?: boolean;
+  imagePreview?: string; // data URL shown in bubble
   actions?: ActionResult[];
 };
 
@@ -93,6 +94,7 @@ export function FortifyAI() {
   const [loadingHistory,   setLoadingHistory]   = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [savingSession,    setSavingSession]    = useState(false);
+  const [imagePreview,     setImagePreview]     = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
 
@@ -103,6 +105,19 @@ export function FortifyAI() {
     if (open || launching) return;
     setLaunching(true);
     setTimeout(() => { setOpen(true); setLaunching(false); }, 210);
+  }
+
+  function handlePaste(e: React.ClipboardEvent) {
+    const items = Array.from(e.clipboardData.items);
+    const imageItem = items.find((item) => item.type.startsWith("image/"));
+    if (!imageItem) return;
+    e.preventDefault();
+    const blob = imageItem.getAsFile();
+    if (!blob) return;
+    setFile(blob);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string ?? null);
+    reader.readAsDataURL(blob);
   }
 
   async function fetchUsage() {
@@ -144,6 +159,8 @@ export function FortifyAI() {
     setMessages([]);
     setCurrentSessionId(null);
     setShowHistory(false);
+    setFile(null);
+    setImagePreview(null);
   }
 
   async function loadSession(id: string) {
@@ -172,7 +189,12 @@ export function FortifyAI() {
     if (!input.trim() && !file) return;
     if (usage?.sessionExhausted && !usage.hasPackCredits) { setShowPacks(true); return; }
 
-    const userMsg: Msg = { role: "user", content: input, hasFile: !!file };
+    const userMsg: Msg = {
+      role: "user",
+      content: input,
+      hasFile: !!file,
+      imagePreview: imagePreview ?? undefined,
+    };
     setMessages((p) => [...p, userMsg]);
     setInput("");
     setSending(true);
@@ -188,6 +210,7 @@ export function FortifyAI() {
         fd.append("file", file);
         res = await fetch("/api/ai/chat", { method: "POST", body: fd });
         setFile(null);
+        setImagePreview(null);
       } else {
         res = await fetch("/api/ai/chat", {
           method: "POST",
@@ -292,7 +315,10 @@ export function FortifyAI() {
       {/* ── Chat panel ── */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6 pointer-events-none">
-          <div className="fortify-panel-in pointer-events-auto flex flex-col w-full max-w-md h-[620px] rounded-2xl border border-bg-border bg-bg shadow-2xl overflow-hidden">
+          <div
+            className="fortify-panel-in pointer-events-auto flex flex-col w-full max-w-md h-[620px] rounded-2xl border border-bg-border bg-bg shadow-2xl overflow-hidden"
+            onPaste={handlePaste}
+          >
 
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-bg-border bg-bg-panel">
@@ -406,7 +432,17 @@ export function FortifyAI() {
                         : "bg-bg-panel border border-bg-border text-text"
                     }`}
                   >
-                    {m.hasFile && <p className="text-[10px] text-text-muted mb-1">📎 File attached</p>}
+                    {m.imagePreview && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={m.imagePreview}
+                        alt="attached"
+                        className="mb-2 max-h-40 w-full rounded-lg object-cover border border-white/10"
+                      />
+                    )}
+                    {m.hasFile && !m.imagePreview && (
+                      <p className="text-[10px] text-text-muted mb-1">📎 File attached</p>
+                    )}
                     <div className="whitespace-pre-wrap">{renderContent(m.content)}</div>
 
                     {/* Action result chips */}
@@ -462,10 +498,31 @@ export function FortifyAI() {
             {(!usage?.sessionExhausted || usage.hasPackCredits) && (
               <div className="border-t border-bg-border p-3">
                 {file && (
-                  <div className="mb-2 flex items-center gap-2 text-xs text-text-muted">
-                    <Paperclip className="h-3 w-3" />
-                    {file.name}
-                    <button onClick={() => setFile(null)} className="hover:text-text"><X className="h-3 w-3" /></button>
+                  <div className="mb-2 flex items-center gap-2">
+                    {imagePreview ? (
+                      <div className="relative shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={imagePreview}
+                          alt="pasted"
+                          className="h-14 w-14 rounded-lg object-cover border border-bg-border"
+                        />
+                        <button
+                          onClick={() => { setFile(null); setImagePreview(null); }}
+                          className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-bg-elevated border border-bg-border text-text-muted hover:text-text"
+                        >
+                          <X className="h-2.5 w-2.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <Paperclip className="h-3 w-3 text-text-muted" />
+                        <span className="text-xs text-text-muted truncate max-w-[180px]">{file.name}</span>
+                        <button onClick={() => setFile(null)} className="text-text-muted hover:text-text ml-auto">
+                          <X className="h-3 w-3" />
+                        </button>
+                      </>
+                    )}
                   </div>
                 )}
                 <div className="flex gap-2 items-center">

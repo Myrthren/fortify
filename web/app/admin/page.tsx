@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import { TierSwitcher } from "@/components/tier-switcher";
 import { AdminCreditAdjuster } from "@/components/admin-credit-adjuster";
 import { AdminAnnouncementManager } from "@/components/admin-announcement-manager";
+import { AdminResetLimits } from "@/components/admin-reset-limits";
 import Link from "next/link";
 
 export default async function AdminPage() {
@@ -67,6 +68,17 @@ export default async function AdminPage() {
             🚩 Forum Moderation
           </Link>
         </div>
+
+        {/* Reset limits */}
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">Dev tools</h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Reset your own account limits for testing. Deletes AI sessions, recent generations, restores credits.
+          </p>
+          <div className="mt-4">
+            <AdminResetLimits userId={user.id} />
+          </div>
+        </section>
 
         {/* Tier switcher */}
         <section>

@@ -34,7 +34,10 @@ type ActiveKey =
   | "profile"
   | "settings"
   | "support"
-  | "credits";
+  | "credits"
+  | "recon"
+  | "competitor-watch"
+  | "workflows";
 
 type ToolItem = { key: string; href: string; label: string; badge?: string | null; minTier?: "PRO" | "ELITE" | "APEX" };
 
@@ -54,6 +57,7 @@ const TOOL_GROUPS: { heading: string; items: ToolItem[] }[] = [
       { key: "outreach",    href: "/dashboard/outreach",    label: "Outreach",           minTier: "PRO" },
       { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing",      minTier: "PRO" },
       { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking",        minTier: "PRO" },
+      { key: "recon", href: "/dashboard/recon", label: "Fortify Recon", minTier: "ELITE" as const },
     ],
   },
   {
@@ -62,6 +66,7 @@ const TOOL_GROUPS: { heading: string; items: ToolItem[] }[] = [
       { key: "audit",       href: "/dashboard/audit",       label: "Funnel Audit",       minTier: "PRO" },
       { key: "trends",      href: "/dashboard/trends",      label: "Trend Radar",        minTier: "PRO" },
       { key: "competitors", href: "/dashboard/competitors", label: "Competitors",        minTier: "PRO" },
+      { key: "competitor-watch", href: "/dashboard/competitor-tracking", label: "Competitor Watch", minTier: "ELITE" as const },
     ],
   },
   {
@@ -72,6 +77,12 @@ const TOOL_GROUPS: { heading: string; items: ToolItem[] }[] = [
       { key: "revenue",     href: "/dashboard/revenue",     label: "Revenue",            minTier: "PRO" },
       { key: "dna",         href: "/dashboard/company-dna", label: "Company DNA",        minTier: "PRO" },
       { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics", badge: "Soon" },
+    ],
+  },
+  {
+    heading: "Automation",
+    items: [
+      { key: "workflows", href: "/dashboard/workflows", label: "Workflows", minTier: "ELITE" as const },
     ],
   },
 ];
