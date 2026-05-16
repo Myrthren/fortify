@@ -36,41 +36,41 @@ type ActiveKey =
   | "support"
   | "credits";
 
-type ToolItem = { key: string; href: string; label: string; badge?: string | null; minTier?: "ELITE" | "APEX" };
+type ToolItem = { key: string; href: string; label: string; badge?: string | null; minTier?: "PRO" | "ELITE" | "APEX" };
 
 const TOOL_GROUPS: { heading: string; items: ToolItem[] }[] = [
   {
     heading: "Content",
     items: [
-      { key: "voice",       href: "/dashboard/voice",       label: "Brand Voice" },
-      { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration" },
-      { key: "virality",    href: "/dashboard/virality",    label: "Virality Engine", minTier: "ELITE" },
-      { key: "logo",        href: "/dashboard/logo",        label: "Logo Intelligence" },
+      { key: "voice",       href: "/dashboard/voice",       label: "Brand Voice",       minTier: "PRO" },
+      { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration",        minTier: "PRO" },
+      { key: "virality",    href: "/dashboard/virality",    label: "Virality Engine",    minTier: "ELITE" },
+      { key: "logo",        href: "/dashboard/logo",        label: "Logo Intelligence",  minTier: "PRO" },
     ],
   },
   {
     heading: "Growth",
     items: [
-      { key: "outreach",    href: "/dashboard/outreach",    label: "Outreach" },
-      { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing" },
-      { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking" },
+      { key: "outreach",    href: "/dashboard/outreach",    label: "Outreach",           minTier: "PRO" },
+      { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing",      minTier: "PRO" },
+      { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking",        minTier: "PRO" },
     ],
   },
   {
     heading: "Research",
     items: [
-      { key: "audit",       href: "/dashboard/audit",       label: "Funnel Audit" },
-      { key: "trends",      href: "/dashboard/trends",      label: "Trend Radar" },
-      { key: "competitors", href: "/dashboard/competitors", label: "Competitors" },
+      { key: "audit",       href: "/dashboard/audit",       label: "Funnel Audit",       minTier: "PRO" },
+      { key: "trends",      href: "/dashboard/trends",      label: "Trend Radar",        minTier: "PRO" },
+      { key: "competitors", href: "/dashboard/competitors", label: "Competitors",        minTier: "PRO" },
     ],
   },
   {
     heading: "Business",
     items: [
-      { key: "ads",         href: "/dashboard/ads",         label: "Meta Ads" },
-      { key: "shopify",     href: "/dashboard/shopify",     label: "Shopify" },
-      { key: "revenue",     href: "/dashboard/revenue",     label: "Revenue" },
-      { key: "dna",         href: "/dashboard/company-dna", label: "Company DNA" },
+      { key: "ads",         href: "/dashboard/ads",         label: "Meta Ads",           minTier: "PRO" },
+      { key: "shopify",     href: "/dashboard/shopify",     label: "Shopify",            minTier: "PRO" },
+      { key: "revenue",     href: "/dashboard/revenue",     label: "Revenue",            minTier: "PRO" },
+      { key: "dna",         href: "/dashboard/company-dna", label: "Company DNA",        minTier: "PRO" },
       { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics", badge: "Soon" },
     ],
   },
@@ -209,11 +209,11 @@ export function DashboardNav({
                         {group.heading}
                       </p>
                       {group.items.map((item) => {
-                        const locked = item.minTier === "ELITE"
-                          ? (user.tier === "FREE" || user.tier === "PRO")
-                          : item.minTier === "APEX"
-                          ? (user.tier !== "APEX")
-                          : false;
+                        const locked =
+                          item.minTier === "APEX"  ? user.tier !== "APEX" :
+                          item.minTier === "ELITE" ? (user.tier === "FREE" || user.tier === "PRO") :
+                          item.minTier === "PRO"   ? user.tier === "FREE" :
+                          false;
                         return (
                           <DropdownLink key={item.key} href={item.href} active={active === item.key}>
                             <span className="flex w-full items-center justify-between gap-2">
