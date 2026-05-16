@@ -187,6 +187,7 @@ export function ViralityEngine({
         </p>
         <div className="flex flex-wrap gap-3">
           {(["tiktok", "youtube", "facebook"] as Platform[]).map((platform) => {
+            const comingSoon = platform === "tiktok";
             const conn = connections.find((c) => c.platform === platform);
             return conn ? (
               <div
@@ -202,6 +203,15 @@ export function ViralityEngine({
                 >
                   <Unplug className="h-3.5 w-3.5" />
                 </button>
+              </div>
+            ) : comingSoon ? (
+              <div
+                key={platform}
+                className="flex items-center gap-2 rounded-lg border border-bg-border bg-bg-elevated px-3 py-2 text-sm text-text-dim opacity-50 cursor-not-allowed"
+              >
+                {PLATFORM_ICONS[platform]}
+                {PLATFORM_LABELS[platform]}
+                <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-text-muted">Soon</span>
               </div>
             ) : (
               <a

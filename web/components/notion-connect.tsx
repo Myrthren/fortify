@@ -81,10 +81,9 @@ export function NotionConnectSection({
               Disconnect
             </button>
           ) : (
-            <a href="/api/notion/connect" className="btn-primary text-sm flex items-center gap-1.5">
-              <FileText className="h-3.5 w-3.5" />
-              Connect Notion
-            </a>
+            <span className="rounded-md bg-white/[0.06] px-2.5 py-1 text-xs font-medium text-text-muted">
+              Coming soon
+            </span>
           )}
         </div>
 
