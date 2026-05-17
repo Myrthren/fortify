@@ -3,6 +3,26 @@ import { db } from "@/lib/db";
 import { verifyWebhookSignature } from "@/lib/paypal";
 import { syncTierRole, sendDM } from "@/lib/discord";
 import { sendDMConditional, alertOwner } from "@/lib/notifications";
+import { runWorkflow } from "@/lib/workflow-runner";
+
+/** Fire all active workflows that have a trigger_new_member node (fire-and-forget) */
+async function fireMemberWorkflows(userId: string, tier: string, name: string, email: string) {
+  try {
+    const workflows = await db.workflow.findMany({
+      where: { userId, active: true },
+      select: { id: true, nodes: true },
+    });
+    for (const wf of workflows) {
+      const raw = wf.nodes as any;
+      const nodes: any[] = Array.isArray(raw?.nodes) ? raw.nodes : Array.isArray(raw) ? raw : [];
+      const hasTrigger = nodes.some((n: any) => n.type === "trigger_new_member");
+      const tierFilter = nodes.find((n: any) => n.type === "trigger_new_member")?.config?.tier;
+      if (!hasTrigger) continue;
+      if (tierFilter && tierFilter !== "" && tierFilter !== tier) continue;
+      runWorkflow(wf.id, userId, { memberName: name, memberEmail: email, memberTier: tier }).catch(() => {});
+    }
+  } catch { /* ignore — don't block the webhook response */ }
+}
 
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -30,6 +50,13 @@ export async function POST(req: Request) {
         await alertOwner(
           "dmOwnerNewSub",
           `New subscriber: **${sub.user.name ?? sub.user.email ?? "unknown"}** — ${sub.tier} tier`
+        );
+        // Fire trigger_new_member workflows (fire-and-forget)
+        fireMemberWorkflows(
+          sub.userId,
+          sub.tier,
+          sub.user.name ?? "",
+          sub.user.email ?? "",
         );
       }
       break;

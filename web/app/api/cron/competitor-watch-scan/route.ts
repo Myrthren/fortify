@@ -3,6 +3,26 @@ import { db } from "@/lib/db";
 import { createHash } from "crypto";
 import { randomUUID } from "crypto";
 import { sendDMConditional } from "@/lib/notifications";
+import { runWorkflow } from "@/lib/workflow-runner";
+
+/** Fire any active trigger_competitor workflows for the given user */
+async function fireCompetitorWorkflows(userId: string, watchName: string) {
+  try {
+    const workflows = await db.workflow.findMany({
+      where: { userId, active: true },
+      select: { id: true, nodes: true },
+    });
+    for (const wf of workflows) {
+      const raw = wf.nodes as any;
+      const nodes: any[] = Array.isArray(raw?.nodes) ? raw.nodes : Array.isArray(raw) ? raw : [];
+      const triggerNode = nodes.find((n: any) => n.type === "trigger_competitor");
+      if (!triggerNode) continue;
+      const nameFilter = triggerNode.config?.watchName as string | undefined;
+      if (nameFilter && nameFilter !== "" && nameFilter !== watchName) continue;
+      runWorkflow(wf.id, userId, { watchName }).catch(() => {});
+    }
+  } catch { /* fire-and-forget */ }
+}
 
 /**
  * POST /api/cron/competitor-watch-scan
@@ -117,6 +137,9 @@ export async function POST(req: Request) {
           `🔍 **Competitor Watch** — Changes detected for **${watch.name}**:\n${changedLinks}\n\nView: https://fortify-io.com/dashboard/competitor-tracking`
         ).catch(() => {});
       }
+
+      // Fire trigger_competitor workflows
+      fireCompetitorWorkflows(user.id, watch.name);
     }
   }
 

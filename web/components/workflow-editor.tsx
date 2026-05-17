@@ -382,8 +382,12 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
   const [selId,    setSelId]    = useState<string | null>(null);
   const [saving,   setSaving]   = useState(false);
   const [toggling, setToggling] = useState(false);
+  const [running,  setRunning]  = useState(false);
+  const [lastRunStatus, setLastRunStatus] = useState<"ok" | "error" | null>(null);
   const [dirty,    setDirty]    = useState(false);
   const [showRuns, setShowRuns] = useState(false);
+  const [runs,     setRuns]     = useState<any[]>(init.runs);
+  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
   const [showSchedule, setShowSchedule] = useState(false);
   const [tempConn, setTempConn] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   const [hovInputId, setHovInputId] = useState<string | null>(null);
@@ -546,6 +550,38 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
     } finally { setToggling(false); }
   }
 
+  async function fetchRuns() {
+    const r = await fetch(`/api/workflows/${init.id}`);
+    if (r.ok) {
+      const data = await r.json();
+      setRuns(data.workflow?.runs ?? []);
+    }
+  }
+
+  async function runNow() {
+    setRunning(true);
+    setLastRunStatus(null);
+    try {
+      const r = await fetch(`/api/workflows/${init.id}/run`, { method: "POST" });
+      const data = await r.json();
+      if (!r.ok) {
+        setLastRunStatus("error");
+        // Show error inline in runs panel instead of alert
+        setShowRuns(true);
+        await fetchRuns();
+      } else {
+        setLastRunStatus(data.status === "completed" ? "ok" : "error");
+        setShowRuns(true);
+        setExpandedRunId(data.runId ?? null);
+        await fetchRuns();
+      }
+    } catch {
+      setLastRunStatus("error");
+    } finally {
+      setRunning(false);
+    }
+  }
+
   const selNode = nodes.find(n => n.id === selId);
   const selDef  = selNode ? DEFS[selNode.type] : null;
 
@@ -660,6 +696,18 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
             </div>
             <button onClick={() => setShowRuns(r => !r)} className="btn-ghost text-xs gap-1.5">
               <History className="h-3.5 w-3.5" />Runs
+            </button>
+            <button
+              onClick={runNow}
+              disabled={running || saving}
+              className="btn-ghost text-xs gap-1.5 disabled:opacity-40"
+              title="Run workflow now (manual trigger)"
+              style={lastRunStatus === "ok" ? { color: "#34d399" } : lastRunStatus === "error" ? { color: "#f87171" } : {}}
+            >
+              {running
+                ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                : <Play className="h-3.5 w-3.5" />}
+              {running ? "Running…" : "Run Now"}
             </button>
             <button onClick={toggleActive} disabled={toggling} className="btn-secondary text-xs">
               {toggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : active ? <><Pause className="h-3 w-3" />Pause</> : <><Play className="h-3 w-3" />Activate</>}
@@ -964,6 +1012,22 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
                   </div>
                 )}
 
+                {/* Webhook URL (for webhook trigger nodes) */}
+                {selNode.type === "trigger_webhook" && (
+                  <div className="border-t border-bg-border pt-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-widest text-text-dim mb-2">Webhook URL</p>
+                    <p className="text-[10px] text-text-muted mb-1.5">POST to this URL to trigger the workflow (workflow must be Active):</p>
+                    <div
+                      className="rounded border border-bg-border bg-black/30 px-2 py-1.5 text-[10px] font-mono text-text-muted break-all cursor-pointer select-all"
+                      onClick={() => navigator.clipboard?.writeText(`https://fortify-io.com/api/workflows/webhook/${init.id}`)}
+                      title="Click to copy"
+                    >
+                      https://fortify-io.com/api/workflows/webhook/{init.id}
+                    </div>
+                    <p className="wf-config-hint mt-1">Click to copy. Activate the workflow first, then send POST requests to this URL.</p>
+                  </div>
+                )}
+
                 {/* Connections */}
                 <div className="border-t border-bg-border pt-3">
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-text-dim mb-2">Connections</p>
@@ -998,42 +1062,69 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
 
         {/* ── Run history drawer ── */}
         {showRuns && (
-          <div className="border-t border-bg-border bg-bg-panel" style={{ height: 200, overflowY: "auto" }}>
-            <div className="flex items-center justify-between px-4 py-2 border-b border-bg-border sticky top-0 bg-bg-panel">
+          <div className="border-t border-bg-border bg-bg-panel" style={{ maxHeight: 280, overflowY: "auto" }}>
+            <div className="flex items-center justify-between px-4 py-2 border-b border-bg-border sticky top-0 bg-bg-panel z-10">
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">Run history</p>
-              <button onClick={() => setShowRuns(false)} className="text-text-dim hover:text-text">
-                <ChevronDown className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={fetchRuns} className="text-text-dim hover:text-text text-[10px]" title="Refresh">↻</button>
+                <button onClick={() => setShowRuns(false)} className="text-text-dim hover:text-text">
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
             </div>
-            {init.runs.length === 0 ? (
-              <p className="px-4 py-4 text-xs text-text-dim">No runs yet.</p>
+            {runs.length === 0 ? (
+              <p className="px-4 py-4 text-xs text-text-dim">No runs yet. Click "Run Now" to execute the workflow manually.</p>
             ) : (
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-text-dim border-b border-bg-border">
-                    <th className="px-4 py-1.5 text-left font-medium">Status</th>
-                    <th className="px-4 py-1.5 text-left font-medium">Started</th>
-                    <th className="px-4 py-1.5 text-left font-medium">Duration</th>
-                    <th className="px-4 py-1.5 text-left font-medium">Capacity</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {init.runs.map((r: any) => {
-                    const dur = r.completedAt
-                      ? `${((new Date(r.completedAt).getTime() - new Date(r.startedAt).getTime()) / 1000).toFixed(1)}s`
-                      : "—";
-                    const color = r.status === "completed" ? "text-emerald-400" : r.status === "failed" ? "text-red-400" : "text-blue-400";
-                    return (
-                      <tr key={r.id} className="border-b border-bg-border/40 hover:bg-white/[0.02]">
-                        <td className={`px-4 py-2 font-medium ${color}`}>{r.status}</td>
-                        <td className="px-4 py-2 text-text-muted">{new Date(r.startedAt).toLocaleString()}</td>
-                        <td className="px-4 py-2 text-text-muted">{dur}</td>
-                        <td className="px-4 py-2 text-text-muted">{r.usedCapacity} units</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div>
+                {runs.map((r: any) => {
+                  const dur = r.completedAt
+                    ? `${((new Date(r.completedAt).getTime() - new Date(r.startedAt).getTime()) / 1000).toFixed(1)}s`
+                    : r.status === "running" ? "running…" : "—";
+                  const statusColor = r.status === "completed" ? "#34d399" : r.status === "failed" ? "#f87171" : "#60a5fa";
+                  const logs: any[] = Array.isArray(r.log) ? r.log : [];
+                  const isExpanded = expandedRunId === r.id;
+
+                  return (
+                    <div key={r.id} className="border-b border-bg-border/40">
+                      {/* Run summary row */}
+                      <button
+                        type="button"
+                        onClick={() => setExpandedRunId(isExpanded ? null : r.id)}
+                        className="flex w-full items-center gap-3 px-4 py-2 text-xs hover:bg-white/[0.02] text-left transition"
+                      >
+                        <span className="font-semibold" style={{ color: statusColor, minWidth: 70 }}>{r.status}</span>
+                        <span className="text-text-muted">{new Date(r.startedAt).toLocaleString()}</span>
+                        <span className="text-text-dim ml-auto">{dur}</span>
+                        <span className="text-text-dim">{r.usedCapacity}u</span>
+                        <span className="text-text-dim text-[10px] ml-1">{isExpanded ? "▲" : "▼"}</span>
+                      </button>
+
+                      {/* Expanded per-node logs */}
+                      {isExpanded && (
+                        <div className="px-4 pb-3 space-y-1.5 bg-black/20">
+                          {logs.length === 0 ? (
+                            <p className="text-[10px] text-text-dim py-2">No node logs recorded.</p>
+                          ) : logs.map((log: any, i: number) => (
+                            <div key={i} className="flex items-start gap-2 text-[10px]">
+                              <span
+                                className="shrink-0 w-14 font-semibold"
+                                style={{ color: log.status === "ok" ? "#34d399" : log.status === "error" ? "#f87171" : "#94a3b8" }}
+                              >
+                                {log.status === "ok" ? "✓ ok" : log.status === "error" ? "✗ err" : "↷ skip"}
+                              </span>
+                              <span className="text-text-muted font-medium shrink-0 w-28 truncate">{log.nodeLabel}</span>
+                              <span className="text-text-dim flex-1 truncate">
+                                {log.error ? <span className="text-red-300">{log.error}</span> : log.output}
+                              </span>
+                              <span className="shrink-0 text-text-dim">{log.ms}ms</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
