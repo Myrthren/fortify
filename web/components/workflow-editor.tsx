@@ -25,7 +25,7 @@ type ConfigField = {
   previewInNode?: boolean; // show value on node tile
 };
 
-type PortKey = "out" | "yes" | "no";
+type PortKey = "out" | "yes" | "no" | "a" | "b" | "c" | "d";
 
 type NodeDef = {
   label: string;
@@ -242,10 +242,77 @@ const DEFS: Record<string, NodeDef> = {
         hint: "Supports AND, OR, comparison operators. Workflow continues only if this evaluates true." },
     ],
   },
+  logic_switch: {
+    label: "Switch", icon: "🔀", category: "logic", accent: "#fb923c", ports: ["a", "b", "c", "d"],
+    configFields: [
+      { key: "variable", label: "Variable to switch on", placeholder: "{{member.tier}}", previewInNode: true,
+        hint: "The value that will be compared against each branch." },
+      { key: "caseA", label: "Branch A — matches value", placeholder: "APEX",
+        hint: "Output port A fires when variable equals this." },
+      { key: "caseB", label: "Branch B — matches value", placeholder: "ELITE" },
+      { key: "caseC", label: "Branch C — matches value", placeholder: "PRO" },
+      { key: "caseD", label: "Branch D — default (fallback)", placeholder: "FREE (or leave blank for always)" },
+    ],
+  },
+  logic_transform: {
+    label: "Transform", icon: "⚙", category: "logic", accent: "#a3e635", ports: ["out"],
+    configFields: [
+      { key: "input", label: "Input value or variable", placeholder: "{{previous_output}}", previewInNode: true },
+      { key: "template", label: "Output template", type: "textarea", rows: 3,
+        placeholder: "Name: {{member.name}}\nTier: {{member.tier}}\nData: {{previous_output}}",
+        hint: "Build any string using template variables. The result becomes {{transformed_output}} in later nodes." },
+      { key: "outputVar", label: "Output variable name", placeholder: "transformed_output" },
+    ],
+  },
+  action_http_request: {
+    label: "HTTP Request", icon: "🌐", category: "action", accent: "#38bdf8", ports: ["out"],
+    configFields: [
+      { key: "url", label: "URL", placeholder: "https://api.example.com/data", previewInNode: true },
+      { key: "method", label: "Method", type: "select", placeholder: "GET",
+        options: [{ value: "GET", label: "GET" }, { value: "POST", label: "POST" }, { value: "PUT", label: "PUT" }, { value: "PATCH", label: "PATCH" }, { value: "DELETE", label: "DELETE" }] },
+      { key: "headers", label: "Headers (JSON)", type: "textarea", rows: 2,
+        placeholder: '{"Authorization": "Bearer {{secret}}", "Content-Type": "application/json"}' },
+      { key: "body", label: "Request Body (JSON)", type: "textarea", rows: 3,
+        placeholder: '{"query": "{{member.name}}", "source": "fortify"}',
+        hint: "Template variables are replaced at run time. Response body becomes {{http_response}} for later nodes." },
+      { key: "outputVar", label: "Output variable name", placeholder: "http_response" },
+    ],
+  },
+  logic_loop: {
+    label: "Loop / Iterator", icon: "🔁", category: "logic", accent: "#f472b6", ports: ["out"],
+    configFields: [
+      { key: "items", label: "Items to iterate (JSON array or variable)", type: "textarea", rows: 2,
+        placeholder: "{{leads_list}} or [\"item1\",\"item2\"]", previewInNode: true,
+        hint: "Each iteration runs downstream nodes once with {{loop_item}} set to the current item." },
+      { key: "maxIterations", label: "Max iterations (safety limit)", placeholder: "50",
+        hint: "Hard cap to prevent runaway loops. Maximum 500." },
+      { key: "outputVar", label: "Current item variable name", placeholder: "loop_item" },
+    ],
+  },
+  logic_retry: {
+    label: "Error / Retry", icon: "🔄", category: "logic", accent: "#f87171", ports: ["out"],
+    configFields: [
+      { key: "maxRetries", label: "Max retries", placeholder: "3", previewInNode: true,
+        hint: "How many times to retry a failed downstream node before giving up." },
+      { key: "delaySeconds", label: "Delay between retries (seconds)", placeholder: "5" },
+      { key: "errorOutputVar", label: "Error message variable name", placeholder: "error_message",
+        hint: "The error reason is stored here for use in later error-handling steps." },
+    ],
+  },
 };
 
 const CATEGORY_ORDER = ["trigger", "ai", "action", "logic"] as const;
 const CATEGORY_LABELS: Record<string, string> = { trigger: "Triggers", ai: "AI", action: "Actions", logic: "Logic" };
+
+const PORT_COLORS: Record<PortKey, string> = {
+  out: "rgba(255,255,255,0.5)",
+  yes: "#34d399",
+  no:  "#f87171",
+  a:   "#a78bfa",
+  b:   "#38bdf8",
+  c:   "#f59e0b",
+  d:   "#6b7280",
+};
 
 // ── Types ────────────────────────────────────────────────────────────────────
 type WFNode = { id: string; type: string; label: string; x: number; y: number; config: Record<string, string> };
@@ -317,8 +384,14 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
   const [toggling, setToggling] = useState(false);
   const [dirty,    setDirty]    = useState(false);
   const [showRuns, setShowRuns] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
   const [tempConn, setTempConn] = useState<{ x1: number; y1: number; x2: number; y2: number } | null>(null);
   const [hovInputId, setHovInputId] = useState<string | null>(null);
+
+  // Derived: cron from the first trigger_schedule node
+  const scheduleNode = nodes.find(n => n.type === "trigger_schedule");
+  const scheduleCron = scheduleNode?.config?.cron ?? "";
+  const scheduleLabel = scheduleCron || "Not scheduled";
 
   // Sidebar width (resizable)
   const [sidebarW, setSidebarW] = useState(220);
@@ -524,6 +597,67 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
           />
           <div className="ml-auto flex items-center gap-2">
             {dirty && <span className="text-[10px] text-text-dim">Unsaved changes</span>}
+            {/* Schedule picker */}
+            <div className="relative">
+              <button
+                onClick={() => setShowSchedule(s => !s)}
+                className="btn-ghost text-xs gap-1.5"
+                title="Edit run schedule"
+              >
+                <span>⏰</span>
+                <span className="max-w-[120px] truncate hidden sm:inline">{scheduleLabel}</span>
+              </button>
+              {showSchedule && (
+                <div className="absolute right-0 top-full mt-1 z-50 w-72 rounded-lg border border-bg-border bg-bg-panel p-3 shadow-xl">
+                  <p className="text-xs font-semibold mb-2">Run Schedule</p>
+                  <p className="text-[10px] text-text-dim mb-2">
+                    Set a cron expression on your Schedule trigger node.
+                    {!scheduleNode && " Add a 'Schedule' trigger node to the canvas first."}
+                  </p>
+                  {scheduleNode ? (
+                    <>
+                      <input
+                        className="input text-xs mb-1.5"
+                        placeholder="0 9 * * 1 (Mon 9am)"
+                        value={scheduleNode.config.cron ?? ""}
+                        onChange={e => {
+                          updateConfig(scheduleNode.id, "cron", e.target.value);
+                        }}
+                      />
+                      <input
+                        className="input text-xs mb-2"
+                        placeholder="Timezone: Europe/London"
+                        value={scheduleNode.config.timezone ?? ""}
+                        onChange={e => updateConfig(scheduleNode.id, "timezone", e.target.value)}
+                      />
+                      <div className="grid grid-cols-2 gap-1 text-[10px] text-text-dim">
+                        {[
+                          ["Every day 8am",    "0 8 * * *"],
+                          ["Every Mon 9am",    "0 9 * * 1"],
+                          ["Every hour",       "0 * * * *"],
+                          ["Every 30 min",     "*/30 * * * *"],
+                        ].map(([lbl, cron]) => (
+                          <button
+                            key={cron}
+                            className="rounded px-2 py-1 bg-white/[0.04] hover:bg-white/[0.08] transition text-left"
+                            onClick={() => updateConfig(scheduleNode.id, "cron", cron)}
+                          >
+                            {lbl}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <button
+                      className="btn-ghost text-xs w-full"
+                      onClick={() => { addNode("trigger_schedule"); setShowSchedule(false); }}
+                    >
+                      <Plus className="h-3 w-3" /> Add Schedule trigger
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
             <button onClick={() => setShowRuns(r => !r)} className="btn-ghost text-xs gap-1.5">
               <History className="h-3.5 w-3.5" />Runs
             </button>
@@ -625,10 +759,8 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
                   if (!fromNode || !toNode) return null;
                   const fp = outPortPos(fromNode, conn.fromPort, DEFS[fromNode.type]?.ports ?? ["out"]);
                   const tp = inPortPos(toNode);
-                  const strokeColor =
-                    conn.fromPort === "yes" ? "#34d39966" :
-                    conn.fromPort === "no"  ? "#f8717166" :
-                    "rgba(255,255,255,0.22)";
+                  const baseColor = PORT_COLORS[conn.fromPort] ?? "rgba(255,255,255,0.5)";
+                  const strokeColor = baseColor.startsWith("rgba") ? baseColor : `${baseColor}66`;
                   const arrowRef =
                     conn.fromPort === "yes" ? "url(#arrow-yes)" :
                     conn.fromPort === "no"  ? "url(#arrow-no)"  :
@@ -720,7 +852,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
                     {/* Output port(s) (bottom) */}
                     {def.ports.map(port => {
                       const pp = outPortPos(node, port, def.ports);
-                      const portColor = port === "yes" ? "#34d399" : port === "no" ? "#f87171" : "rgba(255,255,255,0.5)";
+                      const portColor = PORT_COLORS[port] ?? "rgba(255,255,255,0.5)";
                       return (
                         <div key={port} style={{ position: "absolute", pointerEvents: "all" }}>
                           <div

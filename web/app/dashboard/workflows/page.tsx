@@ -3,8 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { WorkflowsClient } from "@/components/workflows-client";
-import { Lock, Sparkles } from "lucide-react";
-import Link from "next/link";
+import { LockedPage } from "@/components/locked-page";
 import { getCapacityInfo, CAPACITY_PACKS } from "@/lib/workflow-capacity";
 
 export default async function WorkflowsPage() {
@@ -18,47 +17,17 @@ export default async function WorkflowsPage() {
   // Only Elite + Apex can access
   if (user.tier === "FREE" || user.tier === "PRO") {
     return (
-      <div className="min-h-screen bg-bg">
-        <DashboardNav user={user} active="workflows" />
-        <main className="mx-auto max-w-3xl px-4 py-20 sm:px-6 text-center">
-          <div
-            className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl border border-bg-border"
-            style={{
-              background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%)",
-              boxShadow: "0 0 40px rgba(255,255,255,0.04), inset 0 1px 0 rgba(255,255,255,0.08)",
-            }}
-          >
-            <Lock className="h-8 w-8 text-text-muted" />
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight mb-3">Workflows</h1>
-          <p className="text-text-muted mb-2 max-w-md mx-auto">
-            Automate your business with multi-step AI workflows. Connect triggers, actions, and AI steps into powerful automations.
-          </p>
-          <p className="text-sm text-text-dim mb-8">
-            Available on <span className="text-text-muted font-medium">Elite and Apex</span> plans.
-          </p>
-          <div className="mb-10 grid gap-3 sm:grid-cols-3 text-left max-w-xl mx-auto">
-            {[
-              { icon: "⚡", title: "Triggers", desc: "Start workflows on schedule, webhook, or from other Fortify features." },
-              { icon: "🤖", title: "AI Steps", desc: "Chain AI actions — analyse, generate, summarise, and decide automatically." },
-              { icon: "📤", title: "Actions", desc: "Post to Discord, send emails, update CRM, notify Slack, and more." },
-            ].map((f) => (
-              <div key={f.title} className="card p-4 space-y-1.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs">{f.icon}</span>
-                  <p className="text-sm font-semibold">{f.title}</p>
-                </div>
-                <p className="text-xs text-text-muted leading-relaxed">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-          <Link href="/pricing" className="btn-primary">
-            <Sparkles className="h-4 w-4" />
-            Upgrade to unlock Workflows
-          </Link>
-          <p className="mt-4 text-xs text-text-dim">Plans from £79/mo · Cancel anytime</p>
-        </main>
-      </div>
+      <LockedPage
+        user={user} active="workflows" requiredTier="ELITE"
+        title="Workflows"
+        description="Build multi-step automations with a visual drag-and-drop canvas. Connect triggers, AI nodes, and actions into powerful pipelines."
+        icon="⚡"
+        features={[
+          { icon: "🎯", title: "Smart Triggers", desc: "Schedule, webhooks, new members, competitor changes, and more." },
+          { icon: "🤖", title: "AI Steps", desc: "Chain AI generate, summarise, analyse, and classify into any workflow." },
+          { icon: "📤", title: "Actions", desc: "Post to Discord, email, Slack, Notion, Twitter, Shopify, or any webhook." },
+        ]}
+      />
     );
   }
 

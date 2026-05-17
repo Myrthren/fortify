@@ -5,6 +5,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { ViralityEngine } from "@/components/virality-engine";
 import { AutoSlideshow } from "@/components/auto-slideshow";
 import { TIER_LIMITS } from "@/lib/tiers";
+import { LockedPage } from "@/components/locked-page";
 import Link from "next/link";
 
 export default async function ViralityPage() {
@@ -24,21 +25,17 @@ export default async function ViralityPage() {
 
   if (!canUse) {
     return (
-      <div className="min-h-screen bg-bg">
-        <DashboardNav user={user} active="virality" />
-        <main className="mx-auto max-w-2xl px-4 py-20 sm:px-6 text-center">
-          <div className="mb-6 text-4xl">🎬</div>
-          <h1 className="text-2xl font-bold tracking-tight mb-3">Virality Engine</h1>
-          <p className="text-text-muted mb-8">
-            Connect your social accounts, analyse your videos with AI, and publish at the perfect
-            time with the perfect tags. Available on <strong>Elite</strong> and{" "}
-            <strong>Apex</strong>.
-          </p>
-          <Link href="/pricing" className="btn-primary">
-            Upgrade to Elite →
-          </Link>
-        </main>
-      </div>
+      <LockedPage
+        user={user} active="virality" requiredTier="ELITE"
+        title="Virality Engine"
+        description="AI-powered video scoring, optimal publish timing, and automated social publishing to TikTok, YouTube, and Facebook."
+        icon="🎬"
+        features={[
+          { icon: "🧠", title: "AI Video Scoring", desc: "Get a virality score, title suggestions, and hook analysis for any video." },
+          { icon: "📅", title: "Optimal Timing", desc: "AI finds the best time to post based on your audience and platform data." },
+          { icon: "🚀", title: "Auto-Publish (Apex)", desc: "Schedule and auto-publish to TikTok, YouTube, and Facebook from one place." },
+        ]}
+      />
     );
   }
 
