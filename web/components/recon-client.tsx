@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Search, Loader2, ExternalLink, MapPin, Globe } from "lucide-react";
+import { TierBadge } from "@/components/tier-badge";
 
 type Lead = {
   title: string;
@@ -93,7 +94,10 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
       {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Fortify Recon</h1>
+          <div className="flex items-center gap-3 mb-1">
+            <h1 className="text-3xl font-bold tracking-tight">Fortify Recon</h1>
+            <TierBadge tier="ELITE" />
+          </div>
           <p className="mt-2 text-text-muted">
             Find local businesses in any area and category — ready to prospect.
           </p>

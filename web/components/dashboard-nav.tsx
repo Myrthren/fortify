@@ -7,22 +7,6 @@ import { handleSignOut } from "@/app/actions/auth";
 import { NotificationBell } from "@/components/notification-bell";
 import type { Tier } from "@prisma/client";
 
-// ── Animated tier badge for nav dropdown ────────────────────────────────────
-const TIER_COLORS: Record<string, string> = { PRO: "#d69130", ELITE: "#35d9e2", APEX: "#e74c3c" };
-const TIER_LABELS: Record<string, string> = { PRO: "Pro", ELITE: "Elite", APEX: "Apex" };
-
-function NavTierBadge({ tier }: { tier: "PRO" | "ELITE" | "APEX" }) {
-  const color = TIER_COLORS[tier];
-  const label = TIER_LABELS[tier];
-  return (
-    <span
-      className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-semibold leading-none shrink-0"
-      style={{ border: `1px solid ${color}55`, color: color, background: `${color}18` }}
-    >
-      {label}+
-    </span>
-  );
-}
 
 type ActiveKey =
   | "dashboard"
@@ -247,12 +231,12 @@ export function DashboardNav({
                             <span className="flex w-full items-center justify-between gap-2">
                               {item.label}
                               <span className="flex items-center gap-1">
-                                {item.badge && !item.minTier && (
+                                {item.badge && (
                                   <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-text-muted">
                                     {item.badge}
                                   </span>
                                 )}
-                                {item.minTier && <NavTierBadge tier={item.minTier} />}
+                                {locked && <Lock className="h-3 w-3 text-text-dim opacity-60" />}
                               </span>
                             </span>
                           </DropdownLink>

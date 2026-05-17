@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { Loader2, Sparkles, ArrowUp, Lock, TrendingUp } from "lucide-react";
 import type { Tier } from "@prisma/client";
 import Link from "next/link";
+import { TierBadge } from "@/components/tier-badge";
 
 type InspirationPost = {
   hook: string;
@@ -185,9 +186,7 @@ export function ContentInspiration({
         >
           {!canComments && <Lock className="h-3 w-3" />}
           Comment Intel
-          <span className="rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] text-text-muted">
-            Elite+
-          </span>
+          <TierBadge tier="ELITE" size="xs" />
         </button>
         <button
           onClick={() => canAds && setTab("ads")}
@@ -201,9 +200,7 @@ export function ContentInspiration({
         >
           {!canAds && <Lock className="h-3 w-3" />}
           Ad Intel
-          <span className="rounded-full bg-bg-elevated px-1.5 py-0.5 text-[10px] text-text-muted">
-            Elite+
-          </span>
+          <TierBadge tier="ELITE" size="xs" />
         </button>
       </div>
 

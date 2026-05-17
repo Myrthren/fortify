@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { TierBadge } from "@/components/tier-badge";
 import {
   Plus,
   X,
@@ -238,9 +239,7 @@ export function CompetitorWatchClient({
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Competitor Watch</h1>
-            <span className="rounded-md bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 text-xs font-medium text-blue-300">
-              Elite+
-            </span>
+            <TierBadge tier="ELITE" />
           </div>
           <p className="text-text-muted">
             Monitor competitor pages for content changes. Scan manually or let cron check them for you.

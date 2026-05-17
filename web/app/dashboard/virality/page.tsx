@@ -6,6 +6,7 @@ import { ViralityEngine } from "@/components/virality-engine";
 import { AutoSlideshow } from "@/components/auto-slideshow";
 import { TIER_LIMITS } from "@/lib/tiers";
 import { LockedPage } from "@/components/locked-page";
+import { TierBadge } from "@/components/tier-badge";
 import Link from "next/link";
 
 export default async function ViralityPage() {
@@ -53,15 +54,7 @@ export default async function ViralityPage() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-bold tracking-tight">Virality Engine</h1>
-            {canAutoPublish ? (
-              <span className="rounded-md bg-purple-500/15 border border-purple-500/30 px-2 py-0.5 text-xs font-medium text-purple-300">
-                Apex
-              </span>
-            ) : (
-              <span className="rounded-md bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 text-xs font-medium text-blue-300">
-                Elite
-              </span>
-            )}
+            <TierBadge tier={canAutoPublish ? "APEX" : "ELITE"} />
           </div>
           <p className="text-sm text-text-muted">
             Upload videos to your Media Pool, get AI virality scores per platform, and{" "}
