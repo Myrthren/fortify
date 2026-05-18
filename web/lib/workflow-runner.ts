@@ -12,6 +12,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { Resend } from "resend";
 import { db } from "@/lib/db";
 import { getCapacityInfo } from "@/lib/workflow-capacity";
+import { braveSearch } from "@/lib/brave";
 import type { Tier } from "@prisma/client";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -186,10 +187,14 @@ async function slackPost(webhookUrl: string, message: string, username?: string,
 }
 
 // ── Email (Resend) ────────────────────────────────────────────────────────────
-const resend = new Resend(process.env.RESEND_API_KEY!);
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY!);
+  return _resend;
+}
 
 async function sendEmail(to: string, subject: string, body: string, fromName: string): Promise<void> {
-  const { error } = await resend.emails.send({
+  const { error } = await getResend().emails.send({
     from: `${fromName || "Fortify"} <noreply@fortify-io.com>`,
     to,
     subject,
@@ -484,6 +489,70 @@ async function execNode(
       ctx.vars.__retry_delay__ = c.delaySeconds || "5";
       ctx.vars.__retry_error_var__ = c.errorOutputVar || "error_message";
       return { firedPort: "out", output: `Retry wrapper: ${c.maxRetries || 3} attempts` };
+    }
+
+    // ── Lead Search ──────────────────────────────────────────────────────────
+    case "action_lead_search": {
+      const icp = c.icp?.trim();
+      if (!icp || icp.length < 5) throw new Error("Lead Search: ICP not configured (minimum 5 characters)");
+
+      // Credit check and deduction
+      const freshUser = await db.user.findUnique({ where: { id: ctx.userId }, select: { credits: true } });
+      if (!freshUser) throw new Error("Lead Search: user not found");
+      if (freshUser.credits < 50) throw new Error(`Lead Search: insufficient credits (need 50, have ${freshUser.credits})`);
+
+      await db.user.update({ where: { id: ctx.userId }, data: { credits: { decrement: 50 } } });
+      await db.creditTransaction.create({
+        data: { userId: ctx.userId, amount: -50, source: "spend_leads" },
+      });
+
+      const location = c.location?.trim() ?? "";
+      const signal   = c.signal?.trim()   ?? "";
+      const maxCount = Math.min(parseInt(c.count || "8", 10), 15);
+      const outVar   = c.outputVar?.trim() || "leads";
+
+      const query = [icp, location, signal, "company"].filter(Boolean).join(" ");
+      const results = await braveSearch({ query, count: 15 });
+
+      if (!results.length) {
+        ctx.vars[outVar]         = "[]";
+        ctx.vars.previous_output = "[]";
+        ctx.vars.lead_count      = "0";
+        return { firedPort: "out", output: `Lead Search: no results for "${icp.slice(0, 40)}"` };
+      }
+
+      const resultList = results
+        .map((r, i) => `${i + 1}. Title: "${r.title}" | URL: ${r.url} | Snippet: ${r.description}`)
+        .join("\n");
+
+      const prompt = `You are a B2B sales prospecting expert. The user is looking for leads matching this ideal customer profile (ICP): "${icp}"${location ? `, located in: ${location}` : ""}${signal ? `, with buying signal: ${signal}` : ""}.
+
+Below are web search results. For each result that looks like a real company or person matching the ICP, output a scored lead entry. Skip irrelevant results (news articles, job boards, directories, etc.).
+
+Search results:
+${resultList}
+
+Return ONLY a JSON array of up to ${maxCount} lead objects with this exact shape:
+[{"company":"name","website":"url","fitScore":7,"fitReason":"one sentence","hook":"personalised opening line for cold outreach"}]`;
+
+      const raw = await callClaude(prompt, "sonnet", 2000);
+      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+
+      let leads: unknown[] = [];
+      if (jsonMatch) {
+        try { leads = JSON.parse(jsonMatch[0]); } catch { /* malformed — return empty */ }
+      }
+
+      const leadsJson = JSON.stringify(leads);
+      ctx.vars[outVar]         = leadsJson;
+      ctx.vars.previous_output = leadsJson;
+      ctx.vars.lead_count      = String(leads.length);
+
+      await db.generation.create({
+        data: { userId: ctx.userId, type: "lead-sourcing", input: query, output: leadsJson },
+      });
+
+      return { firedPort: "out", output: `Found ${leads.length} lead(s) for "${icp.slice(0, 40)}"` };
     }
 
     default:

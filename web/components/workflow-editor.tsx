@@ -192,6 +192,20 @@ const DEFS: Record<string, NodeDef> = {
       { key: "customerId", label: "Customer ID or Email (optional)", placeholder: "{{member.email}}" },
     ],
   },
+  action_lead_search: {
+    label: "Lead Search", icon: "🎯", category: "action", accent: "#f472b6", ports: ["out"],
+    configFields: [
+      { key: "icp", label: "Ideal Customer Profile", type: "textarea", rows: 2,
+        placeholder: "SaaS founders in London with 10-50 employees", previewInNode: true,
+        hint: "Describe your ideal prospect. Be specific about industry, size, and role." },
+      { key: "location", label: "Location (optional)", placeholder: "London, UK" },
+      { key: "signal", label: "Buying Signal (optional)", placeholder: "recently funded, hiring sales staff" },
+      { key: "count", label: "Max Leads to Return", placeholder: "8",
+        hint: "1–15. Costs 50 credits per search regardless of count." },
+      { key: "outputVar", label: "Output Variable Name", placeholder: "leads",
+        hint: "Leads stored as a JSON array. Pipe into a Loop node with {{leads}} as items. Each lead has: company, website, fitScore, fitReason, hook." },
+    ],
+  },
   action_webhook_out: {
     label: "Webhook Out", icon: "📤", category: "action", accent: "#f59e0b", ports: ["out"],
     configFields: [
