@@ -164,15 +164,20 @@ export function AnalyticsDashboard({ conn }: { conn: GoogleConn }) {
       <div className="card p-8 text-center space-y-4">
         <BarChart2 className="mx-auto h-8 w-8 text-text-muted" />
         <div>
-          <p className="font-semibold">Google Analytics — coming soon</p>
+          <p className="font-semibold">Connect Google Analytics</p>
           <p className="mt-1 text-sm text-text-muted">
-            GA4, Search Console, and YouTube Analytics in one dashboard.
-            Launching once our Google app passes verification.
+            Link your Google account to pull GA4, Search Console, and YouTube Analytics into one dashboard.
           </p>
         </div>
-        <span className="inline-block rounded-md border border-bg-border bg-white/[0.04] px-3 py-1.5 text-xs text-text-muted">
-          Pending Google app review
-        </span>
+        {oauthError && (
+          <p className="text-xs text-red-300">Google returned an error: {oauthError}. Try again.</p>
+        )}
+        <a
+          href="/api/google/connect"
+          className="btn-primary inline-flex items-center gap-2"
+        >
+          Connect Google
+        </a>
       </div>
     );
   }

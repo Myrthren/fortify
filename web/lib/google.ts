@@ -9,7 +9,17 @@ const GA_DATA_BASE = "https://analyticsdata.googleapis.com/v1beta";
 const SC_BASE = "https://www.googleapis.com/webmasters/v3";
 const YT_BASE = "https://youtubeanalytics.googleapis.com/v2";
 
-const SCOPES = [
+// Sensitive scopes — covered by standard Google app verification
+const SCOPES_BASE = [
+  "openid",
+  "email",
+  "https://www.googleapis.com/auth/analytics.readonly",
+  "https://www.googleapis.com/auth/webmasters.readonly",
+].join(" ");
+
+// Restricted scope — requires CASA Tier 2 security assessment.
+// Requested separately so GA4 / Search Console work without it.
+const SCOPES_YOUTUBE = [
   "openid",
   "email",
   "https://www.googleapis.com/auth/analytics.readonly",
@@ -29,13 +39,13 @@ function cfg() {
 
 // ── OAuth ──────────────────────────────────────────────────────────────────────
 
-export function buildAuthUrl(state: string): string {
+export function buildAuthUrl(state: string, includeYouTube = false): string {
   const { clientId, redirectUri } = cfg();
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
     response_type: "code",
-    scope: SCOPES,
+    scope: includeYouTube ? SCOPES_YOUTUBE : SCOPES_BASE,
     access_type: "offline",
     prompt: "consent", // always force consent to get refresh_token
     state,
