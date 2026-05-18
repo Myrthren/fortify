@@ -57,7 +57,10 @@ export default async function CreditsPage({
         )}
 
         {/* Balance */}
-        <section className="mb-8 rounded-xl border border-bg-border bg-bg-panel p-6">
+        <section
+          className="mb-8 rounded-xl border border-white/[0.07] p-6"
+          style={{ background: "linear-gradient(145deg,#111827,#0d0d0d)" }}
+        >
           <p className="text-xs font-medium uppercase tracking-widest text-text-muted">Current balance</p>
           <p className="mt-2 text-5xl font-bold tracking-tight tabular-nums">
             {user.credits.toLocaleString()}
@@ -72,11 +75,19 @@ export default async function CreditsPage({
             {CREDIT_PACKS.map((pack) => (
               <div
                 key={pack.id}
-                className={`relative flex flex-col rounded-xl border p-5 ${
+                className="relative flex flex-col rounded-xl border p-5"
+                style={
                   pack.highlight
-                    ? "border-white/20 bg-bg-panel ring-1 ring-white/10"
-                    : "border-bg-border bg-bg-panel"
-                }`}
+                    ? {
+                        background: "linear-gradient(160deg,#1a1a2e,#0f0f1a)",
+                        border: "1px solid rgba(255,255,255,0.15)",
+                        boxShadow: "0 0 0 1px rgba(255,255,255,0.06) inset",
+                      }
+                    : {
+                        background: "linear-gradient(145deg,#131313,#0a0a0a)",
+                        border: "1px solid rgba(255,255,255,0.07)",
+                      }
+                }
               >
                 {pack.highlight && (
                   <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-white px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-bg">
@@ -108,9 +119,12 @@ export default async function CreditsPage({
 
         {/* Recent transactions */}
         {user.creditTransactions.length > 0 && (
-          <section className="rounded-xl border border-bg-border bg-bg-panel p-6">
+          <section
+            className="rounded-xl border border-white/[0.07] p-6"
+            style={{ background: "linear-gradient(145deg,#111827,#0d0d0d)" }}
+          >
             <h2 className="mb-4 text-base font-semibold">Recent transactions</h2>
-            <div className="flex flex-col divide-y divide-bg-border">
+            <div className="flex flex-col divide-y divide-white/[0.06]">
               {user.creditTransactions.map((tx, i) => (
                 <div key={i} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                   <div>
