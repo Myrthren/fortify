@@ -79,7 +79,7 @@ export default async function CreditsPage({
                 style={
                   pack.highlight
                     ? {
-                        background: "linear-gradient(160deg,#1a1a2e,#0f0f1a)",
+                        background: "linear-gradient(145deg,#1a1a1a,#0a0a0a)",
                         border: "1px solid rgba(255,255,255,0.15)",
                         boxShadow: "0 0 0 1px rgba(255,255,255,0.06) inset",
                       }
