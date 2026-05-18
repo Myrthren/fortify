@@ -59,7 +59,7 @@ export default async function CreditsPage({
         {/* Balance */}
         <section
           className="mb-8 rounded-xl border border-white/[0.07] p-6"
-          style={{ background: "linear-gradient(145deg,#111827,#0d0d0d)" }}
+          style={{ background: "linear-gradient(145deg,#141414,#0d0d0d)" }}
         >
           <p className="text-xs font-medium uppercase tracking-widest text-text-muted">Current balance</p>
           <p className="mt-2 text-5xl font-bold tracking-tight tabular-nums">
@@ -121,7 +121,7 @@ export default async function CreditsPage({
         {user.creditTransactions.length > 0 && (
           <section
             className="rounded-xl border border-white/[0.07] p-6"
-            style={{ background: "linear-gradient(145deg,#111827,#0d0d0d)" }}
+            style={{ background: "linear-gradient(145deg,#141414,#0d0d0d)" }}
           >
             <h2 className="mb-4 text-base font-semibold">Recent transactions</h2>
             <div className="flex flex-col divide-y divide-white/[0.06]">
