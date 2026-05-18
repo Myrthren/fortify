@@ -67,6 +67,9 @@ export default async function AdminPage() {
           <Link href="/admin/moderation" className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-300 hover:bg-amber-500/20 transition">
             🚩 Forum Moderation
           </Link>
+          <Link href="/admin/usage" className="rounded-md border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 hover:bg-purple-500/20 transition">
+            📊 Usage &amp; Abuse
+          </Link>
         </div>
 
         {/* Reset limits */}

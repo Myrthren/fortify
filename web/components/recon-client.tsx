@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Search, Loader2, ExternalLink, MapPin, Globe } from "lucide-react";
+import { Search, Loader2, ExternalLink, MapPin, Globe, Mail, Phone } from "lucide-react";
 import { TierBadge } from "@/components/tier-badge";
 
 type Lead = {
@@ -9,6 +9,8 @@ type Lead = {
   url: string;
   description: string;
   source?: string;
+  emails?: string[];
+  phones?: string[];
 };
 
 type PastSearch = {
@@ -27,11 +29,18 @@ interface ReconClientProps {
 export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("");
+  const [extractEmails, setExtractEmails] = useState(false);
+  const [extractPhones, setExtractPhones] = useState(false);
   const [results, setResults] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [credits, setCredits] = useState(userCredits);
   const [localPastSearches, setLocalPastSearches] = useState<PastSearch[]>(pastSearches);
+
+  const baseCost = 50;
+  const emailCost = extractEmails ? 25 : 0;
+  const phoneCost = extractPhones ? 25 : 0;
+  const totalCost = baseCost + emailCost + phoneCost;
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -45,7 +54,12 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
       const res = await fetch("/api/recon", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ location: location.trim(), category: category.trim() }),
+        body: JSON.stringify({
+          location: location.trim(),
+          category: category.trim(),
+          extractEmails,
+          extractPhones,
+        }),
       });
 
       const data = await res.json();
@@ -56,7 +70,7 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
       }
 
       setResults(data.leads ?? []);
-      setCredits((c) => c - 50);
+      setCredits((c) => c - (data.creditsUsed ?? totalCost));
 
       const newSearch: PastSearch = {
         id: data.searchId,
@@ -144,6 +158,37 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
           </div>
         </div>
 
+        {/* Extraction options */}
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-text-muted mb-2">
+            Extract contact info
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-bg-border bg-bg-panel px-3 py-2 text-sm transition hover:border-white/20 has-[:checked]:border-white/30 has-[:checked]:bg-white/[0.05]">
+              <input
+                type="checkbox"
+                className="h-3.5 w-3.5 accent-white"
+                checked={extractEmails}
+                onChange={(e) => setExtractEmails(e.target.checked)}
+              />
+              <Mail className="h-3.5 w-3.5 text-text-muted" />
+              <span>Email addresses</span>
+              <span className="text-xs text-text-dim">+25 credits</span>
+            </label>
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-bg-border bg-bg-panel px-3 py-2 text-sm transition hover:border-white/20 has-[:checked]:border-white/30 has-[:checked]:bg-white/[0.05]">
+              <input
+                type="checkbox"
+                className="h-3.5 w-3.5 accent-white"
+                checked={extractPhones}
+                onChange={(e) => setExtractPhones(e.target.checked)}
+              />
+              <Phone className="h-3.5 w-3.5 text-text-muted" />
+              <span>Phone numbers</span>
+              <span className="text-xs text-text-dim">+25 credits</span>
+            </label>
+          </div>
+        </div>
+
         <div className="flex items-center gap-4">
           <button
             type="submit"
@@ -155,7 +200,7 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
             ) : (
               <Search className="h-4 w-4" />
             )}
-            {loading ? "Searching…" : "Search · 50 credits"}
+            {loading ? "Searching…" : `Search · ${totalCost} credits`}
           </button>
           <p className="text-xs text-text-muted">
             Returns up to 20 businesses per search
@@ -194,6 +239,37 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
                     {lead.description}
                   </p>
                 )}
+
+                {/* Extracted contacts */}
+                {(lead.emails && lead.emails.length > 0) && (
+                  <div className="flex flex-wrap gap-1 pt-1">
+                    {lead.emails.map((email, ei) => (
+                      <a
+                        key={ei}
+                        href={`mailto:${email}`}
+                        className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] border border-white/[0.10] px-2 py-0.5 text-[11px] text-text-muted hover:text-text transition"
+                      >
+                        <Mail className="h-2.5 w-2.5" />
+                        {email}
+                      </a>
+                    ))}
+                  </div>
+                )}
+                {(lead.phones && lead.phones.length > 0) && (
+                  <div className="flex flex-wrap gap-1">
+                    {lead.phones.map((phone, pi) => (
+                      <a
+                        key={pi}
+                        href={`tel:${phone.replace(/[\s\-]/g, "")}`}
+                        className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] border border-white/[0.10] px-2 py-0.5 text-[11px] text-text-muted hover:text-text transition"
+                      >
+                        <Phone className="h-2.5 w-2.5" />
+                        {phone}
+                      </a>
+                    ))}
+                  </div>
+                )}
+
                 <div className="pt-1">
                   <a
                     href={lead.url}

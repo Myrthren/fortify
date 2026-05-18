@@ -19,11 +19,14 @@ type Usage = {
   tier: string;
   canUse: boolean;
   isApex: boolean;
+  isFree: boolean;
   pct: number;
   sessionExhausted: boolean;
+  freeTrialExhausted: boolean;
   expiresAt: string;
   packRemainingGbp: number;
   hasPackCredits: boolean;
+  remainingGbp: number;
 };
 
 const PACKS = [
@@ -187,7 +190,8 @@ export function FortifyAI() {
 
   async function send() {
     if (!input.trim() && !file) return;
-    if (usage?.sessionExhausted && !usage.hasPackCredits) { setShowPacks(true); return; }
+    if (usage?.freeTrialExhausted) { return; } // blocked — upgrade banner shown
+    if (usage?.sessionExhausted && !usage.hasPackCredits && !usage.isFree) { setShowPacks(true); return; }
 
     const userMsg: Msg = {
       role: "user",
@@ -221,8 +225,15 @@ export function FortifyAI() {
 
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
-        if (d.error === "SESSION_LIMIT_REACHED") { setShowPacks(true); }
-        else { setMessages((p) => [...p, { role: "assistant", content: `Error: ${d.error ?? "Something went wrong."}` }]); }
+        if (d.error === "SESSION_LIMIT_REACHED") {
+          if (d.freeTrialExhausted) {
+            fetchUsage(); // refresh so the upgrade banner appears
+          } else {
+            setShowPacks(true);
+          }
+        } else {
+          setMessages((p) => [...p, { role: "assistant", content: `Error: ${d.error ?? "Something went wrong."}` }]);
+        }
         return;
       }
 
@@ -336,7 +347,10 @@ export function FortifyAI() {
                     <span className="text-[10px] text-text-muted">{usage.pct}%</span>
                   </div>
                 )}
-                {usage?.sessionExhausted && !usage.hasPackCredits && (
+                {usage?.isFree && !usage.freeTrialExhausted && usage.remainingGbp !== undefined && (
+                  <span className="text-[10px] text-text-muted">Trial · £{usage.remainingGbp.toFixed(2)} left</span>
+                )}
+                {usage?.sessionExhausted && !usage.hasPackCredits && !usage.isFree && (
                   <span className="text-[10px] text-amber-300">{getTimeUntilReset()}</span>
                 )}
               </div>
@@ -484,8 +498,21 @@ export function FortifyAI() {
               <div ref={bottomRef} />
             </div>
 
-            {/* Session exhausted banner */}
-            {usage?.sessionExhausted && !usage.hasPackCredits && (
+            {/* Free trial exhausted banner */}
+            {usage?.freeTrialExhausted && (
+              <div className="px-4 py-4 border-t border-bg-border bg-bg-panel text-center">
+                <p className="text-sm font-semibold mb-1">Free trial used up ✦</p>
+                <p className="text-xs text-text-muted mb-3">
+                  Upgrade to keep chatting with Fortify AI.
+                </p>
+                <a href="/pricing" className="btn-primary text-xs">
+                  Upgrade to Pro →
+                </a>
+              </div>
+            )}
+
+            {/* Session exhausted banner (paid tiers) */}
+            {usage?.sessionExhausted && !usage.hasPackCredits && !usage.isFree && (
               <div className="px-4 py-3 border-t border-bg-border bg-bg-panel text-center">
                 <p className="text-xs text-text-muted mb-2">{getTimeUntilReset()} · Or buy extra usage</p>
                 <button onClick={() => setShowPacks(true)} className="btn-primary text-xs">
@@ -495,7 +522,7 @@ export function FortifyAI() {
             )}
 
             {/* Input */}
-            {(!usage?.sessionExhausted || usage.hasPackCredits) && (
+            {(!usage?.freeTrialExhausted) && (!usage?.sessionExhausted || usage.hasPackCredits) && (
               <div className="border-t border-bg-border p-3">
                 {file && (
                   <div className="mb-2 flex items-center gap-2">

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
 import { getOrCreateSession, deductCost, estimateCost } from "@/lib/ai-usage";
+import { flagAbuse } from "@/lib/abuse";
 import { randomUUID } from "crypto";
 
 // ── Workflow node types (kept in sync with workflow-editor.tsx) ───────────────
@@ -358,16 +359,18 @@ export async function POST(req: Request) {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return new NextResponse("Not found", { status: 404 });
 
-  if (user.tier === "FREE") {
-    return NextResponse.json(
-      { error: "Fortify AI requires a Pro, Elite, or Apex plan." },
-      { status: 403 }
-    );
-  }
-
-  const { session: aiSession, overLimit } = await getOrCreateSession(userId, user.tier);
+  const { session: aiSession, overLimit, freeTrialExhausted } = await getOrCreateSession(userId, user.tier);
   if (overLimit) {
-    return NextResponse.json({ error: "SESSION_LIMIT_REACHED" }, { status: 429 });
+    // Flag repeated limit-hitting as potential abuse
+    void flagAbuse(
+      userId,
+      "ai_chat",
+      `${user.tier} user hit AI limit (freeTrialExhausted: ${freeTrialExhausted})`
+    );
+    return NextResponse.json(
+      { error: "SESSION_LIMIT_REACHED", freeTrialExhausted: freeTrialExhausted ?? false },
+      { status: 429 }
+    );
   }
 
   // ── Parse multipart or JSON ──

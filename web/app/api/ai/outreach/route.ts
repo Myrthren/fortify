@@ -9,6 +9,7 @@ import {
   type OutreachChannel,
 } from "@/lib/outreach";
 import { sendDMConditional } from "@/lib/notifications";
+import { flagAbuse } from "@/lib/abuse";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -21,6 +22,7 @@ export async function POST(req: Request) {
   const limit = TIER_LIMITS[user.tier].monthlyOutreach;
   const { ok, used } = await checkMonthly(userId, "outreach", limit);
   if (!ok) {
+    void flagAbuse(userId, "outreach", `Hit outreach limit (${used}/${limit}) — tier ${user.tier}`);
     return NextResponse.json(
       {
         error:

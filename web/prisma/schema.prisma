@@ -69,8 +69,9 @@ model User {
   tier                Tier      @default(FREE)
   xp                  Int       @default(0)
   streak              Int       @default(0)
-  credits             Int       @default(0)
+  credits             Int       @default(100)
   creditsResetAt      DateTime?               // tracks last monthly credit top-up
+  freeAiUsed          Boolean   @default(false) // one-time £0.20 Fortify AI trial for FREE tier
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -110,6 +111,7 @@ model User {
   competitorWatches      CompetitorWatch[]
   workflows              Workflow[]
   workflowCapacityPacks  WorkflowCapacityPack[]
+  abuseAlerts            AbuseAlert[]
 }
 
 model Announcement {
@@ -630,6 +632,22 @@ model WorkflowCapacityPack {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ─── Abuse / usage alerts ────────────────────────────────
+model AbuseAlert {
+  id          String   @id @default(cuid())
+  userId      String
+  feature     String   // "ai_chat" | "outreach" | "recon" | "credits" | etc.
+  description String   @db.Text
+  alertCount  Int      @default(1)
+  dismissed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, feature])
+  @@index([dismissed, createdAt])
 }
 
 // ─── In-app notifications ─────────────────────────────────

@@ -42,22 +42,30 @@ export default async function TrendsPage() {
 
         {limit === 0 ? (
           <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
-            <h3 className="font-semibold">Trend Radar is a Pro+ feature</h3>
+            <h3 className="font-semibold">Trend Radar is a Free+ feature</h3>
             <p className="mt-1 text-sm text-text-muted">
-              Track 10 topics on Pro (web), unlimited on Elite (web + Reddit) and Apex.
+              Track 5 topics on Free (web), 10 on Pro, unlimited on Elite (web + Reddit) and Apex.
             </p>
             <Link href="/pricing" className="btn-primary mt-4 w-fit">Upgrade</Link>
           </div>
         ) : (
-          <TrendRadar
-            initialTerms={terms.map((t) => ({
-              id: t.id,
-              term: t.term,
-              createdAt: t.createdAt.toISOString(),
-            }))}
-            limit={limit === Infinity ? -1 : limit}
-            tier={user.tier}
-          />
+          <>
+            {user.tier === "FREE" && (
+              <div className="mb-6 rounded-lg border border-white/[0.07] bg-bg-panel px-4 py-3 text-sm text-text-muted">
+                You&apos;re on the free plan — track up to 5 topics (web only).{" "}
+                <Link href="/pricing" className="underline hover:text-text">Upgrade for more.</Link>
+              </div>
+            )}
+            <TrendRadar
+              initialTerms={terms.map((t) => ({
+                id: t.id,
+                term: t.term,
+                createdAt: t.createdAt.toISOString(),
+              }))}
+              limit={limit === Infinity ? -1 : limit}
+              tier={user.tier}
+            />
+          </>
         )}
       </main>
     </div>
