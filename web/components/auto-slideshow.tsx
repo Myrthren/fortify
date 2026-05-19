@@ -380,7 +380,11 @@ export function AutoSlideshow({ credits }: { credits: number }) {
               )}
 
               <div className="grid gap-3 sm:grid-cols-2">
-                {slides.map((slide, i) => (
+                {slides.map((slide, i) => {
+                  const isTitle   = i === 0;
+                  const isClosing = i === slides.length - 1 && slides.length > 2;
+                  const slideLabel = isTitle ? "Title" : isClosing ? "Closing" : `${i + 1}`;
+                  return (
                   <div key={i} className="rounded-xl overflow-hidden border border-bg-border bg-bg-panel">
                     <div className="relative aspect-video bg-bg-elevated">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -398,11 +402,27 @@ export function AutoSlideshow({ credits }: { credits: number }) {
                           )}
                         </div>
                       )}
-                      <span className="absolute left-2 top-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white">
-                        {i + 1}
+                      <span className={`absolute left-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-medium text-white ${
+                        isTitle   ? "bg-white/30 backdrop-blur-sm" :
+                        isClosing ? "bg-black/50" :
+                        "bg-black/60"
+                      }`}>
+                        {slideLabel}
                       </span>
                     </div>
                     <div className="p-3">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        {isTitle && (
+                          <span className="rounded bg-white/[0.10] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-text-muted">
+                            Title
+                          </span>
+                        )}
+                        {isClosing && (
+                          <span className="rounded bg-white/[0.10] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-text-muted">
+                            Closing
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs font-medium truncate">{slide.title}</p>
                       <p className="text-[11px] text-text-muted truncate">{slide.subtitle}</p>
                       <div className="mt-2 flex gap-1.5">
@@ -421,7 +441,8 @@ export function AutoSlideshow({ credits }: { credits: number }) {
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

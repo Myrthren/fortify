@@ -49,20 +49,54 @@ export async function POST(req: Request) {
   // ── Own images path ──────────────────────────────────────────────────────────
   if (hasOwnImages) {
     const slideContent: { title: string; subtitle: string }[] = [];
+    const imageList = (images as string[]).slice(0, count);
 
-    for (const dataUrl of (images as string[]).slice(0, count)) {
+    for (let slideIdx = 0; slideIdx < imageList.length; slideIdx++) {
+      const dataUrl = imageList[slideIdx];
+      const isFirst = slideIdx === 0;
+      const isLast  = slideIdx === imageList.length - 1 && imageList.length > 1;
+
       // Parse data URL → base64 + media type
       const match = dataUrl.match(/^data:([^;]+);base64,(.+)$/);
       if (!match) {
-        slideContent.push({ title: "Untitled", subtitle: "" });
+        slideContent.push({ title: isFirst ? description.trim().slice(0, 50) : "Untitled", subtitle: "" });
         continue;
       }
       const [, mediaType, data] = match;
-      // Only send supported image types to Claude
       const supported = ["image/jpeg", "image/png", "image/gif", "image/webp"];
       if (!supported.includes(mediaType)) {
-        slideContent.push({ title: "Untitled", subtitle: "" });
+        slideContent.push({ title: isFirst ? description.trim().slice(0, 50) : "Untitled", subtitle: "" });
         continue;
+      }
+
+      // Build a role-specific prompt per slide position
+      let slidePrompt: string;
+      if (isFirst) {
+        slidePrompt = `You are creating the TITLE SLIDE (slide 1 of ${imageList.length}) for a presentation.
+Presentation context: "${description}"
+
+Generate a strong MAIN PRESENTATION TITLE (max 7 words) and a punchy TAGLINE (max 12 words) for this cover slide.
+The title should be the name / headline of the entire presentation — bold and memorable.
+The tagline should be a single supporting line that sets the tone.
+Use the image for visual inspiration but the title represents the whole slideshow, not just this image.
+
+Return ONLY valid JSON: {"title":"...","subtitle":"..."}`;
+      } else if (isLast) {
+        slidePrompt = `You are creating the CLOSING SLIDE (slide ${slideIdx + 1} of ${imageList.length}) for a presentation.
+Presentation context: "${description}"
+
+Generate a strong closing title (max 7 words) and a call-to-action subtitle (max 12 words).
+Examples of good closing titles: "Get Started Today", "Join Us", "Ready to Transform?", "Let's Build Together"
+The subtitle should be an action-oriented follow-up.
+
+Return ONLY valid JSON: {"title":"...","subtitle":"..."}`;
+      } else {
+        slidePrompt = `You are creating slide ${slideIdx + 1} of ${imageList.length} for a presentation.
+Presentation context: "${description}"
+
+Look at this image and generate a punchy content slide title (max 7 words) and supporting subtitle (max 12 words) that fits both the image and the presentation context.
+
+Return ONLY valid JSON: {"title":"...","subtitle":"..."}`;
       }
 
       try {
@@ -76,14 +110,7 @@ export async function POST(req: Request) {
                 type: "image",
                 source: { type: "base64", media_type: mediaType as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data },
               },
-              {
-                type: "text",
-                text: `You are creating presentation slide text for this image. Context: "${description}".
-
-Generate a punchy slide title (max 8 words) and a supporting subtitle (max 15 words) that fits both the image and context.
-
-Return ONLY valid JSON with no explanation: {"title":"...","subtitle":"..."}`,
-              },
+              { type: "text", text: slidePrompt },
             ],
           }],
         });
@@ -116,19 +143,31 @@ Return ONLY valid JSON with no explanation: {"title":"...","subtitle":"..."}`,
   }
 
   // ── AI backgrounds path (original flow) ─────────────────────────────────────
+  const hasClosing = count > 2;
+  const contentSlidesRange = count > 2 ? `slides 2–${count - 1}` : count === 2 ? "slide 2" : "";
+
+  const structureInstructions = [
+    `Slide 1: TITLE SLIDE — the main headline title of the entire presentation (bold, memorable, max 6 words) + a punchy one-line tagline (max 12 words). Background should feel like a hero/cover image.`,
+    count > 1 && `${contentSlidesRange}: CONTENT SLIDES — each covering a distinct key point, feature, benefit, or section. Vary the backgrounds to give each slide its own mood.`,
+    hasClosing && `Slide ${count}: CLOSING SLIDE — a strong call to action, key takeaway, or memorable closing statement. Background should feel conclusive and energising.`,
+  ].filter(Boolean).join("\n");
+
   const contentResp = await claude().messages.create({
     model: CLAUDE_MODELS.fast,
-    max_tokens: 1000,
+    max_tokens: 1200,
     messages: [{
       role: "user",
-      content: `Create ${count} slides for a slideshow about: "${description}"
+      content: `Create ${count} slides for a professional slideshow presentation about: "${description}"
 
-For each slide, generate:
-- title: short punchy heading (max 8 words)
-- subtitle: one supporting line (max 15 words)
-- backgroundDesc: vivid description of the slide's background/visual (color, mood, shapes — no text in this)
+SLIDE STRUCTURE (follow this exactly):
+${structureInstructions}
 
-Return ONLY valid JSON array, no explanation:
+For EACH slide generate:
+- title: heading text (max 7 words) — for slide 1 this is the MAIN PRESENTATION TITLE
+- subtitle: supporting line (max 14 words) — for slide 1 this is the TAGLINE
+- backgroundDesc: vivid visual description for the AI background image (color palette, mood, shapes, textures — NO text in the image, NO slides of any kind visible)
+
+Return ONLY a valid JSON array with no explanation or markdown:
 [{"title":"...","subtitle":"...","backgroundDesc":"..."}]`,
     }],
   });
@@ -145,8 +184,19 @@ Return ONLY valid JSON array, no explanation:
   }
 
   const generatedImages: string[] = [];
-  for (const slide of slideContent.slice(0, count)) {
-    const prompt = `Professional presentation slide. ${slide.backgroundDesc}. Centered text layout. Large bold title text reads exactly: "${slide.title}". Below it, subtitle text reads: "${slide.subtitle}". ${fontStyle}. Clean minimal design, high contrast, suitable for business presentation.`;
+  for (let i = 0; i < slideContent.slice(0, count).length; i++) {
+    const slide = slideContent[i];
+    const isTitle   = i === 0;
+    const isClosing = i === slideContent.length - 1 && slideContent.length > 2;
+
+    const slideRole = isTitle
+      ? "Hero/cover presentation background. Full-bleed, dramatic, premium quality."
+      : isClosing
+      ? "Closing presentation background. Energising, conclusive, motivating."
+      : `Content presentation slide background (slide ${i + 1} of ${count}).`;
+
+    const prompt = `${slideRole} ${slide.backgroundDesc}. ${fontStyle}. No text, no words, no letters, no numbers visible anywhere in the image. Abstract or photographic background only. Clean minimal design, high contrast, widescreen 16:9 format, suitable for a professional business presentation.`;
+
     try {
       const img = await generateLogoImage(prompt, "1536x1024");
       generatedImages.push(img);
