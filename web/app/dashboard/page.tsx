@@ -81,7 +81,7 @@ export default async function DashboardPage() {
                 <ToolLink href="/dashboard/recon" name="Fortify Recon" desc="Find local businesses by location and category" />
                 <ToolLink href="/dashboard/competitor-tracking" name="Competitor Watch" desc="Monitor competitor pages for content changes" />
                 <ToolLink href="/dashboard/workflows" name="Workflows" desc="Automate tasks with multi-step AI workflows" />
-                <ToolLink href="/dashboard/analytics" name="Analytics" desc="GA4, Search Console, and YouTube — coming soon" />
+                <ToolLink href="/dashboard/analytics" name="Analytics" desc="GA4, Search Console, and YouTube in one place" />
                 <ToolLink href="/dashboard/forums" name="Forums" desc="Community discussion boards" />
                 <ToolLink href="/dashboard/members" name="Member Directory" desc="Find founders, operators, creators" />
                 <ToolLink href="/dashboard/matchmaking" name="AI Matchmaking" desc="Top members worth talking to" />

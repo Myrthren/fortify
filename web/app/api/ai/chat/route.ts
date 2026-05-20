@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
 import { getOrCreateSession, deductCost, estimateCost } from "@/lib/ai-usage";
 import { flagAbuse } from "@/lib/abuse";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { randomUUID } from "crypto";
 
 // ── Workflow node types (kept in sync with workflow-editor.tsx) ───────────────
@@ -355,6 +356,10 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id as string;
+
+  // 20 messages per minute per user — prevents runaway loops
+  const rl = rateLimit(`chat:${userId}`, 20, 60_000);
+  if (!rl.ok) return rateLimitResponse(rl.resetMs);
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return new NextResponse("Not found", { status: 404 });

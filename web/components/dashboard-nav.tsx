@@ -77,7 +77,7 @@ const TOOL_GROUPS: { heading: string; items: ToolItem[] }[] = [
       { key: "shopify",     href: "/dashboard/shopify",     label: "Shopify",            minTier: "PRO" },
       { key: "revenue",     href: "/dashboard/revenue",     label: "Revenue",            minTier: "PRO" },
       { key: "dna",         href: "/dashboard/company-dna", label: "Company DNA",        minTier: "PRO" },
-      { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics", badge: "Soon" },
+      { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics" },
     ],
   },
   {
