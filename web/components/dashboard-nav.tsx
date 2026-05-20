@@ -38,7 +38,8 @@ type ActiveKey =
   | "credits"
   | "recon"
   | "competitor-watch"
-  | "workflows";
+  | "workflows"
+  | "advisor";
 
 type ToolItem = { key: string; href: string; label: string; badge?: string | null; minTier?: "PRO" | "ELITE" | "APEX" };
 
@@ -83,7 +84,13 @@ const TOOL_GROUPS: { heading: string; items: ToolItem[] }[] = [
   {
     heading: "Automation",
     items: [
-      { key: "workflows", href: "/dashboard/workflows", label: "Workflows", minTier: "ELITE" as const },
+      { key: "workflows", href: "/dashboard/workflows", label: "Workflows",   minTier: "ELITE" as const },
+    ],
+  },
+  {
+    heading: "Apex",
+    items: [
+      { key: "advisor",   href: "/dashboard/advisor",   label: "AI Advisor",  minTier: "APEX" as const },
     ],
   },
 ];

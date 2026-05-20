@@ -309,7 +309,8 @@ If a user asks you to change something about their account or build a workflow, 
 - **Fortify Recon** — Find local businesses by location and category for B2B lead gen (Elite/Apex, 50 credits/search). Results include name, address, phone, website.
 - **Competitor Watch** — Monitor competitor web pages for content changes. Tracks MD5 hashes of pages, alerts you via dashboard notification + Discord DM when content changes. 25 credits to create a watch, 10 credits per scan. Runs daily automatically for Elite/Apex users.
 - **Workflows** — Visual drag-and-drop automation builder. Create multi-step automations with: Trigger nodes (Schedule, Webhook, New Member, Competitor Change, New Lead), AI nodes (Generate, Summarise, Analyse, Classify), Action nodes (Discord Post, Email, Slack, Notion, Twitter/X, Shopify, Webhook Out), and Logic nodes (Condition, Delay, Filter). Nodes connect with bezier string connections. Each node has detailed config. Capacity packs: 5,000 units for £9.99, 12,000 units for £19.99.
-- **Analytics** — GA4, Search Console, YouTube (coming soon)
+- **Analytics** — GA4, Search Console, and YouTube metrics in one place
+- **AI Advisor** — Apex-only strategic briefing tool. Claude Opus synthesises all your Fortify data (DNA, competitors, trends, tool history, platforms) into a comprehensive strategic response. Located at /dashboard/advisor.
 - **Forums** — Community discussion boards
 - **Member Directory** — Find founders and operators
 - **AI Matchmaking** — Top members worth talking to based on your profile
@@ -421,34 +422,50 @@ export async function POST(req: Request) {
       (dna.entries as any[]).map((e: any) => `**${e.label}**: ${e.content}`).join("\n");
   }
 
+  // ── Tier-aware AI settings ──
+  const isApex   = user.tier === "APEX";
+  const aiModel  = isApex ? CLAUDE_MODELS.premium : CLAUDE_MODELS.fast;
+  const maxTok1  = isApex ? 4000 : 2000;
+  const maxTok2  = isApex ? 3000 : 1500;
+  const memTake  = isApex ? 15   : 5;
+  // How much context to extract per session
+  const memUserChars   = isApex ? 400  : 200;
+  const memAssistChars = isApex ? 700  : 300;
+
   // ── Inject past chat memory ──
   let memoryContext = "";
   const pastSessions = await db.chatSession.findMany({
     where: { userId },
     orderBy: { updatedAt: "desc" },
-    take: 5, // last 5 sessions for context
+    take: memTake,
     select: { title: true, messages: true, createdAt: true },
   });
   if (pastSessions.length > 0) {
-    memoryContext = "\n\n## Your memory from past conversations with this user:\n";
+    memoryContext = isApex
+      ? "\n\n## Deep memory — your full conversation history with this user (Apex):\n"
+      : "\n\n## Your memory from past conversations with this user:\n";
     for (const s of pastSessions.reverse()) { // oldest first
       const msgs = s.messages as any[];
-      // Take first user message and last assistant message as summary
-      const firstUser = msgs.find((m) => m.role === "user")?.content?.slice(0, 200) ?? "";
-      const lastAssist = [...msgs].reverse().find((m) => m.role === "assistant")?.content?.slice(0, 300) ?? "";
+      const firstUser  = msgs.find((m) => m.role === "user")?.content?.slice(0, memUserChars) ?? "";
+      const lastAssist = [...msgs].reverse().find((m) => m.role === "assistant")?.content?.slice(0, memAssistChars) ?? "";
       if (firstUser || lastAssist) {
         memoryContext += `\n**Session: "${s.title}"** (${new Date(s.createdAt).toLocaleDateString()})\n`;
-        if (firstUser) memoryContext += `User asked: ${firstUser}\n`;
+        if (firstUser)  memoryContext += `User asked: ${firstUser}\n`;
         if (lastAssist) memoryContext += `You replied: ${lastAssist}\n`;
       }
     }
   }
-  const systemPrompt = FORTIFY_KNOWLEDGE + dnaContext + memoryContext;
+
+  const apexNote = isApex
+    ? "\n\n## Apex user — premium experience\nThis user is on the Apex plan. You are running as Claude Opus (the most capable model). Give them more thorough, detailed, and strategic responses. Go deeper. Don't summarise when you can fully explain. They're paying for quality."
+    : "";
+
+  const systemPrompt = FORTIFY_KNOWLEDGE + dnaContext + memoryContext + apexNote;
 
   // ── First Claude call (may use tools) ──
   const resp1 = await claude().messages.create({
-    model: CLAUDE_MODELS.fast,
-    max_tokens: 2000,
+    model: aiModel,
+    max_tokens: maxTok1,
     system: systemPrompt,
     tools: FORTIFY_TOOLS,
     messages,
@@ -498,8 +515,8 @@ export async function POST(req: Request) {
 
     // ── Second Claude call with tool results ──
     const resp2 = await claude().messages.create({
-      model: CLAUDE_MODELS.fast,
-      max_tokens: 1500,
+      model: aiModel,
+      max_tokens: maxTok2,
       system: systemPrompt,
       tools: FORTIFY_TOOLS,
       messages: [
