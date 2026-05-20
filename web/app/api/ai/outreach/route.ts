@@ -10,11 +10,16 @@ import {
 } from "@/lib/outreach";
 import { sendDMConditional } from "@/lib/notifications";
 import { flagAbuse } from "@/lib/abuse";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id;
+
+  // 10 outreach generations per minute per user
+  const rl = rateLimit(`outreach:${userId}`, 10, 60_000);
+  if (!rl.ok) return rateLimitResponse(rl.resetMs);
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return new NextResponse("Not found", { status: 404 });

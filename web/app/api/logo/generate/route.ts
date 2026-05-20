@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { generateLogoImage, analyzeImageWithVision } from "@/lib/openai";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const SIZE_MAP: Record<string, "1024x1024" | "1024x1536" | "1536x1024"> = {
   "500x500":  "1024x1024",
@@ -14,6 +15,10 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id as string;
+
+  // 5 logo generations per minute per user
+  const rl = rateLimit(`logo:${userId}`, 5, 60_000);
+  if (!rl.ok) return rateLimitResponse(rl.resetMs);
 
   const user = await db.user.findUnique({ where: { id: userId }, select: { tier: true, credits: true } });
   if (!user || user.tier === "FREE") return NextResponse.json({ error: "Requires Pro+" }, { status: 403 });

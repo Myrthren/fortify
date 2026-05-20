@@ -8,6 +8,7 @@ import { ShopifyConnectSection } from "@/components/shopify-connect";
 import { StripeConnectSection } from "@/components/stripe-connect";
 import { NotionConnectSection } from "@/components/notion-connect";
 import type { Tier } from "@prisma/client";
+import { Download, Trash2 } from "lucide-react";
 
 type Prefs = {
   dmPaymentFailed: boolean;
@@ -130,6 +131,11 @@ export function SettingsClient({
   const [userPrefs, setUserPrefs] = useState<UserPrefs | null>(null);
   const [savingPref, setSavingPref] = useState<string | null>(null);
 
+  // GDPR
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
   // Username state
   const [username, setUsername] = useState(initialUsername ?? "");
   const [usernameInput, setUsernameInput] = useState(initialUsername ?? "");
@@ -207,6 +213,21 @@ export function SettingsClient({
       }
     } finally {
       setSavingUsername(false);
+    }
+  }
+
+  async function deleteAccount() {
+    setDeleting(true);
+    try {
+      const res = await fetch("/api/user/delete", { method: "DELETE" });
+      if (res.ok) {
+        window.location.href = "/";
+      } else {
+        const d = await res.json();
+        alert(d.error ?? "Deletion failed. Please contact support.");
+      }
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -388,7 +409,7 @@ export function SettingsClient({
 
         {/* Owner-only */}
         {isOwner && (
-          <section>
+          <section className="mb-8">
             <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
               Owner alerts
             </h2>
@@ -408,6 +429,87 @@ export function SettingsClient({
               })}
             </div>
           </section>
+        )}
+
+        {/* Data & Privacy (GDPR) */}
+        <section className="mb-8">
+          <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Data &amp; Privacy
+          </h2>
+          <div className="card divide-y divide-bg-border">
+            {/* Data export */}
+            <div className="flex items-start justify-between gap-4 px-5 py-4">
+              <div>
+                <p className="text-sm font-medium">Export your data</p>
+                <p className="mt-0.5 text-xs text-text-muted">
+                  Download a full copy of your account data — profile, chat history, generations, and more.
+                </p>
+              </div>
+              <a
+                href="/api/user/export"
+                download
+                className="shrink-0 flex items-center gap-1.5 rounded-md border border-bg-border px-3 py-1.5 text-sm text-text-muted transition hover:border-white/20 hover:text-text"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Export
+              </a>
+            </div>
+
+            {/* Account deletion */}
+            <div className="flex items-start justify-between gap-4 px-5 py-4">
+              <div>
+                <p className="text-sm font-medium text-red-400">Delete account</p>
+                <p className="mt-0.5 text-xs text-text-muted">
+                  Permanently erase all your data. This cannot be undone.
+                </p>
+              </div>
+              <button
+                onClick={() => { setShowDeleteModal(true); setDeleteConfirm(""); }}
+                className="shrink-0 flex items-center gap-1.5 rounded-md border border-red-500/30 bg-red-500/5 px-3 py-1.5 text-sm text-red-400 transition hover:border-red-500/60 hover:bg-red-500/10"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Delete confirmation modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
+            <div className="w-full max-w-sm rounded-2xl border border-red-500/20 bg-[#0d0d0d] p-6 shadow-2xl">
+              <h3 className="text-base font-semibold text-red-400">Delete your account?</h3>
+              <p className="mt-2 text-sm text-text-muted">
+                This will permanently erase your profile, chat history, AI sessions, credits, and all generated content. It cannot be undone.
+              </p>
+              <p className="mt-4 text-sm text-text-muted">
+                Type <span className="font-mono text-text">DELETE</span> to confirm:
+              </p>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                className="input mt-2 w-full"
+                placeholder="DELETE"
+                autoFocus
+              />
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={deleteAccount}
+                  disabled={deleteConfirm !== "DELETE" || deleting}
+                  className="flex-1 rounded-md bg-red-600 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-40"
+                >
+                  {deleting ? "Deleting…" : "Delete my account"}
+                </button>
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="rounded-md border border-bg-border px-4 py-2 text-sm text-text-muted transition hover:border-white/20 hover:text-text"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </div>

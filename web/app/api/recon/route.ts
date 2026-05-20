@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { braveSearch } from "@/lib/brave";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 // UK & general phone patterns
@@ -38,6 +39,10 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id;
+
+  // 5 recon searches per minute per user
+  const rl = rateLimit(`recon:${userId}`, 5, 60_000);
+  if (!rl.ok) return rateLimitResponse(rl.resetMs);
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return new NextResponse("Not found", { status: 404 });

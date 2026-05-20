@@ -3,6 +3,8 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { AdsDashboard } from "@/components/ads-dashboard";
+import { LockedPage } from "@/components/locked-page";
+import { TIER_LIMITS } from "@/lib/tiers";
 import Link from "next/link";
 
 export default async function AdsPage() {
@@ -15,6 +17,24 @@ export default async function AdsPage() {
     db.metaConnection.findUnique({ where: { userId } }),
   ]);
   if (!user) redirect("/login");
+
+  if (!TIER_LIMITS[user.tier].metaAds) {
+    return (
+      <LockedPage
+        title="Meta Ads Dashboard"
+        description="Connect your Meta ad account and get AI-powered analysis of your campaigns, spend, and performance."
+        requiredTier="PRO"
+        icon="📊"
+        user={user}
+        active="ads"
+        features={[
+          { icon: "📈", title: "Campaign performance", desc: "Impressions, clicks, CTR, and ROAS across all campaigns." },
+          { icon: "🤖", title: "AI analysis", desc: "Weekly AI digest of what's working and what to cut." },
+          { icon: "💰", title: "Spend tracking", desc: "Budget vs spend vs return — at a glance." },
+        ]}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-bg">

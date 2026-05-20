@@ -70,6 +70,9 @@ export default async function AdminPage() {
           <Link href="/admin/usage" className="rounded-md border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 hover:bg-purple-500/20 transition">
             📊 Usage &amp; Abuse
           </Link>
+          <Link href="/admin/pods" className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition">
+            🫂 Mastermind Pods
+          </Link>
         </div>
 
         {/* Reset limits */}

@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
 import { generateLogoImage } from "@/lib/openai";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const FONT_STYLES: Record<string, string> = {
   "Inter":            "clean modern sans-serif typography",
@@ -23,6 +24,10 @@ export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id as string;
+
+  // 3 slideshow generations per minute per user
+  const rl = rateLimit(`slideshow:${userId}`, 3, 60_000);
+  if (!rl.ok) return rateLimitResponse(rl.resetMs);
 
   const user = await db.user.findUnique({ where: { id: userId }, select: { tier: true, credits: true } });
   if (!user || user.tier === "FREE") return NextResponse.json({ error: "Requires Pro+" }, { status: 403 });

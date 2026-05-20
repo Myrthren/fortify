@@ -43,7 +43,7 @@ export default async function PodsPage() {
         {user.tier !== "APEX" ? (
           <div className="card p-6">
             <p className="font-medium">Mastermind Pods are an Apex feature.</p>
-            <p className="mt-1 text-sm text-text-muted">Upgrade to Apex ($199/mo) to get auto-assigned to a pod of 3–5 operators.</p>
+            <p className="mt-1 text-sm text-text-muted">Upgrade to Apex (£199/mo) to get auto-assigned to a pod of 3–5 operators.</p>
             <Link href="/pricing" className="mt-4 inline-block text-sm underline underline-offset-2">
               See Apex →
             </Link>
