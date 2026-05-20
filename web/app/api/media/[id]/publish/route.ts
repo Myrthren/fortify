@@ -46,6 +46,12 @@ export async function POST(
   const report = item.viralityReport as any;
 
   for (const platform of platforms) {
+    // TikTok posting is not yet available — Content Posting API approval pending
+    if (platform === "tiktok") {
+      results[platform] = { success: false, error: "TikTok publishing is coming soon." };
+      continue;
+    }
+
     const conn = connections.find((c) => c.platform === platform);
     if (!conn) {
       results[platform] = { success: false, error: `${platform} not connected` };

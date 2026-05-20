@@ -319,19 +319,31 @@ export function ViralityEngine({
               <div>
                 <label className="block text-xs text-text-muted mb-1">Target platforms</label>
                 <div className="flex gap-2">
-                  {(["tiktok", "youtube", "facebook"] as Platform[]).map((p) => (
-                    <button
-                      key={p}
-                      onClick={() => togglePlatform(p)}
-                      className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition ${
-                        addPlatforms.includes(p)
-                          ? "border-white/30 bg-white/10 text-text"
-                          : "border-bg-border text-text-muted hover:text-text"
-                      }`}
-                    >
-                      {PLATFORM_ICONS[p]} {PLATFORM_LABELS[p]}
-                    </button>
-                  ))}
+                  {(["tiktok", "youtube", "facebook"] as Platform[]).map((p) => {
+                    const isSoon = p === "tiktok";
+                    return isSoon ? (
+                      <div
+                        key={p}
+                        className="flex items-center gap-1.5 rounded-md border border-bg-border px-2.5 py-1.5 text-xs text-text-dim opacity-50 cursor-not-allowed"
+                        title="Coming soon"
+                      >
+                        {PLATFORM_ICONS[p]} {PLATFORM_LABELS[p]}
+                        <span className="text-[10px]">Soon</span>
+                      </div>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => togglePlatform(p)}
+                        className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition ${
+                          addPlatforms.includes(p)
+                            ? "border-white/30 bg-white/10 text-text"
+                            : "border-bg-border text-text-muted hover:text-text"
+                        }`}
+                      >
+                        {PLATFORM_ICONS[p]} {PLATFORM_LABELS[p]}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
               {/* Auto suggest */}
