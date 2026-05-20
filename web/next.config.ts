@@ -3,6 +3,8 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Required for Sentry server-side instrumentation in App Router
+  experimental: { instrumentationHook: true },
   // Skip lint/type-check during prod build — we run these in CI separately.
   // Avoids spurious build failures on Netlify when CI environments differ.
   eslint: { ignoreDuringBuilds: true },

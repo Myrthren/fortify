@@ -137,12 +137,8 @@ export function AnalyticsDashboard({ conn }: { conn: GoogleConn }) {
           const json = await res.json();
           if (!res.ok) { setError(json.error ?? "Failed"); return; }
           setScData(json);
-        } else {
-          const res = await fetch(`/api/google/youtube?days=${d}`);
-          const json = await res.json();
-          if (!res.ok) { setError(json.error ?? "Failed"); return; }
-          setYtData(json);
         }
+        // YouTube Analytics: coming soon — no fetch
       } catch {
         setError("Request failed.");
       } finally {
@@ -166,7 +162,7 @@ export function AnalyticsDashboard({ conn }: { conn: GoogleConn }) {
         <div>
           <p className="font-semibold">Connect Google Analytics</p>
           <p className="mt-1 text-sm text-text-muted">
-            Link your Google account to pull GA4, Search Console, and YouTube Analytics into one dashboard.
+            Link your Google account to pull GA4 and Search Console data into one dashboard.
           </p>
         </div>
         {oauthError && (
@@ -341,10 +337,15 @@ export function AnalyticsDashboard({ conn }: { conn: GoogleConn }) {
         <EmptyState icon={<Search className="h-5 w-5" />} text={localConn.scSiteUrl ? "Loading Search Console data…" : "No Search Console site selected."} cta={!localConn.scSiteUrl ? <button onClick={() => setShowSetup(true)} className="btn-primary text-sm mt-3">Set up Search Console</button> : null} />
       )}
 
-      {/* YouTube */}
-      {tab === "youtube" && ytData && !loading && <YouTubeView data={ytData} days={days} />}
-      {tab === "youtube" && !ytData && !loading && !error && (
-        <EmptyState icon={<Youtube className="h-5 w-5" />} text="Loading YouTube Analytics…" />
+      {/* YouTube — coming soon */}
+      {tab === "youtube" && (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-bg-border bg-bg-panel/50 py-16 text-center">
+          <Youtube className="h-8 w-8 text-text-dim mb-4" />
+          <p className="font-semibold text-text">YouTube Analytics — Coming Soon</p>
+          <p className="mt-2 text-sm text-text-muted max-w-sm">
+            YouTube Analytics integration is in development. GA4 and Search Console are fully available now.
+          </p>
+        </div>
       )}
     </div>
   );
