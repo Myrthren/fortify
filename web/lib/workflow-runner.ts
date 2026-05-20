@@ -396,17 +396,230 @@ async function execNode(
       return { firedPort: "out", output: `${c.method || "GET"} ${url.slice(0, 60)} → ${resp.length} bytes` };
     }
 
-    // ── Twitter / X (stub) ───────────────────────────────────────────────────
+    // ── Twitter / X ──────────────────────────────────────────────────────────
     case "action_twitter": {
-      const msg = c.message || ctx.vars.previous_output || "";
-      // Twitter API v2 requires OAuth 2.0 user context — stub until user connects
-      ctx.vars.previous_output = msg;
-      return { firedPort: "out", output: `[Twitter stub] Would post: ${msg.slice(0, 100)}` };
+      const twitterKey    = process.env.TWITTER_API_KEY;
+      const twitterSecret = process.env.TWITTER_API_SECRET;
+      const accessToken   = process.env.TWITTER_ACCESS_TOKEN;
+      const accessSecret  = process.env.TWITTER_ACCESS_TOKEN_SECRET;
+
+      if (!twitterKey || !twitterSecret || !accessToken || !accessSecret) {
+        throw new Error(
+          "Twitter not connected. Add TWITTER_API_KEY, TWITTER_API_SECRET, TWITTER_ACCESS_TOKEN, " +
+          "and TWITTER_ACCESS_TOKEN_SECRET to your Netlify environment variables to enable Twitter posting."
+        );
+      }
+
+      const tweetText = (c.message || ctx.vars.previous_output || "").slice(0, 280);
+      if (!tweetText) throw new Error("Twitter: no message to post");
+
+      // OAuth 1.0a signature for Twitter API v2 POST /2/tweets
+      const oauthParams: Record<string, string> = {
+        oauth_consumer_key:     twitterKey,
+        oauth_nonce:            Math.random().toString(36).slice(2) + Date.now().toString(36),
+        oauth_signature_method: "HMAC-SHA1",
+        oauth_timestamp:        Math.floor(Date.now() / 1000).toString(),
+        oauth_token:            accessToken,
+        oauth_version:          "1.0",
+      };
+
+      // Build signature base string
+      const url = "https://api.twitter.com/2/tweets";
+      const paramStr = Object.entries(oauthParams)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join("&");
+      const signatureBase = [
+        "POST",
+        encodeURIComponent(url),
+        encodeURIComponent(paramStr),
+      ].join("&");
+
+      // Sign with HMAC-SHA1
+      const { createHmac } = await import("crypto");
+      const signingKey = `${encodeURIComponent(twitterSecret)}&${encodeURIComponent(accessSecret)}`;
+      const signature = createHmac("sha1", signingKey)
+        .update(signatureBase)
+        .digest("base64");
+      oauthParams.oauth_signature = signature;
+
+      const authHeader =
+        "OAuth " +
+        Object.entries(oauthParams)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([k, v]) => `${encodeURIComponent(k)}="${encodeURIComponent(v)}"`)
+          .join(", ");
+
+      const tweetRes = await fetch(url, {
+        method: "POST",
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: tweetText }),
+      });
+
+      if (!tweetRes.ok) {
+        const errBody = await tweetRes.text();
+        throw new Error(`Twitter API error ${tweetRes.status}: ${errBody.slice(0, 200)}`);
+      }
+
+      const tweetData = await tweetRes.json() as { data?: { id?: string } };
+      const tweetId   = tweetData?.data?.id ?? "unknown";
+      const tweetUrl  = tweetId !== "unknown"
+        ? `https://twitter.com/i/web/status/${tweetId}`
+        : "https://twitter.com";
+
+      ctx.vars.previous_output = tweetUrl;
+      ctx.vars.tweet_url       = tweetUrl;
+      ctx.vars.tweet_id        = tweetId;
+      return { firedPort: "out", output: `Tweet posted: ${tweetUrl}` };
     }
 
-    // ── Shopify (stub) ───────────────────────────────────────────────────────
+    // ── Shopify ───────────────────────────────────────────────────────────────
     case "action_shopify": {
-      return { firedPort: "out", output: `[Shopify stub] Action: ${c.action}` };
+      const shopifyConn = await db.shopifyConnection.findUnique({
+        where: { userId: ctx.userId },
+        select: { shop: true, accessToken: true },
+      });
+      if (!shopifyConn) {
+        throw new Error(
+          "Shopify not connected. Go to Dashboard → Shopify and connect your store first."
+        );
+      }
+
+      const { shop, accessToken: shopToken } = shopifyConn;
+      const apiVersion = "2024-10";
+      const action = c.action || "create_product";
+
+      switch (action) {
+        case "create_product": {
+          const title  = c.title  || ctx.vars.previous_output || "New Product";
+          const body   = c.body   || "";
+          const price  = c.price  || "0.00";
+          const vendor = c.vendor || "";
+
+          const res = await fetch(
+            `https://${shop}/admin/api/${apiVersion}/products.json`,
+            {
+              method: "POST",
+              headers: {
+                "X-Shopify-Access-Token": shopToken,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                product: {
+                  title,
+                  body_html: body,
+                  vendor,
+                  variants: [{ price }],
+                },
+              }),
+            }
+          );
+          if (!res.ok) {
+            const err = await res.text();
+            throw new Error(`Shopify create_product error ${res.status}: ${err.slice(0, 200)}`);
+          }
+          const data = await res.json() as { product?: { id?: number; title?: string } };
+          const productId  = data?.product?.id ?? "unknown";
+          const productUrl = `https://${shop}/admin/products/${productId}`;
+          ctx.vars.previous_output  = productUrl;
+          ctx.vars.shopify_product_id  = String(productId);
+          ctx.vars.shopify_product_url = productUrl;
+          return { firedPort: "out", output: `Product created: "${title}" (ID ${productId})` };
+        }
+
+        case "create_draft_order": {
+          const variantId = c.variantId || "";
+          const qty       = parseInt(c.quantity || "1", 10);
+          const email     = c.email || ctx.vars["member.email"] || "";
+
+          if (!variantId) throw new Error("Shopify create_draft_order: no variantId configured");
+
+          const res = await fetch(
+            `https://${shop}/admin/api/${apiVersion}/draft_orders.json`,
+            {
+              method: "POST",
+              headers: {
+                "X-Shopify-Access-Token": shopToken,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                draft_order: {
+                  line_items: [{ variant_id: variantId, quantity: qty }],
+                  ...(email ? { email } : {}),
+                },
+              }),
+            }
+          );
+          if (!res.ok) {
+            const err = await res.text();
+            throw new Error(`Shopify create_draft_order error ${res.status}: ${err.slice(0, 200)}`);
+          }
+          const data = await res.json() as { draft_order?: { id?: number; invoice_url?: string } };
+          const orderId   = data?.draft_order?.id ?? "unknown";
+          const invoiceUrl = data?.draft_order?.invoice_url ?? "";
+          ctx.vars.previous_output      = invoiceUrl || String(orderId);
+          ctx.vars.shopify_order_id     = String(orderId);
+          ctx.vars.shopify_invoice_url  = invoiceUrl;
+          return { firedPort: "out", output: `Draft order created: ID ${orderId}` };
+        }
+
+        case "get_orders": {
+          const limit  = Math.min(parseInt(c.limit || "10", 10), 50);
+          const status = c.status || "any";
+          const res = await fetch(
+            `https://${shop}/admin/api/${apiVersion}/orders.json?limit=${limit}&status=${status}`,
+            {
+              headers: { "X-Shopify-Access-Token": shopToken },
+            }
+          );
+          if (!res.ok) {
+            const err = await res.text();
+            throw new Error(`Shopify get_orders error ${res.status}: ${err.slice(0, 200)}`);
+          }
+          const data = await res.json() as { orders?: unknown[] };
+          const orders    = data?.orders ?? [];
+          const ordersJson = JSON.stringify(orders);
+          const outVar    = c.outputVar || "shopify_orders";
+          ctx.vars[outVar]         = ordersJson;
+          ctx.vars.previous_output = ordersJson.slice(0, 2000);
+          ctx.vars.shopify_order_count = String(orders.length);
+          return { firedPort: "out", output: `Fetched ${orders.length} order(s) from Shopify` };
+        }
+
+        case "update_inventory": {
+          const inventoryItemId = c.inventoryItemId || "";
+          const locationId      = c.locationId || "";
+          const available       = parseInt(c.available || "0", 10);
+
+          if (!inventoryItemId || !locationId) {
+            throw new Error("Shopify update_inventory: inventoryItemId and locationId are required");
+          }
+
+          const res = await fetch(
+            `https://${shop}/admin/api/${apiVersion}/inventory_levels/set.json`,
+            {
+              method: "POST",
+              headers: {
+                "X-Shopify-Access-Token": shopToken,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ inventory_item_id: inventoryItemId, location_id: locationId, available }),
+            }
+          );
+          if (!res.ok) {
+            const err = await res.text();
+            throw new Error(`Shopify update_inventory error ${res.status}: ${err.slice(0, 200)}`);
+          }
+          ctx.vars.previous_output = `Inventory updated: ${available} units`;
+          return { firedPort: "out", output: `Inventory set to ${available} for item ${inventoryItemId}` };
+        }
+
+        default:
+          throw new Error(`Shopify: unknown action "${action}". Supported: create_product, create_draft_order, get_orders, update_inventory`);
+      }
     }
 
     // ── Condition ────────────────────────────────────────────────────────────

@@ -86,7 +86,7 @@ export default function PricingPage() {
         <div className="mb-12 text-center sm:mb-16">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Pricing</h1>
           <p className="mx-auto mt-4 max-w-xl text-text-muted">
-            Pay monthly, cancel anytime. Every tier unlocks both site + Discord features.
+            Pay monthly, cancel anytime. All sales are final — no refunds. Every tier unlocks both site + Discord features.
           </p>
         </div>
 

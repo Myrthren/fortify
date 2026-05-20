@@ -20,7 +20,11 @@ const FAQS = [
   },
   {
     q: "I want to cancel my subscription",
-    a: "Go to your PayPal account and cancel the billing agreement. Your access remains active until the end of the current billing period.",
+    a: "Go to your PayPal account and cancel the billing agreement. Your access remains active until the end of the current billing period. Please note: all sales are final and we do not offer refunds.",
+  },
+  {
+    q: "Can I get a refund?",
+    a: "All sales are final. We do not offer refunds on any subscription tier or credit purchase. You can cancel your subscription at any time to prevent future billing, and your access continues until the end of the current period.",
   },
   {
     q: "My AI generation count isn't resetting",
