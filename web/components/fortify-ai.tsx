@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, Paperclip, X, ShoppingCart, CheckCircle2, XCircle, History, SquarePen, Trash2 } from "lucide-react";
+import { Send, Loader2, Paperclip, X, ShoppingCart, CheckCircle2, XCircle, History, SquarePen, Trash2, Download } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -11,7 +11,8 @@ type Msg = {
   role: "user" | "assistant";
   content: string;
   hasFile?: boolean;
-  imagePreview?: string; // data URL shown in bubble
+  imagePreview?: string;    // user-attached image shown in bubble
+  generatedImage?: string;  // AI-generated image (base64 data URL)
   actions?: ActionResult[];
 };
 
@@ -240,7 +241,12 @@ export function FortifyAI() {
       const d = await res.json();
       setMessages((p) => [
         ...p,
-        { role: "assistant", content: d.message, actions: d.actions?.length ? d.actions : undefined },
+        {
+          role: "assistant",
+          content: d.message,
+          actions: d.actions?.length ? d.actions : undefined,
+          generatedImage: d.imageUrl ?? undefined,
+        },
       ]);
       fetchUsage();
     } finally {
@@ -458,6 +464,26 @@ export function FortifyAI() {
                       <p className="text-[10px] text-text-muted mb-1">📎 File attached</p>
                     )}
                     <div className="whitespace-pre-wrap">{renderContent(m.content)}</div>
+
+                    {/* AI-generated image */}
+                    {m.generatedImage && (
+                      <div className="mt-2.5 space-y-1.5">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={m.generatedImage}
+                          alt="AI generated"
+                          className="w-full rounded-xl border border-white/10 object-cover"
+                        />
+                        <a
+                          href={m.generatedImage}
+                          download="fortify-ai-image.png"
+                          className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] border border-white/[0.10] px-2.5 py-1 text-[11px] text-text-muted hover:text-text transition"
+                        >
+                          <Download className="h-2.5 w-2.5" />
+                          Download
+                        </a>
+                      </div>
+                    )}
 
                     {/* Action result chips */}
                     {m.actions && m.actions.length > 0 && (

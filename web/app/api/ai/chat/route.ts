@@ -6,6 +6,10 @@ import { getOrCreateSession, deductCost, estimateCost } from "@/lib/ai-usage";
 import { flagAbuse } from "@/lib/abuse";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { randomUUID } from "crypto";
+import { generateLogoImage } from "@/lib/openai";
+
+// Cost of one gpt-image-1 generation at 1024×1024 high quality (in GBP)
+const IMAGE_GEN_COST_GBP = 0.04;
 
 // ── Workflow node types (kept in sync with workflow-editor.tsx) ───────────────
 const WF_NODE_TYPES = [
@@ -74,6 +78,22 @@ const FORTIFY_TOOLS: any[] = [
         content: { type: "string", description: "The information to save" },
       },
       required: ["label", "content"],
+    },
+  },
+  {
+    name: "generate_image",
+    description:
+      "Generate a real image using AI. Use this whenever the user asks to generate, create, draw, design, or visualise an image. ALWAYS use this tool — never just describe an image in text. Write a detailed, high-quality prompt capturing exactly what they want.",
+    input_schema: {
+      type: "object",
+      properties: {
+        prompt: {
+          type: "string",
+          description:
+            "Detailed image generation prompt. Be descriptive: include subject, style, composition, colours, lighting, and any specific details the user mentioned.",
+        },
+      },
+      required: ["prompt"],
     },
   },
   {
@@ -278,6 +298,17 @@ async function execCreateWorkflow(
   }
 }
 
+async function execGenerateImage(
+  prompt: string
+): Promise<{ success: boolean; description: string; imageUrl?: string }> {
+  try {
+    const imageUrl = await generateLogoImage(prompt, "1024x1024");
+    return { success: true, description: "Image generated successfully", imageUrl };
+  } catch (e: any) {
+    return { success: false, description: e.message ?? "Image generation failed" };
+  }
+}
+
 // ── System prompt ─────────────────────────────────────────────────────────────
 
 const FORTIFY_KNOWLEDGE = `You are Fortify AI — the built-in AI assistant and agent for Fortify, a business scaling platform. You can hold conversations AND perform actions directly inside Fortify when asked.
@@ -287,6 +318,7 @@ const FORTIFY_KNOWLEDGE = `You are Fortify AI — the built-in AI assistant and 
 - **update_settings** — change username or privacy toggles (allow messages, allow connections, show Discord username)
 - **add_company_dna** — save important business context to persistent memory
 - **create_workflow** — build a full automation workflow with nodes and connections from scratch (Elite/Apex only). Use this when the user describes an automation they want — do it immediately, don't just explain how.
+- **generate_image** — generate a real image using gpt-image-1. Use this immediately when the user asks to generate, create, draw, design, or visualise anything. NEVER just describe an image in text — always call this tool. Write a rich, detailed prompt.
 
 If a user asks you to change something about their account or build a workflow, USE THE TOOL — don't just explain how. Do it immediately and confirm what you did.
 
@@ -475,6 +507,8 @@ export async function POST(req: Request) {
   let totalOut = resp1.usage.output_tokens;
   const actionResults: { description: string; success: boolean }[] = [];
   let finalText = "";
+  let generatedImageUrl: string | undefined;
+  let imageGenCost = 0;
 
   if ((resp1 as any).stop_reason === "tool_use") {
     // ── Execute each tool ──
@@ -483,7 +517,7 @@ export async function POST(req: Request) {
 
     for (const block of toolUseBlocks) {
       const input = block.input as Record<string, string>;
-      let result: { success: boolean; description: string };
+      let result: { success: boolean; description: string; imageUrl?: string };
 
       if (block.name === "update_profile") {
         result = await execUpdateProfile(userId, input.field, input.value);
@@ -497,11 +531,17 @@ export async function POST(req: Request) {
           block.input.name, block.input.description,
           block.input.nodes ?? [], block.input.connections ?? []
         );
+      } else if (block.name === "generate_image") {
+        result = await execGenerateImage(block.input.prompt);
+        if (result.imageUrl) {
+          generatedImageUrl = result.imageUrl;
+          imageGenCost += IMAGE_GEN_COST_GBP;
+        }
       } else {
         result = { success: false, description: `Unknown tool: ${block.name}` };
       }
 
-      actionResults.push(result);
+      actionResults.push({ description: result.description, success: result.success });
       // For create_workflow, pass the workflowId so Claude can embed the link in its reply
       const toolContent = result.success
         ? `Success: ${result.description}${(result as any).workflowId ? ` workflowId=${(result as any).workflowId}` : ""}`
@@ -540,8 +580,13 @@ export async function POST(req: Request) {
       .join("\n");
   }
 
-  const cost = estimateCost(totalIn, totalOut, hasImage);
+  const cost = estimateCost(totalIn, totalOut, hasImage) + imageGenCost;
   if (aiSession) await deductCost(userId, user.tier, cost);
 
-  return NextResponse.json({ message: finalText, actions: actionResults, costGbp: cost });
+  return NextResponse.json({
+    message: finalText,
+    actions: actionResults,
+    costGbp: cost,
+    ...(generatedImageUrl ? { imageUrl: generatedImageUrl } : {}),
+  });
 }
