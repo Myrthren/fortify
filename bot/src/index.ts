@@ -50,7 +50,7 @@ const client = new Client({
 });
 
 client.once(Events.ClientReady, (c) => {
-  console.log(`✅ Fortify bot online as ${c.user.tag}`);
+  console.log(`✅ Fortify bot online as ${c.user.tag} — build includes role-toggle handler`);
 });
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
