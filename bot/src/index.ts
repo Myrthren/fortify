@@ -4,7 +4,6 @@ import {
   Collection,
   Events,
   GatewayIntentBits,
-  Partials,
   Interaction,
   Message,
   ButtonInteraction,
@@ -18,11 +17,6 @@ import {
   TextInputStyle,
   ChannelType,
 } from "discord.js";
-
-// ── Reaction role config ──────────────────────────────────────────────────────
-const REACTION_ROLES: Record<string, { emoji: string; roleId: string }> = {
-  "1508087505654644936": { emoji: "🔔", roleId: "1469480118912024791" }, // Fortify Updates
-};
 import * as hook from "./commands/hook";
 import * as upgrade from "./commands/upgrade";
 import * as profile from "./commands/profile";
@@ -51,11 +45,8 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,    // privileged — must be enabled in Discord Dev Portal
-    GatewayIntentBits.GuildMessageReactions, // needed for reaction roles
+    GatewayIntentBits.MessageContent, // privileged — must be enabled in Discord Dev Portal
   ],
-  // Partials required to receive reactions on messages sent before the bot started
-  partials: [Partials.Message, Partials.Channel, Partials.Reaction],
 });
 
 client.once(Events.ClientReady, (c) => {
@@ -90,6 +81,29 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 // ── Support: user clicks "Open a Ticket" from #support embed ─────────────────
 async function handleButtonInteraction(interaction: ButtonInteraction) {
   const id = interaction.customId;
+
+  // ── Role toggle button (e.g. "role_toggle_1469480118912024791") ───────────
+  if (id.startsWith("role_toggle_")) {
+    const roleId = id.slice("role_toggle_".length);
+    const guild  = interaction.guild;
+    if (!guild) return interaction.reply({ content: "Server not found.", ephemeral: true });
+
+    const member = await guild.members.fetch(interaction.user.id).catch(() => null);
+    if (!member) return interaction.reply({ content: "Could not find your membership.", ephemeral: true });
+
+    try {
+      if (member.roles.cache.has(roleId)) {
+        await member.roles.remove(roleId);
+        return interaction.reply({ content: "✅ Role removed — you'll no longer receive update notifications.", ephemeral: true });
+      } else {
+        await member.roles.add(roleId);
+        return interaction.reply({ content: "✅ You've been given the **Fortify Updates** role and will be notified of platform changes.", ephemeral: true });
+      }
+    } catch (e) {
+      console.error("[role-toggle] failed:", e);
+      return interaction.reply({ content: "Failed to update your role. Make sure the bot has Manage Roles permission.", ephemeral: true });
+    }
+  }
 
   // ── User clicks "Open a Ticket" from #support channel embed ──────────────
   if (id === "support_open_modal") {
@@ -325,47 +339,6 @@ client.on(Events.MessageCreate, async (message: Message) => {
     console.error("handleMention error:", err);
     message.reply("Something went wrong. Try again.").catch(() => {});
   });
-});
-
-// ── Reaction roles ────────────────────────────────────────────────────────────
-
-client.on(Events.MessageReactionAdd, async (reaction, user) => {
-  if (user.bot) return;
-  // Fetch partial reaction/message if needed
-  if (reaction.partial) { try { await reaction.fetch(); } catch { return; } }
-
-  const config = REACTION_ROLES[reaction.message.id];
-  if (!config) return;
-  if (reaction.emoji.name !== config.emoji) return;
-
-  const guild = reaction.message.guild;
-  if (!guild) return;
-  try {
-    const member = await guild.members.fetch(user.id);
-    await member.roles.add(config.roleId);
-    console.log(`[reaction-role] +${config.roleId} → ${user.username}`);
-  } catch (e) {
-    console.error("[reaction-role] Failed to add role:", e);
-  }
-});
-
-client.on(Events.MessageReactionRemove, async (reaction, user) => {
-  if (user.bot) return;
-  if (reaction.partial) { try { await reaction.fetch(); } catch { return; } }
-
-  const config = REACTION_ROLES[reaction.message.id];
-  if (!config) return;
-  if (reaction.emoji.name !== config.emoji) return;
-
-  const guild = reaction.message.guild;
-  if (!guild) return;
-  try {
-    const member = await guild.members.fetch(user.id);
-    await member.roles.remove(config.roleId);
-    console.log(`[reaction-role] -${config.roleId} → ${user.username}`);
-  } catch (e) {
-    console.error("[reaction-role] Failed to remove role:", e);
-  }
 });
 
 client.login(process.env.DISCORD_BOT_TOKEN);
