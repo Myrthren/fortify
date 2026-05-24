@@ -84,24 +84,24 @@ async function handleButtonInteraction(interaction: ButtonInteraction) {
 
   // ── Role toggle button (e.g. "role_toggle_1469480118912024791") ───────────
   if (id.startsWith("role_toggle_")) {
+    await interaction.deferReply({ ephemeral: true });
+
     const roleId = id.slice("role_toggle_".length);
     const guild  = interaction.guild;
-    if (!guild) return interaction.reply({ content: "Server not found.", ephemeral: true });
-
-    const member = await guild.members.fetch(interaction.user.id).catch(() => null);
-    if (!member) return interaction.reply({ content: "Could not find your membership.", ephemeral: true });
+    if (!guild) return interaction.editReply("Server not found.");
 
     try {
+      const member = await guild.members.fetch(interaction.user.id);
       if (member.roles.cache.has(roleId)) {
         await member.roles.remove(roleId);
-        return interaction.reply({ content: "✅ Role removed — you'll no longer receive update notifications.", ephemeral: true });
+        return interaction.editReply("✅ Role removed — you'll no longer receive update notifications.");
       } else {
         await member.roles.add(roleId);
-        return interaction.reply({ content: "✅ You've been given the **Fortify Updates** role and will be notified of platform changes.", ephemeral: true });
+        return interaction.editReply("✅ You now have the **Fortify Updates** role and will be notified of platform changes.");
       }
     } catch (e) {
       console.error("[role-toggle] failed:", e);
-      return interaction.reply({ content: "Failed to update your role. Make sure the bot has Manage Roles permission.", ephemeral: true });
+      return interaction.editReply("Something went wrong updating your role. Please try again.");
     }
   }
 
