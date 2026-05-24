@@ -68,9 +68,17 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
       }
     }
   } else if (interaction.isButton()) {
-    await handleButtonInteraction(interaction as ButtonInteraction).catch((e) =>
-      console.error("[button] error:", e)
-    );
+    await handleButtonInteraction(interaction as ButtonInteraction).catch(async (e) => {
+      console.error("[button] error:", e);
+      try {
+        const msg = { content: "Something went wrong. Please try again.", ephemeral: true };
+        if (interaction.deferred || interaction.replied) {
+          await (interaction as ButtonInteraction).editReply(msg.content);
+        } else {
+          await (interaction as ButtonInteraction).reply(msg);
+        }
+      } catch {}
+    });
   } else if (interaction.isModalSubmit()) {
     await handleModalSubmit(interaction as ModalSubmitInteraction).catch((e) =>
       console.error("[modal] error:", e)
@@ -84,24 +92,19 @@ async function handleButtonInteraction(interaction: ButtonInteraction) {
 
   // ── Role toggle button (e.g. "role_toggle_1469480118912024791") ───────────
   if (id.startsWith("role_toggle_")) {
-    await interaction.deferReply({ ephemeral: true });
-
     const roleId = id.slice("role_toggle_".length);
     const guild  = interaction.guild;
-    if (!guild) return interaction.editReply("Server not found.");
+    if (!guild) return interaction.reply({ content: "Server not found.", ephemeral: true });
 
-    try {
-      const member = await guild.members.fetch(interaction.user.id);
-      if (member.roles.cache.has(roleId)) {
-        await member.roles.remove(roleId);
-        return interaction.editReply("✅ Role removed — you'll no longer receive update notifications.");
-      } else {
-        await member.roles.add(roleId);
-        return interaction.editReply("✅ You now have the **Fortify Updates** role and will be notified of platform changes.");
-      }
-    } catch (e) {
-      console.error("[role-toggle] failed:", e);
-      return interaction.editReply("Something went wrong updating your role. Please try again.");
+    const member = await guild.members.fetch(interaction.user.id);
+    const hasRole = member.roles.cache.has(roleId);
+
+    if (hasRole) {
+      await member.roles.remove(roleId);
+      return interaction.reply({ content: "✅ Role removed — you'll no longer receive update notifications.", ephemeral: true });
+    } else {
+      await member.roles.add(roleId);
+      return interaction.reply({ content: "✅ You now have the **Fortify Updates** role and will be notified of platform changes.", ephemeral: true });
     }
   }
 
