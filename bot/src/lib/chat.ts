@@ -112,33 +112,22 @@ type LiveData = {
 
 async function fetchLiveData(discordId: string): Promise<LiveData | null> {
   try {
-    const user = await db.user.findUnique({
-      where: { discordId },
-      select: {
-        tier: true,
-        credits: true,
-        xp: true,
-        streak: true,
-        _count: {
-          select: {
-            brandVoice: true,
-            competitor: true,
-            watchTerm: true,
-            workflow: true,
-          },
-        },
-      },
-    });
+    const user = await db.user.findUnique({ where: { discordId } });
     if (!user) return null;
+    const [bvCount, compCount, wtCount] = await Promise.all([
+      db.brandVoice.count({ where: { userId: user.id } }),
+      db.competitor.count({ where: { userId: user.id } }),
+      db.watchTerm.count({ where: { userId: user.id } }),
+    ]);
     return {
       tier: user.tier,
-      credits: user.credits,
+      credits: (user as any).credits ?? 0,
       xp: user.xp,
       streak: user.streak,
-      brandVoices: user._count.brandVoice,
-      competitors: user._count.competitor,
-      watchTerms: user._count.watchTerm,
-      workflows: user._count.workflow,
+      brandVoices: bvCount,
+      competitors: compCount,
+      watchTerms: wtCount,
+      workflows: 0,
     };
   } catch {
     return null;
