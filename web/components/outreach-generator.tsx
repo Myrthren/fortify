@@ -14,11 +14,13 @@ const CHANNELS: { value: Channel; label: string }[] = [
 
 export function OutreachGenerator({
   voices = [],
+  initialProspect = "",
 }: {
   voices?: { id: string; name: string; isActive: boolean }[];
+  initialProspect?: string;
 }) {
   const [channel, setChannel] = useState<Channel>("dm");
-  const [prospect, setProspect] = useState("");
+  const [prospect, setProspect] = useState(initialProspect);
   const [offer, setOffer] = useState("");
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(
     () => voices.find((v) => v.isActive)?.id ?? ""

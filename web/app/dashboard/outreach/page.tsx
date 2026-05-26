@@ -7,10 +7,16 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { OutreachGenerator } from "@/components/outreach-generator";
 import Link from "next/link";
 
-export default async function OutreachPage() {
+export default async function OutreachPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ prospect?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const userId = (session.user as any).id;
+  const params = await searchParams;
+  const initialProspect = params.prospect ?? "";
 
   const [user, voices] = await Promise.all([
     db.user.findUnique({ where: { id: userId } }),
@@ -53,7 +59,7 @@ export default async function OutreachPage() {
           </div>
         ) : (
           <div className="card p-5 sm:p-6">
-            <OutreachGenerator voices={voices} />
+            <OutreachGenerator voices={voices} initialProspect={initialProspect} />
           </div>
         )}
       </main>

@@ -13,8 +13,20 @@ import {
   Brain,
   ChevronDown,
   ChevronUp,
+  Send,
+  Download,
+  Filter,
 } from "lucide-react";
 import { TierBadge } from "@/components/tier-badge";
+
+type LeadStatus = "new" | "contacted" | "qualified" | "dead";
+
+const STATUS_CONFIG: Record<LeadStatus, { label: string; cls: string }> = {
+  new:       { label: "New",       cls: "border-white/10 bg-white/[0.04] text-text-dim" },
+  contacted: { label: "Contacted", cls: "border-blue-500/30 bg-blue-500/10 text-blue-400" },
+  qualified: { label: "Qualified", cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
+  dead:      { label: "Dead",      cls: "border-red-500/30 bg-red-500/10 text-red-400" },
+};
 
 type Lead = {
   title: string;
@@ -55,6 +67,7 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
   const [extractPhones, setExtractPhones] = useState(false);
   const [applyContext, setApplyContext] = useState(false);
   const [results, setResults] = useState<Lead[]>([]);
+  const [rawCount, setRawCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [credits, setCredits] = useState(userCredits);
@@ -69,6 +82,12 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
   // Expanded context cards
   const [expandedContext, setExpandedContext] = useState<Set<number>>(new Set());
 
+  // Lead status tracking (keyed by URL)
+  const [leadStatuses, setLeadStatuses] = useState<Map<string, LeadStatus>>(new Map());
+
+  // Status filter
+  const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
+
   const baseCost = 50;
   const emailCost = extractEmails ? 25 : 0;
   const phoneCost = extractPhones ? 25 : 0;
@@ -82,7 +101,10 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
     setError(null);
     setLoading(true);
     setResults([]);
+    setRawCount(0);
     setExpandedContext(new Set());
+    setLeadStatuses(new Map());
+    setStatusFilter("all");
 
     try {
       const res = await fetch("/api/recon", {
@@ -106,6 +128,7 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
       }
 
       setResults(data.leads ?? []);
+      setRawCount(data.rawCount ?? 0);
       setCredits((c) => c - (data.creditsUsed ?? totalCost));
 
       const newSearch: PastSearch = {
@@ -157,13 +180,42 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
   function toggleContext(index: number) {
     setExpandedContext((prev) => {
       const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
       return next;
     });
+  }
+
+  function setLeadStatus(url: string, status: LeadStatus) {
+    setLeadStatuses((prev) => {
+      const next = new Map(prev);
+      next.set(url, status);
+      return next;
+    });
+  }
+
+  function exportCSV() {
+    const headers = ["Business", "Website", "Description", "Emails", "Phones", "Status"];
+    const rows = filteredResults.map((lead) => [
+      lead.title,
+      lead.url,
+      lead.description ?? "",
+      (lead.emails ?? []).join("; "),
+      (lead.phones ?? []).join("; "),
+      leadStatuses.get(lead.url) ?? "new",
+    ]);
+    const csv = [headers, ...rows]
+      .map((row) =>
+        row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+      )
+      .join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `recon-${location.replace(/\s+/g, "-")}-${category.replace(/\s+/g, "-")}-${Date.now()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   function domainFromUrl(url: string): string {
@@ -181,6 +233,24 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
       year: "numeric",
     });
   }
+
+  function outreachUrl(lead: Lead): string {
+    const prospect = `${lead.title} (${domainFromUrl(lead.url)})`;
+    return `/dashboard/outreach?prospect=${encodeURIComponent(prospect)}`;
+  }
+
+  const filteredResults =
+    statusFilter === "all"
+      ? results
+      : results.filter((lead) => (leadStatuses.get(lead.url) ?? "new") === statusFilter);
+
+  const statusCounts = results.reduce<Record<string, number>>((acc, lead) => {
+    const s = leadStatuses.get(lead.url) ?? "new";
+    acc[s] = (acc[s] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const filteredAway = rawCount > 0 ? rawCount - results.length : 0;
 
   return (
     <div className="space-y-8">
@@ -387,101 +457,177 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
       {/* Results */}
       {results.length > 0 && (
         <div className="space-y-4">
-          <p className="text-xs text-text-muted">
-            {results.length} result{results.length !== 1 ? "s" : ""} found
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {results.map((lead, i) => (
-              <div key={i} className="card-elevated p-4 space-y-2">
-                <p className="text-[11px] text-text-dim truncate">
-                  {lead.source ?? domainFromUrl(lead.url)}
-                </p>
-                <a
-                  href={lead.url}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="block font-medium text-text leading-snug hover:underline"
-                >
-                  {lead.title}
-                </a>
-                {lead.description && (
-                  <p className="text-xs text-text-muted leading-relaxed line-clamp-3">
-                    {lead.description}
-                  </p>
+          {/* Results header */}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-sm text-text-muted">
+                <span className="font-medium text-text">{results.length}</span> businesses found
+                {filteredAway > 0 && (
+                  <span className="text-text-dim"> · {filteredAway} directories filtered out</span>
                 )}
+              </p>
 
-                {/* AI context */}
-                {lead.context && (
-                  <div className="pt-1">
+              {/* Status filter pills */}
+              <div className="flex items-center gap-1.5 ml-1">
+                <Filter className="h-3 w-3 text-text-dim" />
+                {(["all", "new", "contacted", "qualified", "dead"] as const).map((s) => {
+                  const count = s === "all" ? results.length : (statusCounts[s] ?? 0);
+                  if (s !== "all" && count === 0) return null;
+                  return (
                     <button
+                      key={s}
                       type="button"
-                      onClick={() => toggleContext(i)}
-                      className="flex w-full items-center justify-between rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-left transition hover:bg-white/[0.06]"
+                      onClick={() => setStatusFilter(s)}
+                      className={`rounded-full border px-2 py-0.5 text-[11px] font-medium transition ${
+                        statusFilter === s
+                          ? "border-white/30 bg-white/[0.08] text-text"
+                          : "border-bg-border text-text-dim hover:border-white/20 hover:text-text-muted"
+                      }`}
                     >
-                      <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
-                        <Brain className="h-3 w-3 text-amber-400/70" />
-                        Approach strategy
-                      </span>
-                      {expandedContext.has(i) ? (
-                        <ChevronUp className="h-3 w-3 text-text-dim" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3 text-text-dim" />
-                      )}
+                      {s === "all" ? "All" : STATUS_CONFIG[s].label} {count}
                     </button>
-                    {expandedContext.has(i) && (
-                      <div className="mt-1.5 rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
-                        <p className="text-xs text-text-muted leading-relaxed whitespace-pre-wrap">
-                          {lead.context}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
+                  );
+                })}
+              </div>
+            </div>
 
-                {/* Extracted contacts */}
-                {lead.emails && lead.emails.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-1">
-                    {lead.emails.map((email, ei) => (
-                      <a
-                        key={ei}
-                        href={`mailto:${email}`}
-                        className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] border border-white/[0.10] px-2 py-0.5 text-[11px] text-text-muted hover:text-text transition"
-                      >
-                        <Mail className="h-2.5 w-2.5" />
-                        {email}
-                      </a>
-                    ))}
-                  </div>
-                )}
-                {lead.phones && lead.phones.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {lead.phones.map((phone, pi) => (
-                      <a
-                        key={pi}
-                        href={`tel:${phone.replace(/[\s\-]/g, "")}`}
-                        className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] border border-white/[0.10] px-2 py-0.5 text-[11px] text-text-muted hover:text-text transition"
-                      >
-                        <Phone className="h-2.5 w-2.5" />
-                        {phone}
-                      </a>
-                    ))}
-                  </div>
-                )}
+            {/* Export CSV */}
+            <button
+              type="button"
+              onClick={exportCSV}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-bg-border bg-bg-panel px-3 py-1.5 text-xs font-medium text-text-muted transition hover:border-white/20 hover:text-text"
+            >
+              <Download className="h-3 w-3" />
+              Export CSV
+            </button>
+          </div>
 
-                <div className="pt-1">
+          <div className="grid gap-3 sm:grid-cols-2">
+            {filteredResults.map((lead, i) => {
+              const globalIndex = results.indexOf(lead);
+              const status = leadStatuses.get(lead.url) ?? "new";
+              return (
+                <div key={i} className="card-elevated p-4 space-y-2">
+                  {/* Domain + status row */}
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[11px] text-text-dim truncate">
+                      {lead.source ?? domainFromUrl(lead.url)}
+                    </p>
+                    {/* Status selector */}
+                    <select
+                      value={status}
+                      onChange={(e) => setLeadStatus(lead.url, e.target.value as LeadStatus)}
+                      className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium bg-transparent cursor-pointer transition focus:outline-none ${STATUS_CONFIG[status].cls}`}
+                    >
+                      {(Object.keys(STATUS_CONFIG) as LeadStatus[]).map((s) => (
+                        <option key={s} value={s} className="bg-bg text-text">
+                          {STATUS_CONFIG[s].label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <a
                     href={lead.url}
                     target="_blank"
                     rel="noreferrer noopener"
-                    className="btn-secondary inline-flex items-center gap-1.5 text-xs py-1 px-2.5"
+                    className="block font-medium text-text leading-snug hover:underline"
                   >
-                    <ExternalLink className="h-3 w-3" />
-                    Visit
+                    {lead.title}
                   </a>
+                  {lead.description && (
+                    <p className="text-xs text-text-muted leading-relaxed line-clamp-3">
+                      {lead.description}
+                    </p>
+                  )}
+
+                  {/* AI context */}
+                  {lead.context && (
+                    <div className="pt-1">
+                      <button
+                        type="button"
+                        onClick={() => toggleContext(globalIndex)}
+                        className="flex w-full items-center justify-between rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-left transition hover:bg-white/[0.06]"
+                      >
+                        <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+                          <Brain className="h-3 w-3 text-amber-400/70" />
+                          Approach strategy
+                        </span>
+                        {expandedContext.has(globalIndex) ? (
+                          <ChevronUp className="h-3 w-3 text-text-dim" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3 text-text-dim" />
+                        )}
+                      </button>
+                      {expandedContext.has(globalIndex) && (
+                        <div className="mt-1.5 rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                          <p className="text-xs text-text-muted leading-relaxed whitespace-pre-wrap">
+                            {lead.context}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Extracted contacts */}
+                  {lead.emails && lead.emails.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pt-1">
+                      {lead.emails.map((email, ei) => (
+                        <a
+                          key={ei}
+                          href={`mailto:${email}`}
+                          className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] border border-white/[0.10] px-2 py-0.5 text-[11px] text-text-muted hover:text-text transition"
+                        >
+                          <Mail className="h-2.5 w-2.5" />
+                          {email}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                  {lead.phones && lead.phones.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {lead.phones.map((phone, pi) => (
+                        <a
+                          key={pi}
+                          href={`tel:${phone.replace(/[\s\-]/g, "")}`}
+                          className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] border border-white/[0.10] px-2 py-0.5 text-[11px] text-text-muted hover:text-text transition"
+                        >
+                          <Phone className="h-2.5 w-2.5" />
+                          {phone}
+                        </a>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Actions row */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <a
+                      href={lead.url}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="btn-secondary inline-flex items-center gap-1.5 text-xs py-1 px-2.5"
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                      Visit
+                    </a>
+                    <a
+                      href={outreachUrl(lead)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.10] bg-white/[0.04] px-2.5 py-1 text-xs font-medium text-text-muted transition hover:border-white/20 hover:text-text"
+                    >
+                      <Send className="h-3 w-3" />
+                      Use in Outreach
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
+          {statusFilter !== "all" && filteredResults.length === 0 && (
+            <p className="text-sm text-text-dim text-center py-6">
+              No leads with status "{STATUS_CONFIG[statusFilter].label}" yet.
+            </p>
+          )}
         </div>
       )}
 

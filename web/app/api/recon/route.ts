@@ -9,6 +9,30 @@ const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 // UK & general phone patterns
 const PHONE_RE = /(?:(?:\+44|0044|0)[\s\-.]?(?:\d[\s\-.]?){9,10}|\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?[\s\-.]?\d[\s\-.\d]{6,})/g;
 
+// Directories, aggregators, and social platforms to strip from results
+const BLOCKED_DOMAINS = new Set([
+  "yell.com", "checkatrade.com", "trustpilot.com", "yelp.com", "yelp.co.uk",
+  "bark.com", "ratedpeople.com", "mybuilder.com", "houzz.com", "houzz.co.uk",
+  "facebook.com", "linkedin.com", "twitter.com", "instagram.com",
+  "tiktok.com", "youtube.com", "nextdoor.com",
+  "google.com", "google.co.uk",
+  "companies-house.gov.uk", "companieshouse.gov.uk",
+  "indeed.com", "glassdoor.com", "reed.co.uk", "totaljobs.com",
+  "tripadvisor.com", "tripadvisor.co.uk",
+  "freeindex.co.uk", "192.com", "cylex.co.uk", "scoot.co.uk",
+  "hotfrog.co.uk", "businessmagnet.co.uk", "thomsonlocal.com",
+  "ukbusinessdirectory.com", "bizify.co.uk", "brownbook.net",
+  "yellowpages.com", "bbb.org", "manta.com",
+]);
+
+function getRootDomain(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "").toLowerCase();
+  } catch {
+    return url.toLowerCase();
+  }
+}
+
 async function scrapeContacts(url: string): Promise<{ emails: string[]; phones: string[] }> {
   try {
     const res = await fetch(url, {
@@ -114,13 +138,16 @@ export async function POST(req: Request) {
     );
   }
 
-  const query = `${category} in ${location} contact`;
+  // Fetch extra results so we have enough after filtering out directories
+  const fetchCount = Math.min(count + 10, 20);
+  const query = `${category} ${location}`;
 
   try {
-    const rawResults = await braveSearch({ query, count });
+    const rawResults = await braveSearch({ query, count: fetchCount });
 
-    // Base leads
-    let leads: {
+    // Build leads, strip aggregators, dedupe by root domain, cap at requested count
+    const seenDomains = new Set<string>();
+    type LeadBase = {
       title: string;
       url: string;
       description: string;
@@ -128,12 +155,17 @@ export async function POST(req: Request) {
       emails?: string[];
       phones?: string[];
       context?: string;
-    }[] = rawResults.map((r) => ({
-      title: r.title,
-      url: r.url,
-      description: r.description,
-      source: r.source,
-    }));
+    };
+    let leads: LeadBase[] = rawResults
+      .map((r) => ({ title: r.title, url: r.url, description: r.description, source: r.source }))
+      .filter((lead) => {
+        const domain = getRootDomain(lead.url);
+        if (BLOCKED_DOMAINS.has(domain)) return false;
+        if (seenDomains.has(domain)) return false;
+        seenDomains.add(domain);
+        return true;
+      })
+      .slice(0, count);
 
     // Contact extraction + AI context (run in parallel)
     const [scrapedAll, contextAll] = await Promise.all([
@@ -146,7 +178,10 @@ export async function POST(req: Request) {
     ]);
 
     leads = leads.map((lead, i) => ({
-      ...lead,
+      title: lead.title,
+      url: lead.url,
+      description: lead.description,
+      source: lead.source,
       emails: extractEmails && scrapedAll ? scrapedAll[i].emails : undefined,
       phones: extractPhones && scrapedAll ? scrapedAll[i].phones : undefined,
       context: contextAll ? contextAll[i] : undefined,
@@ -177,6 +212,7 @@ export async function POST(req: Request) {
       searchId: reconSearch.id,
       leads,
       creditsUsed: totalCost,
+      rawCount: rawResults.length,
     });
   } catch (e: any) {
     console.error("[recon] POST failed", e);
