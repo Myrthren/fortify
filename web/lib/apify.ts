@@ -7,12 +7,13 @@ function getToken(): string {
 }
 
 export const ACTOR_IDS = {
-  youtube:   "h7sDV53CddomktSi5",   // streamers/youtube-scraper
-  tiktok:    "GdWCkxBtKWOsKjdch",   // clockworks/tiktok-scraper
-  reddit:    "oAuCIx3ItNrs2okjQ",   // trudax/reddit-scraper-lite
-  instagram: "apify~instagram-scraper",
-  twitter:   "apidojo~tweet-scraper",
-  serp:      "apify~google-search-scraper",
+  youtube:      "h7sDV53CddomktSi5",   // streamers/youtube-scraper
+  tiktok:       "GdWCkxBtKWOsKjdch",   // clockworks/tiktok-scraper
+  reddit:       "oAuCIx3ItNrs2okjQ",   // trudax/reddit-scraper-lite
+  instagram:    "apify~instagram-scraper",
+  twitter:      "apidojo~tweet-scraper",
+  serp:         "apify~google-search-scraper",
+  "google-maps": "compass~crawler-google-places", // local business lead finder
 } as const;
 
 export type Platform = keyof typeof ACTOR_IDS;

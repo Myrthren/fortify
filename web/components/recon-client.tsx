@@ -33,8 +33,12 @@ type Lead = {
   url: string;
   description: string;
   source?: string;
+  phone?: string;
+  address?: string;
+  rating?: number;
+  reviewsCount?: number;
+  category?: string;
   emails?: string[];
-  phones?: string[];
   context?: string;
 };
 
@@ -57,14 +61,13 @@ interface ReconClientProps {
   userCredits: number;
 }
 
-const COUNT_OPTIONS = [5, 10, 15, 20] as const;
+const COUNT_OPTIONS = [10, 20, 30, 50] as const;
 
 export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("");
   const [leadCount, setLeadCount] = useState<number>(10);
   const [extractEmails, setExtractEmails] = useState(false);
-  const [extractPhones, setExtractPhones] = useState(false);
   const [applyContext, setApplyContext] = useState(false);
   const [results, setResults] = useState<Lead[]>([]);
   const [rawCount, setRawCount] = useState<number>(0);
@@ -90,9 +93,8 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
 
   const baseCost = 50;
   const emailCost = extractEmails ? 25 : 0;
-  const phoneCost = extractPhones ? 25 : 0;
   const contextCost = applyContext ? 25 : 0;
-  const totalCost = baseCost + emailCost + phoneCost + contextCost;
+  const totalCost = baseCost + emailCost + contextCost;
 
   async function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -115,7 +117,6 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
           category: category.trim(),
           count: leadCount,
           extractEmails,
-          extractPhones,
           applyContext,
         }),
       });
@@ -195,13 +196,15 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
   }
 
   function exportCSV() {
-    const headers = ["Business", "Website", "Description", "Emails", "Phones", "Status"];
+    const headers = ["Business", "Website", "Address", "Phone", "Rating", "Description", "Emails", "Status"];
     const rows = filteredResults.map((lead) => [
       lead.title,
       lead.url,
+      lead.address ?? "",
+      lead.phone ?? "",
+      lead.rating != null ? String(lead.rating) : "",
       lead.description ?? "",
       (lead.emails ?? []).join("; "),
-      (lead.phones ?? []).join("; "),
       leadStatuses.get(lead.url) ?? "new",
     ]);
     const csv = [headers, ...rows]
@@ -250,7 +253,7 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
     return acc;
   }, {});
 
-  const filteredAway = rawCount > 0 ? rawCount - results.length : 0;
+  const filteredAway = 0; // Google Maps returns real businesses — no filtering step
 
   return (
     <div className="space-y-8">
@@ -403,17 +406,6 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
               <input
                 type="checkbox"
                 className="h-3.5 w-3.5 accent-white"
-                checked={extractPhones}
-                onChange={(e) => setExtractPhones(e.target.checked)}
-              />
-              <Phone className="h-3.5 w-3.5 text-text-muted" />
-              <span>Phone numbers</span>
-              <span className="text-xs text-text-dim">+25 credits</span>
-            </label>
-            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-bg-border bg-bg-panel px-3 py-2 text-sm transition hover:border-white/20 has-[:checked]:border-white/30 has-[:checked]:bg-white/[0.05]">
-              <input
-                type="checkbox"
-                className="h-3.5 w-3.5 accent-white"
                 checked={applyContext}
                 onChange={(e) => setApplyContext(e.target.checked)}
               />
@@ -440,7 +432,7 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
             ) : (
               <Search className="h-4 w-4" />
             )}
-            {loading ? "Searching…" : `Search · ${totalCost} credits`}
+            {loading ? "Searching Google Maps…" : `Search · ${totalCost} credits`}
           </button>
           <p className="text-xs text-text-muted">
             Returns up to {leadCount} businesses
@@ -461,10 +453,7 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2 flex-wrap">
               <p className="text-sm text-text-muted">
-                <span className="font-medium text-text">{results.length}</span> businesses found
-                {filteredAway > 0 && (
-                  <span className="text-text-dim"> · {filteredAway} directories filtered out</span>
-                )}
+                <span className="font-medium text-text">{results.length}</span> businesses found via Google Maps
               </p>
 
               {/* Status filter pills */}
@@ -508,11 +497,21 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
               const status = leadStatuses.get(lead.url) ?? "new";
               return (
                 <div key={i} className="card-elevated p-4 space-y-2">
-                  {/* Domain + status row */}
+                  {/* Domain + rating + status row */}
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-[11px] text-text-dim truncate">
-                      {lead.source ?? domainFromUrl(lead.url)}
-                    </p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <p className="text-[11px] text-text-dim truncate">
+                        {lead.url ? domainFromUrl(lead.url) : lead.category ?? ""}
+                      </p>
+                      {lead.rating != null && (
+                        <span className="shrink-0 text-[11px] text-amber-400 font-medium">
+                          ★ {lead.rating.toFixed(1)}
+                          {lead.reviewsCount != null && (
+                            <span className="text-text-dim font-normal"> ({lead.reviewsCount})</span>
+                          )}
+                        </span>
+                      )}
+                    </div>
                     {/* Status selector */}
                     <select
                       value={status}
@@ -569,9 +568,28 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
                     </div>
                   )}
 
-                  {/* Extracted contacts */}
+                  {/* Address + phone (from Google Maps — always present when available) */}
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {lead.address && (
+                      <span className="inline-flex items-center gap-1 rounded-md bg-white/[0.04] border border-white/[0.08] px-2 py-0.5 text-[11px] text-text-dim">
+                        <MapPin className="h-2.5 w-2.5 shrink-0" />
+                        {lead.address}
+                      </span>
+                    )}
+                    {lead.phone && (
+                      <a
+                        href={`tel:${lead.phone.replace(/[\s\-]/g, "")}`}
+                        className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] border border-white/[0.10] px-2 py-0.5 text-[11px] text-text-muted hover:text-text transition"
+                      >
+                        <Phone className="h-2.5 w-2.5" />
+                        {lead.phone}
+                      </a>
+                    )}
+                  </div>
+
+                  {/* Emails (scraped from website when extractEmails enabled) */}
                   {lead.emails && lead.emails.length > 0 && (
-                    <div className="flex flex-wrap gap-1 pt-1">
+                    <div className="flex flex-wrap gap-1">
                       {lead.emails.map((email, ei) => (
                         <a
                           key={ei}
@@ -580,20 +598,6 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
                         >
                           <Mail className="h-2.5 w-2.5" />
                           {email}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                  {lead.phones && lead.phones.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {lead.phones.map((phone, pi) => (
-                        <a
-                          key={pi}
-                          href={`tel:${phone.replace(/[\s\-]/g, "")}`}
-                          className="inline-flex items-center gap-1 rounded-md bg-white/[0.06] border border-white/[0.10] px-2 py-0.5 text-[11px] text-text-muted hover:text-text transition"
-                        >
-                          <Phone className="h-2.5 w-2.5" />
-                          {phone}
                         </a>
                       ))}
                     </div>
