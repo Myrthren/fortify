@@ -39,7 +39,8 @@ type ActiveKey =
   | "recon"
   | "competitor-watch"
   | "workflows"
-  | "advisor";
+  | "advisor"
+  | "lead-extractor";
 
 type ToolItem = { key: string; href: string; label: string; badge?: string | null; minTier?: "PRO" | "ELITE" | "APEX" };
 
@@ -59,7 +60,8 @@ const TOOL_GROUPS: { heading: string; items: ToolItem[] }[] = [
       { key: "outreach",    href: "/dashboard/outreach",    label: "Outreach",           minTier: "PRO" },
       { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing",      minTier: "PRO" },
       { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking",        minTier: "PRO" },
-      { key: "recon", href: "/dashboard/recon", label: "Fortify Recon", minTier: "ELITE" as const },
+      { key: "recon",           href: "/dashboard/recon",           label: "Fortify Recon",    minTier: "ELITE" as const },
+      { key: "lead-extractor", href: "/dashboard/lead-extractor", label: "Lead Extractor",   minTier: "PRO" as const },
     ],
   },
   {
