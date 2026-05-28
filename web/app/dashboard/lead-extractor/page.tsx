@@ -5,6 +5,12 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { LeadExtractorClient } from "@/components/lead-extractor-client";
 import { LockedPage } from "@/components/locked-page";
 
+const TIER_LIMITS: Record<string, { maxAccounts: number; braveSearch: boolean; deepSearch: boolean }> = {
+  PRO:   { maxAccounts: 10, braveSearch: false, deepSearch: false },
+  ELITE: { maxAccounts: 25, braveSearch: true,  deepSearch: false },
+  APEX:  { maxAccounts: 50, braveSearch: true,  deepSearch: true  },
+};
+
 export default async function LeadExtractorPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
@@ -14,6 +20,7 @@ export default async function LeadExtractorPage() {
   if (!user) redirect("/login");
 
   const canAccess = user.tier !== "FREE";
+  const tierConfig = TIER_LIMITS[user.tier] ?? TIER_LIMITS.PRO;
 
   return (
     <div className="min-h-screen bg-bg">
@@ -36,7 +43,13 @@ export default async function LeadExtractorPage() {
             active
           />
         ) : (
-          <LeadExtractorClient userCredits={user.credits} />
+          <LeadExtractorClient
+            userCredits={user.credits}
+            tier={user.tier}
+            maxAccounts={tierConfig.maxAccounts}
+            braveSearch={tierConfig.braveSearch}
+            deepSearch={tierConfig.deepSearch}
+          />
         )}
       </main>
     </div>

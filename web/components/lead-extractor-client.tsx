@@ -87,9 +87,19 @@ function formatFollowers(n: number): string {
 
 interface LeadExtractorClientProps {
   userCredits: number;
+  tier: string;
+  maxAccounts: number;
+  braveSearch: boolean;
+  deepSearch: boolean;
 }
 
-export function LeadExtractorClient({ userCredits }: LeadExtractorClientProps) {
+export function LeadExtractorClient({
+  userCredits,
+  tier,
+  maxAccounts,
+  braveSearch,
+  deepSearch,
+}: LeadExtractorClientProps) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ExtractedLead[]>([]);
@@ -100,7 +110,8 @@ export function LeadExtractorClient({ userCredits }: LeadExtractorClientProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const preview = parsePreview(input);
-  const validCount = preview.filter((p) => p.valid).length;
+  const validCount = Math.min(preview.filter((p) => p.valid).length, maxAccounts);
+  const overLimit = preview.filter((p) => p.valid).length > maxAccounts;
   const cost = validCount * CREDITS_PER;
 
   async function handleExtract(e: React.FormEvent) {
@@ -196,7 +207,9 @@ export function LeadExtractorClient({ userCredits }: LeadExtractorClientProps) {
             <label className="text-xs font-medium uppercase tracking-wide text-text-muted">
               Paste profile URLs — one per line
             </label>
-            <span className="text-xs text-text-dim">Max 50 accounts</span>
+            <span className="text-xs text-text-dim">
+              Up to {maxAccounts} accounts ({tier} plan)
+            </span>
           </div>
           <textarea
             className="input w-full min-h-[180px] resize-y font-mono text-sm leading-relaxed"
@@ -239,6 +252,13 @@ export function LeadExtractorClient({ userCredits }: LeadExtractorClientProps) {
           </div>
         )}
 
+        {overLimit && (
+          <div className="rounded-md border border-yellow-900/40 bg-yellow-950/20 px-3 py-2 text-sm text-yellow-300">
+            Your {tier} plan allows {maxAccounts} accounts per batch. Only the first {maxAccounts} valid URLs will be processed.{" "}
+            <a href="/pricing" className="underline hover:text-yellow-200">Upgrade</a> to process more.
+          </div>
+        )}
+
         <div className="flex items-center gap-4 flex-wrap">
           <button
             type="submit"
@@ -258,7 +278,7 @@ export function LeadExtractorClient({ userCredits }: LeadExtractorClientProps) {
           </button>
           {validCount > 0 && !loading && (
             <p className="text-xs text-text-dim">
-              {validCount} valid · {preview.filter((p) => !p.valid && p.raw).length} unrecognised
+              {preview.filter((p) => p.valid).length} valid · {preview.filter((p) => !p.valid && p.raw).length} unrecognised
             </p>
           )}
           {loading && (
@@ -432,18 +452,51 @@ export function LeadExtractorClient({ userCredits }: LeadExtractorClientProps) {
 
       {/* Tips */}
       {results.length === 0 && !loading && (
-        <div className="card p-5 space-y-3">
+        <div className="card p-5 space-y-4">
           <p className="text-sm font-medium text-text-muted">How it works</p>
           <ol className="space-y-2 text-sm text-text-dim list-decimal list-inside">
             <li>Paste full Instagram and/or TikTok profile URLs — one per line</li>
             <li>Fortify fetches each profile to read the bio and find their linked website</li>
-            <li>It then scrapes the website for emails and phone numbers</li>
-            <li>If still nothing, it runs a targeted web search for contact details</li>
-            <li>Results are ready to export as CSV or send straight to Outreach</li>
+            <li>Scrapes the website for emails and phone numbers</li>
+            {braveSearch && <li>Runs a targeted web search for any accounts still missing contact info</li>}
+            {deepSearch && <li>Runs a second deeper search pass on all accounts to surface additional contacts</li>}
+            <li>Results ready to export as CSV or send straight to Outreach</li>
           </ol>
-          <p className="text-xs text-text-dim pt-1">
-            Cost: {CREDITS_PER} credits per account. Phones and emails included — no extra charge.
+          <p className="text-xs text-text-dim">
+            {CREDITS_PER} credits per account · phones and emails included
           </p>
+
+          {/* Tier comparison */}
+          <div className="pt-1 border-t border-bg-border">
+            <p className="text-xs font-medium text-text-muted mb-2">Plan limits</p>
+            <div className="grid grid-cols-3 gap-2 text-xs">
+              {[
+                { name: "Pro", max: 10, brave: false, deep: false },
+                { name: "Elite", max: 25, brave: true, deep: false },
+                { name: "Apex", max: 50, brave: true, deep: true },
+              ].map((t) => {
+                const current = t.name.toUpperCase() === tier;
+                return (
+                  <div
+                    key={t.name}
+                    className={`rounded-lg border p-2.5 space-y-1 ${
+                      current
+                        ? "border-white/20 bg-white/[0.05]"
+                        : "border-bg-border bg-bg-panel opacity-60"
+                    }`}
+                  >
+                    <p className={`font-medium ${current ? "text-text" : "text-text-muted"}`}>
+                      {t.name} {current && <span className="text-[10px] text-text-dim">(you)</span>}
+                    </p>
+                    <p className="text-text-dim">{t.max} accounts/batch</p>
+                    <p className="text-text-dim">Bio + website scrape</p>
+                    {t.brave && <p className="text-text-dim">Web search fallback</p>}
+                    {t.deep && <p className="text-text-dim">Deep multi-pass search</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>

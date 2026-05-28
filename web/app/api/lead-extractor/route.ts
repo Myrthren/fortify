@@ -9,7 +9,13 @@ const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 const PHONE_RE = /(?:(?:\+44|0044|0)[\s\-.]?(?:\d[\s\-.]?){9,10}|\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?[\s\-.]?\d[\s\-.\d]{6,})/g;
 
 const CREDITS_PER_ACCOUNT = 20;
-const MAX_ACCOUNTS = 50;
+
+// Batch limits and research depth by tier
+const TIER_LIMITS: Record<string, { maxAccounts: number; braveSearch: boolean; deepSearch: boolean }> = {
+  PRO:   { maxAccounts: 10, braveSearch: false, deepSearch: false },
+  ELITE: { maxAccounts: 25, braveSearch: true,  deepSearch: false },
+  APEX:  { maxAccounts: 50, braveSearch: true,  deepSearch: true  },
+};
 
 // ── Parsers ────────────────────────────────────────────────────────────────
 
@@ -199,6 +205,8 @@ export async function POST(req: Request) {
     );
   }
 
+  const tierConfig = TIER_LIMITS[user.tier] ?? TIER_LIMITS.PRO;
+
   const body = await req.json().catch(() => ({}));
   const rawLines: string[] = (body.accounts ?? [])
     .map((a: string) => a.trim())
@@ -206,8 +214,11 @@ export async function POST(req: Request) {
 
   if (rawLines.length === 0)
     return NextResponse.json({ error: "No accounts provided." }, { status: 400 });
-  if (rawLines.length > MAX_ACCOUNTS)
-    return NextResponse.json({ error: `Max ${MAX_ACCOUNTS} accounts per batch.` }, { status: 400 });
+  if (rawLines.length > tierConfig.maxAccounts)
+    return NextResponse.json(
+      { error: `Your plan allows up to ${tierConfig.maxAccounts} accounts per batch. Upgrade to process more.`, upgrade: true },
+      { status: 400 }
+    );
 
   const parsed: ParsedAccount[] = [];
   const invalid: string[] = [];
@@ -332,34 +343,39 @@ export async function POST(req: Request) {
     );
   }
 
-  // ── 4. Brave search fallback for accounts still missing contact info ───
-  const needsSearch = allLeads.filter(
-    (l) => l.emails.length === 0 && l.phones.length === 0
-  );
+  // ── 4. Brave search fallback (ELITE+ only) ────────────────────────────
+  if (tierConfig.braveSearch) {
+    // Standard: only search accounts with no contact info yet
+    // Deep (APEX): also search accounts that have some info, to surface more
+    const needsSearch = tierConfig.deepSearch
+      ? allLeads
+      : allLeads.filter((l) => l.emails.length === 0 && l.phones.length === 0);
 
-  // Rate-limit: max 3 Brave calls at once
-  for (let i = 0; i < needsSearch.length; i += 3) {
-    await Promise.all(
-      needsSearch.slice(i, i + 3).map(async (lead) => {
-        const { website, emails, phones } = await searchForContact(
-          lead.name ?? "",
-          lead.handle,
-          lead.platform
-        );
-        if (website && !lead.website) {
-          lead.website = website;
-          // Try scraping the discovered site
-          const scraped = await scrapeWebsite(website);
-          emails.push(...scraped.emails);
-          phones.push(...scraped.phones);
-        }
-        if (emails.length || phones.length) {
-          lead.emails.push(...emails.filter((e) => !lead.emails.includes(e)));
-          lead.phones.push(...phones.filter((p) => !lead.phones.includes(p)));
-          lead.sources.push("search");
-        }
-      })
-    );
+    // Rate-limit: max 3 Brave calls at once
+    for (let i = 0; i < needsSearch.length; i += 3) {
+      await Promise.all(
+        needsSearch.slice(i, i + 3).map(async (lead) => {
+          const { website, emails, phones } = await searchForContact(
+            lead.name ?? "",
+            lead.handle,
+            lead.platform
+          );
+          if (website && !lead.website) {
+            lead.website = website;
+            const scraped = await scrapeWebsite(website);
+            emails.push(...scraped.emails);
+            phones.push(...scraped.phones);
+          }
+          const newEmails = emails.filter((e) => !lead.emails.includes(e));
+          const newPhones = phones.filter((p) => !lead.phones.includes(p));
+          if (newEmails.length || newPhones.length) {
+            lead.emails.push(...newEmails);
+            lead.phones.push(...newPhones);
+            if (!lead.sources.includes("search")) lead.sources.push("search");
+          }
+        })
+      );
+    }
   }
 
   // ── 5. Finalise & dedupe ───────────────────────────────────────────────
