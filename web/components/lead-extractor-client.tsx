@@ -90,7 +90,8 @@ interface LeadExtractorClientProps {
   tier: string;
   maxAccounts: number;
   braveSearch: boolean;
-  deepSearch: boolean;
+  /** Whether this tier (Apex) may toggle on the thorough deep scan */
+  deepScan: boolean;
 }
 
 export function LeadExtractorClient({
@@ -98,10 +99,11 @@ export function LeadExtractorClient({
   tier,
   maxAccounts,
   braveSearch,
-  deepSearch,
+  deepScan: canDeepScan,
 }: LeadExtractorClientProps) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deepScanOn, setDeepScanOn] = useState(false);
   const [results, setResults] = useState<ExtractedLead[]>([]);
   const [invalid, setInvalid] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +134,7 @@ export function LeadExtractorClient({
       const res = await fetch("/api/lead-extractor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accounts }),
+        body: JSON.stringify({ accounts, deepScan: canDeepScan && deepScanOn }),
       });
       const data = await res.json();
 
@@ -257,6 +259,30 @@ export function LeadExtractorClient({
             Your {tier} plan allows {maxAccounts} accounts per batch. Only the first {maxAccounts} valid URLs will be processed.{" "}
             <a href="/pricing" className="underline hover:text-yellow-200">Upgrade</a> to process more.
           </div>
+        )}
+
+        {/* Deep scan toggle — Apex only */}
+        {canDeepScan && (
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-bg-border bg-bg-panel px-3.5 py-3 transition hover:border-white/20 has-[:checked]:border-white/30 has-[:checked]:bg-white/[0.05]">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 accent-white"
+              checked={deepScanOn}
+              onChange={(e) => setDeepScanOn(e.target.checked)}
+            />
+            <span className="space-y-0.5">
+              <span className="block text-sm font-medium text-text">
+                Deep scan
+                <span className="ml-2 rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
+                  Apex
+                </span>
+              </span>
+              <span className="block text-[11px] text-text-dim leading-relaxed">
+                Crawls extra contact pages on each website and runs a wider web search on every account.
+                Finds more contacts, but takes noticeably longer per batch.
+              </span>
+            </span>
+          </label>
         )}
 
         <div className="flex items-center gap-4 flex-wrap">
@@ -459,7 +485,7 @@ export function LeadExtractorClient({
             <li>Fortify fetches each profile to read the bio and find their linked website</li>
             <li>Scrapes the homepage and contact/about pages — follows link-in-bio pages (Linktree, Beacons) to the real site</li>
             {braveSearch && <li>Runs a targeted web search for any accounts still missing contact info</li>}
-            {deepSearch && <li>Runs a second deeper search pass on all accounts to surface additional contacts</li>}
+            {canDeepScan && <li>Optional deep scan crawls extra contact pages and widens the search on every account</li>}
             <li>Results ready to export as CSV or send straight to Outreach</li>
           </ol>
           <p className="text-xs text-text-dim">
@@ -491,7 +517,7 @@ export function LeadExtractorClient({
                     <p className="text-text-dim">{t.max} accounts/batch</p>
                     <p className="text-text-dim">Bio + website scrape</p>
                     {t.brave && <p className="text-text-dim">Web search fallback</p>}
-                    {t.deep && <p className="text-text-dim">Deep multi-pass search</p>}
+                    {t.deep && <p className="text-text-dim">Optional deep scan</p>}
                   </div>
                 );
               })}

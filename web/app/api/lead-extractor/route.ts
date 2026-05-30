@@ -30,11 +30,12 @@ const BROWSER_UA =
 
 const CREDITS_PER_ACCOUNT = 20;
 
-// Batch limits and research depth by tier
-const TIER_LIMITS: Record<string, { maxAccounts: number; braveSearch: boolean; deepSearch: boolean }> = {
-  PRO:   { maxAccounts: 10, braveSearch: false, deepSearch: false },
-  ELITE: { maxAccounts: 25, braveSearch: true,  deepSearch: false },
-  APEX:  { maxAccounts: 50, braveSearch: true,  deepSearch: true  },
+// Batch limits and research depth by tier.
+// canDeepScan: whether the user may toggle on the thorough multi-page scan.
+const TIER_LIMITS: Record<string, { maxAccounts: number; braveSearch: boolean; canDeepScan: boolean }> = {
+  PRO:   { maxAccounts: 10, braveSearch: false, canDeepScan: false },
+  ELITE: { maxAccounts: 25, braveSearch: true,  canDeepScan: false },
+  APEX:  { maxAccounts: 50, braveSearch: true,  canDeepScan: true  },
 };
 
 // ── Parsers ────────────────────────────────────────────────────────────────
@@ -199,12 +200,35 @@ async function resolveAggregator(url: string): Promise<string | null> {
   return sorted[0]?.[0] ?? null;
 }
 
+/** Pull internal links whose href/text hints at a contact or about page */
+function findContactLinks(html: string, origin: string): string[] {
+  const decoded = decodeEntities(html);
+  const found = new Set<string>();
+  const hintRe = /contact|about|reach|support|help|enquir|connect|wholesale|stockist/i;
+  for (const m of decoded.matchAll(/<a[^>]+href=["']([^"'#]+)["'][^>]*>([\s\S]*?)<\/a>/gi)) {
+    const href = m[1];
+    const text = m[2].replace(/<[^>]+>/g, "");
+    if (!hintRe.test(href) && !hintRe.test(text)) continue;
+    try {
+      const abs = new URL(href, origin);
+      if (abs.origin !== origin) continue; // internal only
+      found.add(abs.origin + abs.pathname);
+    } catch { /* ignore */ }
+  }
+  return [...found].slice(0, 6);
+}
+
 /**
- * Scrape a website for contacts: homepage + a few contact/about pages.
- * Follows link-in-bio aggregators one hop to the real site first.
+ * Scrape a website for contacts.
+ *  - Balanced (default): homepage + standard contact/about paths, follow one
+ *    link-in-bio aggregator hop. Stops once a contact email is found.
+ *  - Deep (thorough=true): also discovers and crawls internal contact-style
+ *    links, scrapes every standard path, and keeps harvesting phones even
+ *    after an email is found.
  */
 async function scrapeWebsite(
-  rawUrl: string
+  rawUrl: string,
+  thorough = false
 ): Promise<{ emails: string[]; phones: string[]; resolvedUrl?: string }> {
   let url = rawUrl;
 
@@ -220,25 +244,34 @@ async function scrapeWebsite(
 
   const emails = new Set<string>();
   const phones = new Set<string>();
+  const visited = new Set<string>();
 
-  // 1. Homepage
-  const homeHtml = await fetchHtml(url);
-  if (homeHtml) {
-    const r = extractFromHtml(homeHtml);
+  async function harvest(pageUrl: string, timeout = 7000) {
+    if (visited.has(pageUrl)) return null;
+    visited.add(pageUrl);
+    const html = await fetchHtml(pageUrl, timeout);
+    if (!html) return null;
+    const r = extractFromHtml(html);
     r.emails.forEach((e) => emails.add(e));
     r.phones.forEach((p) => phones.add(p));
+    return html;
   }
 
-  // 2. Contact/about pages — only if we still have room to find an email
-  if (emails.size === 0) {
-    for (const path of CONTACT_PATHS) {
-      if (emails.size > 0) break; // stop once we find a contact email
-      const pageUrl = `${base.origin}${path}`;
-      const html = await fetchHtml(pageUrl, 6000);
-      if (!html) continue;
-      const r = extractFromHtml(html);
-      r.emails.forEach((e) => emails.add(e));
-      r.phones.forEach((p) => phones.add(p));
+  // 1. Homepage
+  const homeHtml = await harvest(url, 8000);
+
+  // 2. Standard contact/about paths
+  for (const path of CONTACT_PATHS) {
+    // Balanced mode stops as soon as it has an email; deep mode tries them all
+    if (!thorough && emails.size > 0) break;
+    await harvest(`${base.origin}${path}`, 6000);
+  }
+
+  // 3. Deep mode: discover and crawl internal contact-style links
+  if (thorough && homeHtml) {
+    const links = findContactLinks(homeHtml, base.origin);
+    for (const link of links) {
+      await harvest(link, 6000);
     }
   }
 
@@ -370,6 +403,8 @@ export async function POST(req: Request) {
   const tierConfig = TIER_LIMITS[user.tier] ?? TIER_LIMITS.PRO;
 
   const body = await req.json().catch(() => ({}));
+  // Deep scan is opt-in and only honoured for tiers that allow it (Apex).
+  const deepScan: boolean = body.deepScan === true && tierConfig.canDeepScan;
   const rawLines: string[] = (body.accounts ?? [])
     .map((a: string) => a.trim())
     .filter(Boolean);
@@ -487,14 +522,15 @@ export async function POST(req: Request) {
 
   // ── 3. Website scraping for all accounts ──────────────────────────────
   // Scrapes homepage + contact/about pages, follows link-in-bio aggregators.
-  // Batches of 6 to balance speed vs. overwhelming targets.
+  // Deep scan (Apex, opt-in) also crawls discovered internal contact links.
+  // Smaller batches when deep scanning since each account hits more pages.
   const allLeads = Array.from(leads.values());
-  const BATCH = 6;
+  const BATCH = deepScan ? 4 : 6;
   for (let i = 0; i < allLeads.length; i += BATCH) {
     await Promise.all(
       allLeads.slice(i, i + BATCH).map(async (lead) => {
         if (!lead.website) return;
-        const { emails, phones, resolvedUrl } = await scrapeWebsite(lead.website);
+        const { emails, phones, resolvedUrl } = await scrapeWebsite(lead.website, deepScan);
         // If an aggregator was resolved to a real site, surface that to the user
         if (resolvedUrl) lead.website = resolvedUrl;
         const addedEmails = emails.filter((e) => !lead.emails.includes(e));
@@ -510,9 +546,10 @@ export async function POST(req: Request) {
 
   // ── 4. Brave search fallback (ELITE+ only) ────────────────────────────
   if (tierConfig.braveSearch) {
-    // Standard: only search accounts with no contact info yet
-    // Deep (APEX): also search accounts that have some info, to surface more
-    const needsSearch = tierConfig.deepSearch
+    // Standard: only search accounts with no contact info yet.
+    // Deep scan (Apex, opt-in): also search accounts that already have some
+    // info, to surface additional contacts.
+    const needsSearch = deepScan
       ? allLeads
       : allLeads.filter((l) => l.emails.length === 0 && l.phones.length === 0);
 
@@ -527,7 +564,7 @@ export async function POST(req: Request) {
           );
           if (website && !lead.website) {
             lead.website = website;
-            const scraped = await scrapeWebsite(website);
+            const scraped = await scrapeWebsite(website, deepScan);
             emails.push(...scraped.emails);
             phones.push(...scraped.phones);
           }
