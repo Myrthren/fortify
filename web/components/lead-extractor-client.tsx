@@ -457,7 +457,7 @@ export function LeadExtractorClient({
           <ol className="space-y-2 text-sm text-text-dim list-decimal list-inside">
             <li>Paste full Instagram and/or TikTok profile URLs — one per line</li>
             <li>Fortify fetches each profile to read the bio and find their linked website</li>
-            <li>Scrapes the website for emails and phone numbers</li>
+            <li>Scrapes the homepage and contact/about pages — follows link-in-bio pages (Linktree, Beacons) to the real site</li>
             {braveSearch && <li>Runs a targeted web search for any accounts still missing contact info</li>}
             {deepSearch && <li>Runs a second deeper search pass on all accounts to surface additional contacts</li>}
             <li>Results ready to export as CSV or send straight to Outreach</li>

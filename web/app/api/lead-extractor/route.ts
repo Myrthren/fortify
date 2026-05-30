@@ -7,6 +7,26 @@ import { startRunAndWait, getDatasetItems } from "@/lib/apify";
 
 const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 const PHONE_RE = /(?:(?:\+44|0044|0)[\s\-.]?(?:\d[\s\-.]?){9,10}|\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?[\s\-.]?\d[\s\-.\d]{6,})/g;
+// Obfuscated emails: "name [at] domain [dot] com", "name(at)domain(dot)com"
+const OBFUSCATED_EMAIL_RE =
+  /([a-zA-Z0-9._%+\-]+)\s*[\[(]?\s*(?:at|@)\s*[\])]?\s*([a-zA-Z0-9.\-]+)\s*[\[(]?\s*(?:dot|\.)\s*[\])]?\s*([a-zA-Z]{2,})/gi;
+
+// Link-in-bio aggregators — follow these one hop to find the real site
+const AGGREGATOR_HOSTS = [
+  "linktr.ee", "beacons.ai", "linkin.bio", "lnk.bio", "linkpop.com",
+  "snipfeed.co", "tap.bio", "campsite.bio", "milkshake.app", "shorby.com",
+  "komi.io", "flowcode.com", "stan.store", "linkfly.to", "later.com",
+  "withkoji.com", "carrd.co", "msha.ke", "many.link", "solo.to",
+];
+
+// Contact-page paths to try after the homepage
+const CONTACT_PATHS = [
+  "/contact", "/contact-us", "/contactus", "/pages/contact",
+  "/about", "/about-us", "/pages/about",
+];
+
+const BROWSER_UA =
+  "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 const CREDITS_PER_ACCOUNT = 20;
 
@@ -48,43 +68,185 @@ function parseAccount(raw: string): ParsedAccount | null {
 
 // ── Contact helpers ────────────────────────────────────────────────────────
 
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+    .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(parseInt(d, 10)))
+    .replace(/&amp;/g, "&")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?64;/g, "@");
+}
+
 function cleanEmails(raw: string[]): string[] {
-  const BAD = ["noreply", "no-reply", "example", "sentry", "@schema", "@context", "@2x", ".png", ".jpg", ".gif", ".svg"];
-  return [...new Set(raw.filter((e) => !BAD.some((b) => e.includes(b))))].slice(0, 5);
+  const BAD = [
+    "noreply", "no-reply", "example", "sentry", "@schema", "@context",
+    "@2x", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".css", ".js",
+    "@sentry", "wixpress", "@email.com", "yourname", "domain.com",
+    "u003e", "u003c",
+  ];
+  return [
+    ...new Set(
+      raw
+        .map((e) => e.toLowerCase().trim())
+        .filter((e) => e.length < 100 && !BAD.some((b) => e.includes(b)))
+    ),
+  ].slice(0, 5);
 }
 
 function cleanPhones(raw: string[]): string[] {
-  return [...new Set(raw.filter((p) => {
+  return [...new Set(raw.map((p) => p.trim()).filter((p) => {
     const d = p.replace(/\D/g, "");
     return d.length >= 10 && d.length <= 15;
   }))].slice(0, 5);
 }
 
-function extractFromText(text: string): { emails: string[]; phones: string[] } {
-  return {
-    emails: cleanEmails(text.match(EMAIL_RE) ?? []),
-    phones: cleanPhones(text.match(PHONE_RE) ?? []),
-  };
+/**
+ * Extract contacts from raw HTML. Pulls mailto:/tel: hrefs FIRST (most
+ * reliable), then obfuscated emails, then a plain-text regex pass.
+ */
+function extractFromHtml(html: string): { emails: string[]; phones: string[] } {
+  const decoded = decodeEntities(html);
+  const emails: string[] = [];
+  const phones: string[] = [];
+
+  // 1. mailto: and tel: hrefs — the most reliable signal
+  for (const m of decoded.matchAll(/mailto:([^"'?>\s]+)/gi)) emails.push(m[1]);
+  for (const m of decoded.matchAll(/tel:([+\d][\d\s\-().]{7,})/gi)) phones.push(m[1]);
+
+  // 2. Strip scripts/styles/svg, then plain-text pass
+  const text = decoded
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ");
+
+  emails.push(...(text.match(EMAIL_RE) ?? []));
+  phones.push(...(text.match(PHONE_RE) ?? []));
+
+  // 3. Obfuscated emails ("name [at] domain [dot] com")
+  for (const m of text.matchAll(OBFUSCATED_EMAIL_RE)) {
+    emails.push(`${m[1]}@${m[2]}.${m[3]}`);
+  }
+
+  return { emails: cleanEmails(emails), phones: cleanPhones(phones) };
 }
 
-async function scrapeWebsite(url: string): Promise<{ emails: string[]; phones: string[] }> {
+/** Plain-text extraction (for bios, search snippets) */
+function extractFromText(text: string): { emails: string[]; phones: string[] } {
+  const emails = [...(text.match(EMAIL_RE) ?? [])];
+  const phones = [...(text.match(PHONE_RE) ?? [])];
+  for (const m of text.matchAll(OBFUSCATED_EMAIL_RE)) {
+    emails.push(`${m[1]}@${m[2]}.${m[3]}`);
+  }
+  return { emails: cleanEmails(emails), phones: cleanPhones(phones) };
+}
+
+function hostOf(url: string): string {
+  try { return new URL(url).hostname.replace(/^www\./, "").toLowerCase(); }
+  catch { return ""; }
+}
+
+function isAggregator(url: string): boolean {
+  const h = hostOf(url);
+  return AGGREGATOR_HOSTS.some((a) => h === a || h.endsWith("." + a));
+}
+
+async function fetchHtml(url: string, timeoutMs = 8000): Promise<string | null> {
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" },
-      signal: AbortSignal.timeout(8000),
+      headers: {
+        "User-Agent": BROWSER_UA,
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+      },
+      redirect: "follow",
+      signal: AbortSignal.timeout(timeoutMs),
     });
-    if (!res.ok) return { emails: [], phones: [] };
-    const html = await res.text();
-    const text = html
-      .replace(/<script[\s\S]*?<\/script>/gi, " ")
-      .replace(/<style[\s\S]*?<\/style>/gi, " ")
-      .replace(/<svg[\s\S]*?<\/svg>/gi, " ")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/\s+/g, " ");
-    return extractFromText(text);
+    if (!res.ok) return null;
+    const ct = res.headers.get("content-type") ?? "";
+    if (!ct.includes("html") && !ct.includes("text")) return null;
+    return await res.text();
   } catch {
-    return { emails: [], phones: [] };
+    return null;
   }
+}
+
+/**
+ * If the URL is a link-in-bio aggregator, fetch it and pull the first
+ * external destination link that isn't a social platform.
+ */
+async function resolveAggregator(url: string): Promise<string | null> {
+  const html = await fetchHtml(url, 7000);
+  if (!html) return null;
+  const decoded = decodeEntities(html);
+  const socials = ["instagram", "tiktok", "facebook", "twitter", "x.com", "youtube", "linkedin", "snapchat", "threads", "pinterest"];
+  const candidates = new Map<string, number>();
+  for (const m of decoded.matchAll(/https?:\/\/[^\s"'<>)]+/gi)) {
+    const link = m[0].replace(/[",.)]+$/, "");
+    const h = hostOf(link);
+    if (!h) continue;
+    if (isAggregator(link)) continue;
+    if (socials.some((s) => h.includes(s))) continue;
+    if (h.includes("cdn") || h.includes("googleapis") || h.includes("gstatic") || h.includes("cloudflare")) continue;
+    candidates.set(link, (candidates.get(link) ?? 0) + 1);
+  }
+  // Most-repeated external link wins (usually the real site)
+  const sorted = [...candidates.entries()].sort((a, b) => b[1] - a[1]);
+  return sorted[0]?.[0] ?? null;
+}
+
+/**
+ * Scrape a website for contacts: homepage + a few contact/about pages.
+ * Follows link-in-bio aggregators one hop to the real site first.
+ */
+async function scrapeWebsite(
+  rawUrl: string
+): Promise<{ emails: string[]; phones: string[]; resolvedUrl?: string }> {
+  let url = rawUrl;
+
+  // Resolve aggregator → real site (one hop)
+  if (isAggregator(url)) {
+    const real = await resolveAggregator(url);
+    if (!real) return { emails: [], phones: [] };
+    url = real;
+  }
+
+  let base: URL;
+  try { base = new URL(url); } catch { return { emails: [], phones: [] }; }
+
+  const emails = new Set<string>();
+  const phones = new Set<string>();
+
+  // 1. Homepage
+  const homeHtml = await fetchHtml(url);
+  if (homeHtml) {
+    const r = extractFromHtml(homeHtml);
+    r.emails.forEach((e) => emails.add(e));
+    r.phones.forEach((p) => phones.add(p));
+  }
+
+  // 2. Contact/about pages — only if we still have room to find an email
+  if (emails.size === 0) {
+    for (const path of CONTACT_PATHS) {
+      if (emails.size > 0) break; // stop once we find a contact email
+      const pageUrl = `${base.origin}${path}`;
+      const html = await fetchHtml(pageUrl, 6000);
+      if (!html) continue;
+      const r = extractFromHtml(html);
+      r.emails.forEach((e) => emails.add(e));
+      r.phones.forEach((p) => phones.add(p));
+    }
+  }
+
+  return {
+    emails: cleanEmails([...emails]),
+    phones: cleanPhones([...phones]),
+    resolvedUrl: url !== rawUrl ? url : undefined,
+  };
 }
 
 // ── TikTok profile scrape ──────────────────────────────────────────────────
@@ -324,14 +486,17 @@ export async function POST(req: Request) {
   }
 
   // ── 3. Website scraping for all accounts ──────────────────────────────
-  // Process in batches of 8 to avoid overwhelming targets
+  // Scrapes homepage + contact/about pages, follows link-in-bio aggregators.
+  // Batches of 6 to balance speed vs. overwhelming targets.
   const allLeads = Array.from(leads.values());
-  const BATCH = 8;
+  const BATCH = 6;
   for (let i = 0; i < allLeads.length; i += BATCH) {
     await Promise.all(
       allLeads.slice(i, i + BATCH).map(async (lead) => {
         if (!lead.website) return;
-        const { emails, phones } = await scrapeWebsite(lead.website);
+        const { emails, phones, resolvedUrl } = await scrapeWebsite(lead.website);
+        // If an aggregator was resolved to a real site, surface that to the user
+        if (resolvedUrl) lead.website = resolvedUrl;
         const addedEmails = emails.filter((e) => !lead.emails.includes(e));
         const addedPhones = phones.filter((p) => !lead.phones.includes(p));
         if (addedEmails.length || addedPhones.length) {
