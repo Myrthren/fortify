@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { braveSearch } from "@/lib/brave";
 import { startRunAndWait, getDatasetItems } from "@/lib/apify";
+import { claude, CLAUDE_MODELS } from "@/lib/claude";
 
 const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 const PHONE_RE = /(?:(?:\+44|0044|0)[\s\-.]?(?:\d[\s\-.]?){9,10}|\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?[\s\-.]?\d[\s\-.\d]{6,})/g;
@@ -29,6 +30,9 @@ const BROWSER_UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
 const CREDITS_PER_ACCOUNT = 20;
+// Per-lead surcharge for AI approach strategy (Elite+). Only charged for
+// leads that actually had an email and received generated context.
+const CONTEXT_COST_PER_LEAD = 10;
 
 // Batch limits and research depth by tier.
 // canDeepScan: whether the user may toggle on the thorough multi-page scan.
