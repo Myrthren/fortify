@@ -15,6 +15,9 @@ import {
   AlertCircle,
   Globe,
   Users,
+  Brain,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 type ExtractedLead = {
@@ -28,9 +31,11 @@ type ExtractedLead = {
   emails: string[];
   phones: string[];
   sources: string[];
+  context?: string;
 };
 
 const CREDITS_PER = 20;
+const CONTEXT_CREDITS_PER = 10;
 
 function TikTokIcon({ className }: { className?: string }) {
   return (
@@ -92,6 +97,8 @@ interface LeadExtractorClientProps {
   braveSearch: boolean;
   /** Whether this tier (Apex) may toggle on the thorough deep scan */
   deepScan: boolean;
+  /** Whether this tier (Elite+) may request AI approach strategies */
+  applyContext: boolean;
 }
 
 export function LeadExtractorClient({
@@ -100,21 +107,35 @@ export function LeadExtractorClient({
   maxAccounts,
   braveSearch,
   deepScan: canDeepScan,
+  applyContext: canApplyContext,
 }: LeadExtractorClientProps) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [deepScanOn, setDeepScanOn] = useState(false);
+  const [contextOn, setContextOn] = useState(false);
   const [results, setResults] = useState<ExtractedLead[]>([]);
   const [invalid, setInvalid] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [credits, setCredits] = useState(userCredits);
   const [elapsed, setElapsed] = useState(0);
+  const [expandedContext, setExpandedContext] = useState<Set<number>>(new Set());
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  function toggleContext(index: number) {
+    setExpandedContext((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) next.delete(index);
+      else next.add(index);
+      return next;
+    });
+  }
 
   const preview = parsePreview(input);
   const validCount = Math.min(preview.filter((p) => p.valid).length, maxAccounts);
   const overLimit = preview.filter((p) => p.valid).length > maxAccounts;
-  const cost = validCount * CREDITS_PER;
+  const baseCost = validCount * CREDITS_PER;
+  const contextCost = canApplyContext && contextOn ? validCount * CONTEXT_CREDITS_PER : 0;
+  const cost = baseCost + contextCost;
 
   async function handleExtract(e: React.FormEvent) {
     e.preventDefault();
@@ -123,6 +144,7 @@ export function LeadExtractorClient({
     setError(null);
     setResults([]);
     setInvalid([]);
+    setExpandedContext(new Set());
     setLoading(true);
     setElapsed(0);
 
@@ -134,7 +156,11 @@ export function LeadExtractorClient({
       const res = await fetch("/api/lead-extractor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ accounts, deepScan: canDeepScan && deepScanOn }),
+        body: JSON.stringify({
+          accounts,
+          deepScan: canDeepScan && deepScanOn,
+          applyContext: canApplyContext && contextOn,
+        }),
       });
       const data = await res.json();
 
@@ -157,7 +183,7 @@ export function LeadExtractorClient({
   function exportCSV() {
     const headers = [
       "Handle", "Platform", "Name", "Followers", "Website",
-      "Emails", "Phones", "Bio", "Profile URL", "Sources",
+      "Emails", "Phones", "Bio", "Approach Strategy", "Profile URL", "Sources",
     ];
     const rows = results.map((r) => [
       r.handle,
@@ -168,6 +194,7 @@ export function LeadExtractorClient({
       r.emails.join("; "),
       r.phones.join("; "),
       (r.bio ?? "").replace(/\n/g, " "),
+      (r.context ?? "").replace(/\n/g, " "),
       r.profileUrl,
       r.sources.join(", "),
     ]);
@@ -285,6 +312,33 @@ export function LeadExtractorClient({
           </label>
         )}
 
+        {/* Approach strategy toggle — Elite+ only */}
+        {canApplyContext && (
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-bg-border bg-bg-panel px-3.5 py-3 transition hover:border-white/20 has-[:checked]:border-white/30 has-[:checked]:bg-white/[0.05]">
+            <input
+              type="checkbox"
+              className="mt-0.5 h-4 w-4 accent-white"
+              checked={contextOn}
+              onChange={(e) => setContextOn(e.target.checked)}
+            />
+            <span className="space-y-0.5">
+              <span className="block text-sm font-medium text-text">
+                Approach strategy
+                <span className="ml-2 rounded bg-white/[0.08] px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
+                  Elite+
+                </span>
+                <span className="ml-2 text-[11px] font-normal text-text-dim">
+                  +{CONTEXT_CREDITS_PER} credits per lead found
+                </span>
+              </span>
+              <span className="block text-[11px] text-text-dim leading-relaxed">
+                For each lead with an email, AI reads their profile and tells you the best angle to
+                approach them so your outreach actually gets a reply. You're only charged for leads where contact info is found.
+              </span>
+            </span>
+          </label>
+        )}
+
         <div className="flex items-center gap-4 flex-wrap">
           <button
             type="submit"
@@ -299,12 +353,15 @@ export function LeadExtractorClient({
             {loading
               ? `Researching… ${elapsed}s`
               : validCount > 0
-              ? `Extract ${validCount} account${validCount !== 1 ? "s" : ""} · ${cost} credits`
+              ? `Extract ${validCount} account${validCount !== 1 ? "s" : ""} · ${contextCost > 0 ? `up to ${cost}` : cost} credits`
               : "Extract contacts"}
           </button>
           {validCount > 0 && !loading && (
             <p className="text-xs text-text-dim">
               {preview.filter((p) => p.valid).length} valid · {preview.filter((p) => !p.valid && p.raw).length} unrecognised
+              {contextCost > 0 && (
+                <> · {baseCost} base + up to {contextCost} for strategies</>
+              )}
             </p>
           )}
           {loading && (
@@ -448,6 +505,34 @@ export function LeadExtractorClient({
                   </div>
                 )}
 
+                {/* AI approach strategy */}
+                {lead.context && (
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => toggleContext(i)}
+                      className="flex w-full items-center justify-between rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-left transition hover:bg-white/[0.06]"
+                    >
+                      <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
+                        <Brain className="h-3 w-3 text-amber-400/70" />
+                        Approach strategy
+                      </span>
+                      {expandedContext.has(i) ? (
+                        <ChevronUp className="h-3 w-3 text-text-dim" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3 text-text-dim" />
+                      )}
+                    </button>
+                    {expandedContext.has(i) && (
+                      <div className="mt-1.5 rounded-md border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                        <p className="text-xs text-text-muted leading-relaxed whitespace-pre-wrap">
+                          {lead.context}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Actions */}
                 <div className="flex items-center gap-2 pt-0.5">
                   <a
@@ -485,11 +570,13 @@ export function LeadExtractorClient({
             <li>Fortify fetches each profile to read the bio and find their linked website</li>
             <li>Scrapes the homepage and contact/about pages — follows link-in-bio pages (Linktree, Beacons) to the real site</li>
             {braveSearch && <li>Runs a targeted web search for any accounts still missing contact info</li>}
+            {canApplyContext && <li>Optional approach strategy: AI tells you the best angle to pitch each lead you find</li>}
             {canDeepScan && <li>Optional deep scan crawls extra contact pages and widens the search on every account</li>}
             <li>Results ready to export as CSV or send straight to Outreach</li>
           </ol>
           <p className="text-xs text-text-dim">
             {CREDITS_PER} credits per account · phones and emails included
+            {canApplyContext && <> · approach strategy +{CONTEXT_CREDITS_PER} per lead found</>}
           </p>
 
           {/* Tier comparison */}
@@ -497,9 +584,9 @@ export function LeadExtractorClient({
             <p className="text-xs font-medium text-text-muted mb-2">Plan limits</p>
             <div className="grid grid-cols-3 gap-2 text-xs">
               {[
-                { name: "Pro", max: 10, brave: false, deep: false },
-                { name: "Elite", max: 25, brave: true, deep: false },
-                { name: "Apex", max: 50, brave: true, deep: true },
+                { name: "Pro", max: 10, brave: false, deep: false, context: false },
+                { name: "Elite", max: 25, brave: true, deep: false, context: true },
+                { name: "Apex", max: 50, brave: true, deep: true, context: true },
               ].map((t) => {
                 const current = t.name.toUpperCase() === tier;
                 return (
@@ -517,6 +604,7 @@ export function LeadExtractorClient({
                     <p className="text-text-dim">{t.max} accounts/batch</p>
                     <p className="text-text-dim">Bio + website scrape</p>
                     {t.brave && <p className="text-text-dim">Web search fallback</p>}
+                    {t.context && <p className="text-text-dim">Approach strategy</p>}
                     {t.deep && <p className="text-text-dim">Optional deep scan</p>}
                   </div>
                 );

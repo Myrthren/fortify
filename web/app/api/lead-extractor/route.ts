@@ -32,10 +32,11 @@ const CREDITS_PER_ACCOUNT = 20;
 
 // Batch limits and research depth by tier.
 // canDeepScan: whether the user may toggle on the thorough multi-page scan.
-const TIER_LIMITS: Record<string, { maxAccounts: number; braveSearch: boolean; canDeepScan: boolean }> = {
-  PRO:   { maxAccounts: 10, braveSearch: false, canDeepScan: false },
-  ELITE: { maxAccounts: 25, braveSearch: true,  canDeepScan: false },
-  APEX:  { maxAccounts: 50, braveSearch: true,  canDeepScan: true  },
+// canApplyContext: whether the user may request AI approach strategies (Elite+).
+const TIER_LIMITS: Record<string, { maxAccounts: number; braveSearch: boolean; canDeepScan: boolean; canApplyContext: boolean }> = {
+  PRO:   { maxAccounts: 10, braveSearch: false, canDeepScan: false, canApplyContext: false },
+  ELITE: { maxAccounts: 25, braveSearch: true,  canDeepScan: false, canApplyContext: true  },
+  APEX:  { maxAccounts: 50, braveSearch: true,  canDeepScan: true,  canApplyContext: true  },
 };
 
 // ── Parsers ────────────────────────────────────────────────────────────────
@@ -378,7 +379,42 @@ export type ExtractedLead = {
   emails: string[];
   phones: string[];
   sources: string[]; // where we found data: "bio" | "website" | "search"
+  context?: string;  // AI approach strategy (Elite+, opt-in)
 };
+
+/**
+ * Generate a short, practical outreach approach strategy for a lead using
+ * everything we know about them (name, bio, website, audience size).
+ * Returns "" on any failure so it never breaks the batch.
+ */
+async function generateApproachStrategy(lead: ExtractedLead): Promise<string> {
+  try {
+    const msg = await claude().messages.create({
+      model: CLAUDE_MODELS.fast,
+      max_tokens: 220,
+      messages: [
+        {
+          role: "user",
+          content: `You are helping someone craft a cold outreach approach to a business they found on social media.
+
+Business: ${lead.name ?? lead.handle}
+Platform: ${lead.platform}${lead.followers != null ? ` (${lead.followers.toLocaleString()} followers)` : ""}
+Bio: ${lead.bio || "No bio available"}
+Website: ${lead.website || "None found"}
+
+In 2-3 concise sentences, tell the user:
+1. What this business is about and what they likely care about right now
+2. The single best angle to open an outreach message so it actually gets a reply
+
+Be specific and practical. No filler, no greetings, no bullet points.`,
+        },
+      ],
+    });
+    return msg.content[0].type === "text" ? msg.content[0].text.trim() : "";
+  } catch {
+    return "";
+  }
+}
 
 // ── POST /api/lead-extractor ───────────────────────────────────────────────
 
@@ -405,6 +441,8 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   // Deep scan is opt-in and only honoured for tiers that allow it (Apex).
   const deepScan: boolean = body.deepScan === true && tierConfig.canDeepScan;
+  // Approach strategy is opt-in and only honoured for tiers that allow it (Elite+).
+  const applyContext: boolean = body.applyContext === true && tierConfig.canApplyContext;
   const rawLines: string[] = (body.accounts ?? [])
     .map((a: string) => a.trim())
     .filter(Boolean);
@@ -431,10 +469,14 @@ export async function POST(req: Request) {
       { status: 400 }
     );
 
-  const totalCost = parsed.length * CREDITS_PER_ACCOUNT;
-  if (user.credits < totalCost) {
+  const baseCost = parsed.length * CREDITS_PER_ACCOUNT;
+  // Context is charged per lead that actually receives a strategy, but we
+  // require the worst-case amount upfront (every account could get one).
+  const maxContextCost = applyContext ? parsed.length * CONTEXT_COST_PER_LEAD : 0;
+  const maxCost = baseCost + maxContextCost;
+  if (user.credits < maxCost) {
     return NextResponse.json(
-      { error: `This batch costs ${totalCost} credits. You have ${user.credits}.`, upgrade: true },
+      { error: `This batch costs up to ${maxCost} credits. You have ${user.credits}.`, upgrade: true },
       { status: 402 }
     );
   }
@@ -587,7 +629,30 @@ export async function POST(req: Request) {
     lead.sources = [...new Set(lead.sources)];
   }
 
-  // ── 6. Deduct credits ─────────────────────────────────────────────────
+  // ── 6. AI approach strategy (Elite+, opt-in) ──────────────────────────
+  // Generate one only for leads where we actually found an email — that's
+  // the lead they can act on. Batched to avoid hammering the API.
+  let contextLeads = 0;
+  if (applyContext) {
+    const targets = allLeads.filter((l) => l.emails.length > 0);
+    const CTX_BATCH = 5;
+    for (let i = 0; i < targets.length; i += CTX_BATCH) {
+      await Promise.all(
+        targets.slice(i, i + CTX_BATCH).map(async (lead) => {
+          const strategy = await generateApproachStrategy(lead);
+          if (strategy) {
+            lead.context = strategy;
+            contextLeads += 1;
+          }
+        })
+      );
+    }
+  }
+
+  // ── 7. Deduct credits ─────────────────────────────────────────────────
+  // Only charge for context that was actually generated.
+  const contextCost = contextLeads * CONTEXT_COST_PER_LEAD;
+  const totalCost = baseCost + contextCost;
   await db.user.update({
     where: { id: userId },
     data: { credits: { decrement: totalCost } },

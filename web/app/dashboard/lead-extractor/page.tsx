@@ -5,10 +5,10 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { LeadExtractorClient } from "@/components/lead-extractor-client";
 import { LockedPage } from "@/components/locked-page";
 
-const TIER_LIMITS: Record<string, { maxAccounts: number; braveSearch: boolean; deepScan: boolean }> = {
-  PRO:   { maxAccounts: 10, braveSearch: false, deepScan: false },
-  ELITE: { maxAccounts: 25, braveSearch: true,  deepScan: false },
-  APEX:  { maxAccounts: 50, braveSearch: true,  deepScan: true  },
+const TIER_LIMITS: Record<string, { maxAccounts: number; braveSearch: boolean; deepScan: boolean; applyContext: boolean }> = {
+  PRO:   { maxAccounts: 10, braveSearch: false, deepScan: false, applyContext: false },
+  ELITE: { maxAccounts: 25, braveSearch: true,  deepScan: false, applyContext: true  },
+  APEX:  { maxAccounts: 50, braveSearch: true,  deepScan: true,  applyContext: true  },
 };
 
 export default async function LeadExtractorPage() {
@@ -49,6 +49,7 @@ export default async function LeadExtractorPage() {
           maxAccounts={tierConfig.maxAccounts}
           braveSearch={tierConfig.braveSearch}
           deepScan={tierConfig.deepScan}
+          applyContext={tierConfig.applyContext}
         />
       </main>
     </div>
