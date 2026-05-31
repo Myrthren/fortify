@@ -9,6 +9,7 @@ import { StripeConnectSection } from "@/components/stripe-connect";
 import { NotionConnectSection } from "@/components/notion-connect";
 import type { Tier } from "@prisma/client";
 import { Download, Trash2 } from "lucide-react";
+import { OwnerLeadExtractorSettings } from "./owner-lead-extractor";
 
 type Prefs = {
   dmPaymentFailed: boolean;
@@ -113,6 +114,7 @@ export function SettingsClient({
   username: initialUsername,
   usernameChangesUsed,
   credits,
+  leRaiseBatch,
 }: {
   user: { email: string | null; tier: Tier; discordId: string | null };
   meta: { connected: boolean; accountName: string | null };
@@ -123,6 +125,7 @@ export function SettingsClient({
   username: string | null;
   usernameChangesUsed: number;
   credits: number;
+  leRaiseBatch: boolean;
 }) {
   const [prefs, setPrefs] = useState<Prefs | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -430,6 +433,9 @@ export function SettingsClient({
             </div>
           </section>
         )}
+
+        {/* Owner-only — Lead Extractor controls */}
+        {isOwner && <OwnerLeadExtractorSettings initialRaiseBatch={leRaiseBatch} />}
 
         {/* Data & Privacy (GDPR) */}
         <section className="mb-8">

@@ -72,6 +72,7 @@ model User {
   credits             Int       @default(100)
   creditsResetAt      DateTime?               // tracks last monthly credit top-up
   freeAiUsed          Boolean   @default(false) // one-time £0.20 Fortify AI trial for FREE tier
+  leRaiseBatch        Boolean   @default(false) // owner-only: lift Lead Extractor per-batch account cap
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 

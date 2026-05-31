@@ -5,6 +5,7 @@ import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { braveSearch } from "@/lib/brave";
 import { startRunAndWait, getDatasetItems } from "@/lib/apify";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
+import { isOwner } from "@/lib/owner";
 
 const EMAIL_RE = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g;
 const PHONE_RE = /(?:(?:\+44|0044|0)[\s\-.]?(?:\d[\s\-.]?){9,10}|\+\d{1,3}[\s\-.]?\(?\d{1,4}\)?[\s\-.]?\d[\s\-.\d]{6,})/g;
@@ -33,6 +34,10 @@ const CREDITS_PER_ACCOUNT = 20;
 // Per-lead surcharge for AI approach strategy (Elite+). Only charged for
 // leads that actually had an email and received generated context.
 const CONTEXT_COST_PER_LEAD = 10;
+
+// Owner-only: when leRaiseBatch is enabled in Settings, the per-batch account
+// cap is lifted to this so bulk harvesting can be done in fewer, larger runs.
+const OWNER_MAX_ACCOUNTS = 500;
 
 // Batch limits and research depth by tier.
 // canDeepScan: whether the user may toggle on the thorough multi-page scan.
@@ -441,6 +446,11 @@ export async function POST(req: Request) {
   }
 
   const tierConfig = TIER_LIMITS[user.tier] ?? TIER_LIMITS.PRO;
+  // Owner batch-size override: lifts the per-batch cap when enabled in Settings.
+  const maxAccounts =
+    isOwner(user.discordId) && user.leRaiseBatch
+      ? OWNER_MAX_ACCOUNTS
+      : tierConfig.maxAccounts;
 
   const body = await req.json().catch(() => ({}));
   // Deep scan is opt-in and only honoured for tiers that allow it (Apex).
@@ -453,9 +463,9 @@ export async function POST(req: Request) {
 
   if (rawLines.length === 0)
     return NextResponse.json({ error: "No accounts provided." }, { status: 400 });
-  if (rawLines.length > tierConfig.maxAccounts)
+  if (rawLines.length > maxAccounts)
     return NextResponse.json(
-      { error: `Your plan allows up to ${tierConfig.maxAccounts} accounts per batch. Upgrade to process more.`, upgrade: true },
+      { error: `Your plan allows up to ${maxAccounts} accounts per batch. Upgrade to process more.`, upgrade: true },
       { status: 400 }
     );
 

@@ -37,6 +37,7 @@ export default async function SettingsPage() {
       username={user.username ?? null}
       usernameChangesUsed={user.usernameChangesUsed}
       credits={user.credits}
+      leRaiseBatch={user.leRaiseBatch ?? false}
     />
   );
 }
