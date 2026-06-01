@@ -62,6 +62,7 @@ model User {
   xp            Int       @default(0)
   streak        Int       @default(0)
   credits       Int       @default(0)
+  leRaiseBatch  Boolean   @default(false) // owner-only: lift Lead Extractor per-batch account cap
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
