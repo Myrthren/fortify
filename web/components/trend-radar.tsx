@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Trash2, RefreshCw, ExternalLink, ArrowUp, MessageSquare } from "lucide-react";
+import { Loader2, Plus, Trash2, RefreshCw, ExternalLink, ArrowUp, MessageSquare, Dna } from "lucide-react";
 import type { Tier } from "@prisma/client";
 import Link from "next/link";
 
@@ -375,7 +375,7 @@ export function TrendRadar({
             <div className="card p-4 mt-4">
               <div className="flex items-center justify-between mb-2">
                 <p className="text-xs font-semibold uppercase tracking-wide text-text-muted flex items-center gap-1.5">
-                  <span>🧬</span> Company DNA Insight
+                  <Dna className="h-3.5 w-3.5 text-[var(--accent)]" /> Company DNA Insight
                 </p>
                 <button
                   onClick={loadInsight}

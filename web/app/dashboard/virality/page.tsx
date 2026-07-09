@@ -7,6 +7,7 @@ import { AutoSlideshow } from "@/components/auto-slideshow";
 import { TIER_LIMITS } from "@/lib/tiers";
 import { LockedPage } from "@/components/locked-page";
 import { TierBadge } from "@/components/tier-badge";
+import { Clapperboard, Brain, CalendarClock, Rocket } from "lucide-react";
 import Link from "next/link";
 
 export default async function ViralityPage() {
@@ -30,11 +31,11 @@ export default async function ViralityPage() {
         user={user} active="virality" requiredTier="ELITE"
         title="Virality Engine"
         description="AI-powered video scoring, optimal publish timing, and automated social publishing to TikTok, YouTube, and Facebook."
-        icon="🎬"
+        icon={<Clapperboard />}
         features={[
-          { icon: "🧠", title: "AI Video Scoring", desc: "Get a virality score, title suggestions, and hook analysis for any video." },
-          { icon: "📅", title: "Optimal Timing", desc: "AI finds the best time to post based on your audience and platform data." },
-          { icon: "🚀", title: "Auto-Publish (Apex)", desc: "Schedule and auto-publish to TikTok, YouTube, and Facebook from one place." },
+          { icon: <Brain />, title: "AI Video Scoring", desc: "Get a virality score, title suggestions, and hook analysis for any video." },
+          { icon: <CalendarClock />, title: "Optimal Timing", desc: "AI finds the best time to post based on your audience and platform data." },
+          { icon: <Rocket />, title: "Auto-Publish (Apex)", desc: "Schedule and auto-publish to TikTok, YouTube, and Facebook from one place." },
         ]}
       />
     );

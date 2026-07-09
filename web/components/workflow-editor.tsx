@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { ArrowLeft, Save, Play, Pause, Loader2, Plus, X, Trash2, History, ChevronDown, GripVertical } from "lucide-react";
+import {
+  ArrowLeft, Save, Play, Pause, Loader2, Plus, X, Trash2, History, ChevronDown, GripVertical,
+  Clock, Webhook, UserPlus, Eye, Target, Sparkles, FileText, ScanSearch, Tags,
+  MessageSquare, Mail, Hash, NotebookPen, ShoppingBag, UserSearch, Send, Diamond,
+  Hourglass, Filter, Split, Settings2, Globe, Repeat, RefreshCw,
+} from "lucide-react";
+
+// Node icons scale with their container's font size
+const ni = "h-[1.15em] w-[1.15em]";
 import Link from "next/link";
 
 // ── Canvas dimensions ────────────────────────────────────────────────────────
@@ -29,7 +37,7 @@ type PortKey = "out" | "yes" | "no" | "a" | "b" | "c" | "d";
 
 type NodeDef = {
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   category: "trigger" | "ai" | "action" | "logic";
   accent: string;
   ports: PortKey[];
@@ -40,7 +48,7 @@ type NodeDef = {
 const DEFS: Record<string, NodeDef> = {
   // ── Triggers ─────────────────────────────────────────────────────────────
   trigger_schedule: {
-    label: "Schedule", icon: "⏰", category: "trigger", accent: "#a78bfa", ports: ["out"],
+    label: "Schedule", icon: <Clock className={ni} />, category: "trigger", accent: "#a78bfa", ports: ["out"],
     configFields: [
       { key: "cron", label: "Cron Expression", placeholder: "0 9 * * 1", previewInNode: true,
         hint: "Examples: '0 9 * * 1' = Mon 9am, '0 8 * * *' = daily 8am. Use crontab.guru to build one." },
@@ -48,7 +56,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   trigger_webhook: {
-    label: "Webhook In", icon: "⚡", category: "trigger", accent: "#a78bfa", ports: ["out"],
+    label: "Webhook In", icon: <Webhook className={ni} />, category: "trigger", accent: "#a78bfa", ports: ["out"],
     configFields: [
       { key: "method", label: "Accept Method", type: "select", placeholder: "POST",
         options: [{ value: "POST", label: "POST" }, { value: "GET", label: "GET" }], previewInNode: true },
@@ -57,21 +65,21 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   trigger_new_member: {
-    label: "New Member", icon: "👤", category: "trigger", accent: "#a78bfa", ports: ["out"],
+    label: "New Member", icon: <UserPlus className={ni} />, category: "trigger", accent: "#a78bfa", ports: ["out"],
     configFields: [
       { key: "tier", label: "Filter by Tier (optional)", type: "select", placeholder: "Any tier", previewInNode: true,
         options: [{ value: "", label: "Any tier" }, { value: "PRO", label: "Pro" }, { value: "ELITE", label: "Elite" }, { value: "APEX", label: "Apex" }] },
     ],
   },
   trigger_competitor: {
-    label: "Competitor Change", icon: "👁", category: "trigger", accent: "#a78bfa", ports: ["out"],
+    label: "Competitor Change", icon: <Eye className={ni} />, category: "trigger", accent: "#a78bfa", ports: ["out"],
     configFields: [
       { key: "watchName", label: "Watch Name", placeholder: "Leave blank for all watches", previewInNode: true,
         hint: "Name of the Competitor Watch to listen to. Leave empty to fire on any change." },
     ],
   },
   trigger_lead: {
-    label: "New Lead Found", icon: "🎯", category: "trigger", accent: "#a78bfa", ports: ["out"],
+    label: "New Lead Found", icon: <Target className={ni} />, category: "trigger", accent: "#a78bfa", ports: ["out"],
     configFields: [
       { key: "minScore", label: "Minimum Lead Score", placeholder: "70 (0–100)",
         hint: "Only fire this trigger when a lead scores at or above this threshold." },
@@ -80,7 +88,7 @@ const DEFS: Record<string, NodeDef> = {
 
   // ── AI ───────────────────────────────────────────────────────────────────
   ai_generate: {
-    label: "AI Generate", icon: "✦", category: "ai", accent: "#38bdf8", ports: ["out"],
+    label: "AI Generate", icon: <Sparkles className={ni} />, category: "ai", accent: "#38bdf8", ports: ["out"],
     configFields: [
       { key: "prompt", label: "Prompt", type: "textarea", rows: 4, placeholder: "Write a welcome email for {{member.name}} who just joined Fortify...", previewInNode: true,
         hint: "Variables: {{member.name}} {{member.email}} {{member.tier}} {{previous_output}}" },
@@ -92,7 +100,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   ai_summarise: {
-    label: "AI Summarise", icon: "📝", category: "ai", accent: "#38bdf8", ports: ["out"],
+    label: "AI Summarise", icon: <FileText className={ni} />, category: "ai", accent: "#38bdf8", ports: ["out"],
     configFields: [
       { key: "input", label: "Input to Summarise", type: "textarea", rows: 2, placeholder: "{{previous_output}}", previewInNode: true,
         hint: "Use {{previous_output}} to pass the output of the last node." },
@@ -101,7 +109,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   ai_analyse: {
-    label: "AI Analyse", icon: "🔎", category: "ai", accent: "#38bdf8", ports: ["out"],
+    label: "AI Analyse", icon: <ScanSearch className={ni} />, category: "ai", accent: "#38bdf8", ports: ["out"],
     configFields: [
       { key: "input", label: "Input to Analyse", type: "textarea", rows: 2, placeholder: "{{previous_output}}", previewInNode: true },
       { key: "criteria", label: "Analysis Criteria", type: "textarea", rows: 2, placeholder: "Tone, clarity, engagement potential, key themes",
@@ -110,7 +118,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   ai_classify: {
-    label: "AI Classify", icon: "🏷", category: "ai", accent: "#38bdf8", ports: ["out"],
+    label: "AI Classify", icon: <Tags className={ni} />, category: "ai", accent: "#38bdf8", ports: ["out"],
     configFields: [
       { key: "input", label: "Input to Classify", placeholder: "{{previous_output}}", previewInNode: true },
       { key: "categories", label: "Categories (comma-separated)", placeholder: "positive, negative, neutral",
@@ -121,7 +129,7 @@ const DEFS: Record<string, NodeDef> = {
 
   // ── Actions ──────────────────────────────────────────────────────────────
   action_discord: {
-    label: "Discord Post", icon: "💬", category: "action", accent: "#818cf8", ports: ["out"],
+    label: "Discord Post", icon: <MessageSquare className={ni} />, category: "action", accent: "#818cf8", ports: ["out"],
     configFields: [
       { key: "channel", label: "Channel ID", placeholder: "1234567890123456789", previewInNode: true,
         hint: "Right-click a channel in Discord → Copy ID. Enable Developer Mode in Discord settings first." },
@@ -135,7 +143,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_email: {
-    label: "Send Email", icon: "📧", category: "action", accent: "#34d399", ports: ["out"],
+    label: "Send Email", icon: <Mail className={ni} />, category: "action", accent: "#34d399", ports: ["out"],
     configFields: [
       { key: "to", label: "To Address", placeholder: "{{member.email}}", previewInNode: true,
         hint: "Use {{member.email}} to send to the user who triggered the workflow." },
@@ -147,7 +155,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_slack: {
-    label: "Slack Post", icon: "💼", category: "action", accent: "#f59e0b", ports: ["out"],
+    label: "Slack Post", icon: <Hash className={ni} />, category: "action", accent: "#f59e0b", ports: ["out"],
     configFields: [
       { key: "webhookUrl", label: "Slack Webhook URL", placeholder: "https://hooks.slack.com/services/T.../B.../...", previewInNode: true,
         hint: "Create one at api.slack.com → Your Apps → Incoming Webhooks." },
@@ -159,7 +167,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_notion: {
-    label: "Notion Create", icon: "📓", category: "action", accent: "#e2e8f0", ports: ["out"],
+    label: "Notion Create", icon: <NotebookPen className={ni} />, category: "action", accent: "#e2e8f0", ports: ["out"],
     configFields: [
       { key: "database", label: "Database ID", placeholder: "abc123def456…", previewInNode: true,
         hint: "Found in the Notion page URL after the workspace name and before the '?' query string." },
@@ -179,7 +187,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_shopify: {
-    label: "Shopify", icon: "🛍", category: "action", accent: "#95bf47", ports: ["out"],
+    label: "Shopify", icon: <ShoppingBag className={ni} />, category: "action", accent: "#95bf47", ports: ["out"],
     configFields: [
       { key: "action", label: "Action", type: "select", placeholder: "tag_customer", previewInNode: true,
         options: [
@@ -193,7 +201,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_lead_search: {
-    label: "Lead Search", icon: "🎯", category: "action", accent: "#f472b6", ports: ["out"],
+    label: "Lead Search", icon: <UserSearch className={ni} />, category: "action", accent: "#f472b6", ports: ["out"],
     configFields: [
       { key: "icp", label: "Ideal Customer Profile", type: "textarea", rows: 2,
         placeholder: "SaaS founders in London with 10-50 employees", previewInNode: true,
@@ -207,7 +215,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_webhook_out: {
-    label: "Webhook Out", icon: "📤", category: "action", accent: "#f59e0b", ports: ["out"],
+    label: "Webhook Out", icon: <Send className={ni} />, category: "action", accent: "#f59e0b", ports: ["out"],
     configFields: [
       { key: "url", label: "Endpoint URL", placeholder: "https://your-api.com/webhook", previewInNode: true },
       { key: "method", label: "Method", type: "select", placeholder: "POST",
@@ -222,7 +230,7 @@ const DEFS: Record<string, NodeDef> = {
 
   // ── Logic ────────────────────────────────────────────────────────────────
   logic_condition: {
-    label: "Condition", icon: "◇", category: "logic", accent: "#fb923c", ports: ["yes", "no"],
+    label: "Condition", icon: <Diamond className={ni} />, category: "logic", accent: "#fb923c", ports: ["yes", "no"],
     configFields: [
       { key: "leftSide", label: "Left Side", placeholder: "{{member.tier}}", previewInNode: true,
         hint: "Variables: {{member.tier}} {{member.credits}} {{previous_output}} {{generated_text}}" },
@@ -241,7 +249,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   logic_delay: {
-    label: "Delay", icon: "⏳", category: "logic", accent: "#6b7280", ports: ["out"],
+    label: "Delay", icon: <Hourglass className={ni} />, category: "logic", accent: "#6b7280", ports: ["out"],
     configFields: [
       { key: "duration", label: "Duration", placeholder: "5", previewInNode: true },
       { key: "unit", label: "Unit", type: "select", placeholder: "minutes",
@@ -249,7 +257,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   logic_filter: {
-    label: "Filter", icon: "⧩", category: "logic", accent: "#6b7280", ports: ["out"],
+    label: "Filter", icon: <Filter className={ni} />, category: "logic", accent: "#6b7280", ports: ["out"],
     configFields: [
       { key: "expression", label: "Filter Expression", type: "textarea", rows: 2, previewInNode: true,
         placeholder: "{{member.credits}} > 100 AND {{member.tier}} != 'FREE'",
@@ -257,7 +265,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   logic_switch: {
-    label: "Switch", icon: "🔀", category: "logic", accent: "#fb923c", ports: ["a", "b", "c", "d"],
+    label: "Switch", icon: <Split className={ni} />, category: "logic", accent: "#fb923c", ports: ["a", "b", "c", "d"],
     configFields: [
       { key: "variable", label: "Variable to switch on", placeholder: "{{member.tier}}", previewInNode: true,
         hint: "The value that will be compared against each branch." },
@@ -269,7 +277,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   logic_transform: {
-    label: "Transform", icon: "⚙", category: "logic", accent: "#a3e635", ports: ["out"],
+    label: "Transform", icon: <Settings2 className={ni} />, category: "logic", accent: "#a3e635", ports: ["out"],
     configFields: [
       { key: "input", label: "Input value or variable", placeholder: "{{previous_output}}", previewInNode: true },
       { key: "template", label: "Output template", type: "textarea", rows: 3,
@@ -279,7 +287,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_http_request: {
-    label: "HTTP Request", icon: "🌐", category: "action", accent: "#38bdf8", ports: ["out"],
+    label: "HTTP Request", icon: <Globe className={ni} />, category: "action", accent: "#38bdf8", ports: ["out"],
     configFields: [
       { key: "url", label: "URL", placeholder: "https://api.example.com/data", previewInNode: true },
       { key: "method", label: "Method", type: "select", placeholder: "GET",
@@ -293,7 +301,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   logic_loop: {
-    label: "Loop / Iterator", icon: "🔁", category: "logic", accent: "#f472b6", ports: ["out"],
+    label: "Loop / Iterator", icon: <Repeat className={ni} />, category: "logic", accent: "#f472b6", ports: ["out"],
     configFields: [
       { key: "items", label: "Items to iterate (JSON array or variable)", type: "textarea", rows: 2,
         placeholder: "{{leads_list}} or [\"item1\",\"item2\"]", previewInNode: true,
@@ -304,7 +312,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   logic_retry: {
-    label: "Error / Retry", icon: "🔄", category: "logic", accent: "#f87171", ports: ["out"],
+    label: "Error / Retry", icon: <RefreshCw className={ni} />, category: "logic", accent: "#f87171", ports: ["out"],
     configFields: [
       { key: "maxRetries", label: "Max retries", placeholder: "3", previewInNode: true,
         hint: "How many times to retry a failed downstream node before giving up." },
@@ -654,7 +662,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
                 className="btn-ghost text-xs gap-1.5"
                 title="Edit run schedule"
               >
-                <span>⏰</span>
+                <Clock className="h-3.5 w-3.5" />
                 <span className="max-w-[120px] truncate hidden sm:inline">{scheduleLabel}</span>
               </button>
               {showSchedule && (
@@ -846,7 +854,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
 
               {/* Nodes */}
               {nodes.map(node => {
-                const def = DEFS[node.type] ?? { label: node.type, icon: "⚙", category: "action", accent: "#555", ports: ["out"] as PortKey[], configFields: [] };
+                const def = DEFS[node.type] ?? { label: node.type, icon: <Settings2 className={ni} />, category: "action", accent: "#555", ports: ["out"] as PortKey[], configFields: [] };
                 const isSelected = selId === node.id;
                 const preview = nodePreview(node, def);
 
@@ -1080,7 +1088,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
             <div className="flex items-center justify-between px-4 py-2 border-b border-bg-border sticky top-0 bg-bg-panel z-10">
               <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">Run history</p>
               <div className="flex items-center gap-2">
-                <button onClick={fetchRuns} className="text-text-dim hover:text-text text-[10px]" title="Refresh">↻</button>
+                <button onClick={fetchRuns} className="text-text-dim hover:text-text" title="Refresh"><RefreshCw className="h-3 w-3" /></button>
                 <button onClick={() => setShowRuns(false)} className="text-text-dim hover:text-text">
                   <ChevronDown className="h-4 w-4" />
                 </button>

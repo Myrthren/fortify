@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { HookGenerator } from "@/components/hook-generator";
 import { TIERS } from "@/lib/tiers";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -141,13 +142,13 @@ function ToolLink({ href, name, desc }: { href: string; name: string; desc: stri
     <li>
       <Link
         href={href}
-        className="-mx-2 flex items-center justify-between rounded-md px-2 py-1.5 transition hover:bg-white/[0.04]"
+        className="group -mx-2 flex items-center justify-between rounded-md px-2 py-1.5 transition hover:bg-white/[0.04]"
       >
         <div>
           <p className="font-medium">{name}</p>
           <p className="text-xs text-text-muted">{desc}</p>
         </div>
-        <span className="text-text-muted">→</span>
+        <ArrowRight className="h-3.5 w-3.5 text-text-muted transition-transform duration-200 group-hover:translate-x-1 group-hover:text-text" />
       </Link>
     </li>
   );

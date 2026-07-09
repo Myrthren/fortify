@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { CompetitorWatchClient } from "@/components/competitor-watch-client";
 import { LockedPage } from "@/components/locked-page";
+import { Eye, RefreshCw, Bell, History } from "lucide-react";
 
 export default async function CompetitorTrackingPage() {
   const session = await auth();
@@ -21,11 +22,11 @@ export default async function CompetitorTrackingPage() {
         user={user} active="competitor-watch" requiredTier="ELITE"
         title="Competitor Watch"
         description="Monitor competitor pages for content changes. Get notified via Discord DM and dashboard when their pricing, offers, or messaging shifts."
-        icon="👁"
+        icon={<Eye />}
         features={[
-          { icon: "🔄", title: "Automatic Scanning", desc: "Daily automated scans detect page changes using MD5 hashing." },
-          { icon: "🔔", title: "Instant Alerts", desc: "Dashboard notifications + Discord DM the moment a change is detected." },
-          { icon: "📜", title: "Change History", desc: "Full scan history so you can see when and what changed over time." },
+          { icon: <RefreshCw />, title: "Automatic Scanning", desc: "Daily automated scans detect page changes using MD5 hashing." },
+          { icon: <Bell />, title: "Instant Alerts", desc: "Dashboard notifications + Discord DM the moment a change is detected." },
+          { icon: <History />, title: "Change History", desc: "Full scan history so you can see when and what changed over time." },
         ]}
       />
     );

@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { ReconClient } from "@/components/recon-client";
 import { LockedPage } from "@/components/locked-page";
+import { Search, MapPin, ClipboardList, Crosshair } from "lucide-react";
 
 export default async function ReconPage() {
   const session = await auth();
@@ -21,11 +22,11 @@ export default async function ReconPage() {
         user={user} active="recon" requiredTier="ELITE"
         title="Fortify Recon"
         description="Find local businesses in any area and category — name, address, phone, and website. Ready to prospect."
-        icon="🔍"
+        icon={<Search />}
         features={[
-          { icon: "📍", title: "Local Search", desc: "Search by location and business category anywhere in the world." },
-          { icon: "📋", title: "Rich Data", desc: "Get name, address, phone number, website, and Google rating." },
-          { icon: "🎯", title: "B2B Prospecting", desc: "Export leads and add them directly to your outreach pipeline." },
+          { icon: <MapPin />, title: "Local Search", desc: "Search by location and business category anywhere in the world." },
+          { icon: <ClipboardList />, title: "Rich Data", desc: "Get name, address, phone number, website, and Google rating." },
+          { icon: <Crosshair />, title: "B2B Prospecting", desc: "Export leads and add them directly to your outreach pipeline." },
         ]}
       />
     );

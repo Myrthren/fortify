@@ -14,11 +14,11 @@ export function Logo({
   return (
     <Link href="/" className={cn("inline-flex items-center gap-2", className)}>
       <Image
-        src="/fortify-icon.png"
+        src="/fortify-logo.png"
         alt="Fortify"
         width={size}
         height={size}
-        className="rounded-md"
+        className="rounded-md ring-1 ring-white/10"
         priority
       />
       {withWord && (

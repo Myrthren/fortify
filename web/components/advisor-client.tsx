@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Send, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, Send, ChevronDown, ChevronRight, Zap } from "lucide-react";
 
 type AdvisorSession = {
   id: string;
@@ -212,7 +212,9 @@ export function AdvisorClient({ pastSessions: initial }: Props) {
           </div>
         ) : (
           <div className="card p-10 flex flex-col items-center justify-center text-center min-h-[400px]">
-            <div className="text-4xl mb-4">⚡</div>
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-bg-border bg-bg-elevated shadow-[0_0_24px_-6px_var(--accent-glow)]">
+              <Zap className="h-6 w-6 text-[var(--accent)]" />
+            </div>
             <h3 className="text-base font-semibold mb-2">AI Advisor</h3>
             <p className="text-sm text-text-muted max-w-sm">
               Describe a challenge on the left and your Advisor will synthesise everything it knows about your business — competitors, trends, DNA, tool usage, platform data — into a strategic response.

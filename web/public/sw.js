@@ -7,13 +7,13 @@
  *  - API routes → network-only (never serve stale API data)
  */
 
-const CACHE = "fortify-v1";
+const CACHE = "fortify-v2";
 const OFFLINE_URL = "/offline";
 
 const PRECACHE = [
   "/",
   "/offline",
-  "/fortify-icon.png",
+  "/fortify-logo.png",
 ];
 
 // ── Install: precache app shell ─────────────────────────────────────────────

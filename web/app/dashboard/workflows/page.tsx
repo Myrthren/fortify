@@ -5,6 +5,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { WorkflowsClient } from "@/components/workflows-client";
 import { LockedPage } from "@/components/locked-page";
 import { getCapacityInfo, CAPACITY_PACKS } from "@/lib/workflow-capacity";
+import { Workflow, Crosshair, Bot, Send } from "lucide-react";
 
 export default async function WorkflowsPage() {
   const session = await auth();
@@ -21,11 +22,11 @@ export default async function WorkflowsPage() {
         user={user} active="workflows" requiredTier="ELITE"
         title="Workflows"
         description="Build multi-step automations with a visual drag-and-drop canvas. Connect triggers, AI nodes, and actions into powerful pipelines."
-        icon="⚡"
+        icon={<Workflow />}
         features={[
-          { icon: "🎯", title: "Smart Triggers", desc: "Schedule, webhooks, new members, competitor changes, and more." },
-          { icon: "🤖", title: "AI Steps", desc: "Chain AI generate, summarise, analyse, and classify into any workflow." },
-          { icon: "📤", title: "Actions", desc: "Post to Discord, email, Slack, Notion, Twitter, Shopify, or any webhook." },
+          { icon: <Crosshair />, title: "Smart Triggers", desc: "Schedule, webhooks, new members, competitor changes, and more." },
+          { icon: <Bot />, title: "AI Steps", desc: "Chain AI generate, summarise, analyse, and classify into any workflow." },
+          { icon: <Send />, title: "Actions", desc: "Post to Discord, email, Slack, Notion, Twitter, Shopify, or any webhook." },
         ]}
       />
     );

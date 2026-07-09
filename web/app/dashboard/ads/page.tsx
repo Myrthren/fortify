@@ -5,6 +5,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { AdsDashboard } from "@/components/ads-dashboard";
 import { LockedPage } from "@/components/locked-page";
 import { TIER_LIMITS } from "@/lib/tiers";
+import { BarChart3, TrendingUp, Bot, Wallet } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdsPage() {
@@ -24,13 +25,13 @@ export default async function AdsPage() {
         title="Meta Ads Dashboard"
         description="Connect your Meta ad account and get AI-powered analysis of your campaigns, spend, and performance."
         requiredTier="PRO"
-        icon="📊"
+        icon={<BarChart3 />}
         user={user}
         active="ads"
         features={[
-          { icon: "📈", title: "Campaign performance", desc: "Impressions, clicks, CTR, and ROAS across all campaigns." },
-          { icon: "🤖", title: "AI analysis", desc: "Weekly AI digest of what's working and what to cut." },
-          { icon: "💰", title: "Spend tracking", desc: "Budget vs spend vs return — at a glance." },
+          { icon: <TrendingUp />, title: "Campaign performance", desc: "Impressions, clicks, CTR, and ROAS across all campaigns." },
+          { icon: <Bot />, title: "AI analysis", desc: "Weekly AI digest of what's working and what to cut." },
+          { icon: <Wallet />, title: "Spend tracking", desc: "Budget vs spend vs return — at a glance." },
         ]}
       />
     );

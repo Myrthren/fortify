@@ -8,6 +8,7 @@ import { TierSwitcher } from "@/components/tier-switcher";
 import { AdminCreditAdjuster } from "@/components/admin-credit-adjuster";
 import { AdminAnnouncementManager } from "@/components/admin-announcement-manager";
 import { AdminResetLimits } from "@/components/admin-reset-limits";
+import { Gavel, Flag, Activity, UsersRound } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminPage() {
@@ -61,17 +62,17 @@ export default async function AdminPage() {
 
         {/* Quick links */}
         <div className="flex flex-wrap gap-3">
-          <Link href="/admin/bans" className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-300 hover:bg-red-500/20 transition">
-            🔨 Ban Manager
+          <Link href="/admin/bans" className="inline-flex items-center gap-1.5 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-300 hover:bg-red-500/20 transition">
+            <Gavel className="h-3.5 w-3.5" /> Ban Manager
           </Link>
-          <Link href="/admin/moderation" className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-300 hover:bg-amber-500/20 transition">
-            🚩 Forum Moderation
+          <Link href="/admin/moderation" className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-300 hover:bg-amber-500/20 transition">
+            <Flag className="h-3.5 w-3.5" /> Forum Moderation
           </Link>
-          <Link href="/admin/usage" className="rounded-md border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 hover:bg-purple-500/20 transition">
-            📊 Usage &amp; Abuse
+          <Link href="/admin/usage" className="inline-flex items-center gap-1.5 rounded-md border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 hover:bg-purple-500/20 transition">
+            <Activity className="h-3.5 w-3.5" /> Usage &amp; Abuse
           </Link>
-          <Link href="/admin/pods" className="rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition">
-            🫂 Mastermind Pods
+          <Link href="/admin/pods" className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition">
+            <UsersRound className="h-3.5 w-3.5" /> Mastermind Pods
           </Link>
         </div>
 

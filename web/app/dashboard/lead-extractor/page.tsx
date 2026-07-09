@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { LeadExtractorClient } from "@/components/lead-extractor-client";
 import { LockedPage } from "@/components/locked-page";
+import { Search, ClipboardList, Globe, Contact } from "lucide-react";
 
 const TIER_LIMITS: Record<string, { maxAccounts: number; braveSearch: boolean; deepScan: boolean; applyContext: boolean }> = {
   PRO:   { maxAccounts: 10, braveSearch: false, deepScan: false, applyContext: false },
@@ -25,11 +26,11 @@ export default async function LeadExtractorPage() {
         title="Lead Extractor"
         description="Paste TikTok and Instagram profile URLs — Fortify researches each business and surfaces their email and phone number."
         requiredTier="PRO"
-        icon="🔍"
+        icon={<Search />}
         features={[
-          { icon: "📋", title: "Bulk paste", desc: "Process up to 50 accounts in one batch" },
-          { icon: "🌐", title: "Deep research", desc: "Bio, website, contact pages and web search" },
-          { icon: "📇", title: "Contacts found", desc: "Emails and phone numbers, ready to export" },
+          { icon: <ClipboardList />, title: "Bulk paste", desc: "Process up to 50 accounts in one batch" },
+          { icon: <Globe />, title: "Deep research", desc: "Bio, website, contact pages and web search" },
+          { icon: <Contact />, title: "Contacts found", desc: "Emails and phone numbers, ready to export" },
         ]}
         user={user}
         active="lead-extractor"

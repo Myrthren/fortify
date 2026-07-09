@@ -41,8 +41,8 @@ export default async function LogoPage() {
           {/* Feature preview */}
           <div className="mb-10 grid gap-3 sm:grid-cols-2 text-left max-w-lg mx-auto">
             {[
-              { icon: "✦", title: "Logo Generator", desc: "Text prompt + reference images → AI generates criteria → gpt-image-1 produces your logo. 150 credits." },
-              { icon: "✦", title: "Logo Enhancer", desc: "Upload your logo → AI analyses strengths & weaknesses → enhanced output with your instructions. 100 credits." },
+              { icon: <Sparkles className="h-3.5 w-3.5" />, title: "Logo Generator", desc: "Text prompt + reference images → AI generates criteria → gpt-image-1 produces your logo. 150 credits." },
+              { icon: <Wand2 className="h-3.5 w-3.5" />, title: "Logo Enhancer", desc: "Upload your logo → AI analyses strengths & weaknesses → enhanced output with your instructions. 100 credits." },
             ].map((f) => (
               <div key={f.title} className="card p-4 space-y-1.5">
                 <div className="flex items-center gap-2">

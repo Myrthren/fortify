@@ -15,8 +15,8 @@ type LockedPageProps = {
   title: string;
   description: string;
   requiredTier: "PRO" | "ELITE" | "APEX";
-  icon?: string;              // emoji icon, default 🔒
-  features?: { icon: string; title: string; desc: string }[];
+  icon?: React.ReactNode;     // lucide icon (or string), default Lock
+  features?: { icon: React.ReactNode; title: string; desc: string }[];
 
   // Nav props
   user: {
@@ -87,7 +87,12 @@ export function LockedPage({
             }}
           >
             {icon ? (
-              <span className="text-4xl">{icon}</span>
+              <span
+                className="text-4xl [&>svg]:h-10 [&>svg]:w-10"
+                style={{ color: `${meta.color}bb` }}
+              >
+                {icon}
+              </span>
             ) : (
               <Lock className="h-10 w-10" style={{ color: `${meta.color}bb` }} />
             )}
@@ -118,7 +123,12 @@ export function LockedPage({
                 style={{ borderColor: `${meta.color}15` }}
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm">{f.icon}</span>
+                  <span
+                    className="text-sm [&>svg]:h-4 [&>svg]:w-4"
+                    style={{ color: `${meta.color}cc` }}
+                  >
+                    {f.icon}
+                  </span>
                   <p className="text-sm font-semibold">{f.title}</p>
                 </div>
                 <p className="text-xs text-text-muted leading-relaxed">{f.desc}</p>

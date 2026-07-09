@@ -5,7 +5,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { DealForm } from "@/components/deal-form";
 import { DealDelete } from "@/components/deal-delete";
 import Link from "next/link";
-import { Briefcase, Users, TrendingUp, ExternalLink } from "lucide-react";
+import { Briefcase, Users, TrendingUp, ExternalLink, Wallet } from "lucide-react";
 
 export default async function DealsPage() {
   const session = await auth();
@@ -158,8 +158,8 @@ export default async function DealsPage() {
                       </p>
                       <div className="mt-3 flex flex-wrap gap-4 text-xs">
                         {post.budget && (
-                          <span className="text-text-muted">
-                            💰 {post.budget}
+                          <span className="flex items-center gap-1 text-text-muted">
+                            <Wallet className="h-3 w-3" /> {post.budget}
                           </span>
                         )}
                         {post.link && (

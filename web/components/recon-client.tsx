@@ -16,6 +16,7 @@ import {
   Send,
   Download,
   Filter,
+  Star,
 } from "lucide-react";
 import { TierBadge } from "@/components/tier-badge";
 
@@ -504,8 +505,8 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
                         {lead.url ? domainFromUrl(lead.url) : lead.category ?? ""}
                       </p>
                       {lead.rating != null && (
-                        <span className="shrink-0 text-[11px] text-amber-400 font-medium">
-                          ★ {lead.rating.toFixed(1)}
+                        <span className="shrink-0 inline-flex items-center gap-0.5 text-[11px] text-amber-400 font-medium">
+                          <Star className="h-3 w-3 fill-amber-400" /> {lead.rating.toFixed(1)}
                           {lead.reviewsCount != null && (
                             <span className="text-text-dim font-normal"> ({lead.reviewsCount})</span>
                           )}

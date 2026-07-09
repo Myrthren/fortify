@@ -221,7 +221,7 @@ export function DashboardNav({
                 AI Tools
                 <ChevronDown />
               </button>
-              <div className="pointer-events-none absolute left-0 top-full w-52 pt-1 opacity-0 transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100">
+              <div className="pointer-events-none absolute left-0 top-full w-52 translate-y-1 pt-1 opacity-0 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
                 <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl w-52">
                   {TOOL_GROUPS.map((group, gi) => (
                     <div key={group.heading}>
@@ -269,7 +269,7 @@ export function DashboardNav({
                 Community
                 <ChevronDown />
               </button>
-              <div className="pointer-events-none absolute left-0 top-full w-48 pt-1 opacity-0 transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100">
+              <div className="pointer-events-none absolute left-0 top-full w-48 translate-y-1 pt-1 opacity-0 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
                 <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl">
                   {COMMUNITY.map((item) => (
                     <DropdownLink key={item.key} href={item.href} active={active === item.key}>
@@ -344,7 +344,7 @@ export function DashboardNav({
               Account
               <ChevronDown />
             </button>
-            <div className="pointer-events-none absolute right-0 top-full w-44 pt-1 opacity-0 transition-opacity duration-100 group-hover:pointer-events-auto group-hover:opacity-100">
+            <div className="pointer-events-none absolute right-0 top-full w-44 translate-y-1 pt-1 opacity-0 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
               <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl">
                 {ACCOUNT.map((item) => (
                   <DropdownLink key={item.key} href={item.href} active={active === item.key}>

@@ -27,9 +27,12 @@ export const metadata: Metadata = {
     title: "Fortify",
   },
   icons: {
-    icon: "/fortify-icon.png",
-    apple: "/fortify-icon.png",
-    shortcut: "/fortify-icon.png",
+    icon: [
+      { url: "/favicon.png", sizes: "64x64", type: "image/png" },
+      { url: "/fortify-mark.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/fortify-logo.png",
+    shortcut: "/favicon.png",
   },
   openGraph: {
     type: "website",

@@ -461,7 +461,7 @@ export function FortifyAI() {
                       />
                     )}
                     {m.hasFile && !m.imagePreview && (
-                      <p className="text-[10px] text-text-muted mb-1">📎 File attached</p>
+                      <p className="text-[10px] text-text-muted mb-1 flex items-center gap-1"><Paperclip className="h-2.5 w-2.5" /> File attached</p>
                     )}
                     <div className="whitespace-pre-wrap">{renderContent(m.content)}</div>
 

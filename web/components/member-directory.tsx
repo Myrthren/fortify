@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Search, ExternalLink } from "lucide-react";
+import { Search, ExternalLink, X } from "lucide-react";
 
 type Member = {
   id: string;
@@ -144,7 +144,7 @@ function MemberModal({
           className="absolute right-4 top-4 text-text-muted hover:text-text"
           aria-label="Close"
         >
-          ✕
+          <X className="h-4 w-4" />
         </button>
 
         <div className="flex items-start gap-4">
