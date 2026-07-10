@@ -15,12 +15,13 @@ export default async function ProfilePage() {
   if (!user) redirect("/login");
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="profile" />
 
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Your profile</h1>
+        <div className="mb-8 anim-fade-up">
+          <span className="eyebrow">Account</span>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Your profile</h1>
           <p className="mt-3 text-text-muted">
             Visible in the member directory. Better profiles = better matches.
           </p>

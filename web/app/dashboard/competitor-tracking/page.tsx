@@ -67,7 +67,7 @@ export default async function CompetitorTrackingPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="competitor-watch" />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
         <CompetitorWatchClient

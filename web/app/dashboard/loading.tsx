@@ -5,7 +5,7 @@ import { Logo } from "@/components/logo";
 // real page is still streaming. Keeps the user out of "is it broken?" land.
 export default function DashboardLoading() {
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       {/* Nav skeleton — matches DashboardNav height to prevent layout shift */}
       <header className="border-b border-bg-border">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">

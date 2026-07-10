@@ -39,7 +39,7 @@ export default async function NotificationsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="notifications" />
       <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
         <h1 className="mb-6 text-2xl font-bold tracking-tight">Notifications</h1>

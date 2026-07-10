@@ -41,7 +41,7 @@ export default async function MembersPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={me} active="members" />
 
       {/* Hero */}

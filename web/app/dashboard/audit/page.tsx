@@ -20,13 +20,14 @@ export default async function AuditPage() {
   const limitDisplay = limit === Infinity ? "unlimited" : String(limit);
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="audit" />
 
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Funnel Auditor</h1>
+          <div className="anim-fade-up">
+            <span className="eyebrow">Research</span>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Funnel Auditor</h1>
             <p className="mt-3 text-text-muted">
               Paste a URL. Get scored + actionable fixes for clarity, hook, value prop, CTA, and friction.
             </p>

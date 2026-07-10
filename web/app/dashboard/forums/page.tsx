@@ -24,7 +24,7 @@ export default async function ForumsPage() {
   const totalPosts = forums.reduce((sum, f) => sum + f._count.posts, 0);
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="forums" />
 
       {/* Hero */}

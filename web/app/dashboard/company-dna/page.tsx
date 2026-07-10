@@ -13,7 +13,7 @@ export default async function CompanyDnaPage() {
   if (!user) redirect("/login");
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="dna" />
       <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-8">

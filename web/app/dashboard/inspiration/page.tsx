@@ -21,12 +21,13 @@ export default async function InspirationPage() {
   const defaultNiche = profile?.niche ?? "";
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="inspiration" />
 
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Content Inspiration</h1>
+        <div className="mb-8 anim-fade-up">
+          <span className="eyebrow">Content</span>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Content Inspiration</h1>
           <p className="mt-3 text-text-muted">
             Mine Reddit and YouTube to find what content is actually resonating in your niche.
           </p>

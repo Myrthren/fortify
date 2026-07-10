@@ -54,7 +54,7 @@ export default async function ReconPage() {
   }));
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="recon" />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
         <ReconClient

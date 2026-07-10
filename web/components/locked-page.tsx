@@ -41,7 +41,7 @@ export function LockedPage({
   const meta = TIER_META[requiredTier];
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <style>{`
         @keyframes tierGlow {
           0%,100% { opacity: 0.7; box-shadow: 0 0 20px ${meta.color}22; }

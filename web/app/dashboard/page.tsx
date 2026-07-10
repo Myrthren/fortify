@@ -55,14 +55,8 @@ export default async function DashboardPage() {
   const firstName = user.name?.split(" ")[0] ?? "operator";
 
   return (
-    <div className="relative min-h-screen bg-bg">
+    <div className="relative min-h-screen">
       <DashboardNav user={user} active="dashboard" />
-
-      {/* Ambient header glow */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] overflow-hidden">
-        <div className="aurora aurora-violet left-1/2 top-[-160px] h-[420px] w-[720px] -translate-x-1/2 opacity-70" />
-        <div className="bg-grid-fade absolute inset-0" />
-      </div>
 
       <main className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
         {profileIncomplete && (

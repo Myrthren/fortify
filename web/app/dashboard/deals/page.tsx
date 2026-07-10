@@ -46,7 +46,7 @@ export default async function DealsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="deals" />
 
       {/* ── Hero header ── */}

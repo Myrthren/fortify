@@ -18,6 +18,7 @@ export default async function DashboardLayout({
 
   return (
     <>
+      <div className="dash-ambient" aria-hidden />
       <AnnouncementBar announcements={announcements} />
       {children}
       <FortifyAI />

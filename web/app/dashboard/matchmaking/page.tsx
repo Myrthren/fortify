@@ -20,7 +20,7 @@ export default async function MatchmakingPage() {
   const hasProfile = !!(me.profile && (me.profile.niche || me.profile.skills.length > 0));
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={me} active="matchmaking" />
 
       {/* Hero */}

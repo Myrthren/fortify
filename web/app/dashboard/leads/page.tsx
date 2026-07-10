@@ -17,12 +17,13 @@ export default async function LeadsPage() {
   const canAccess = TIER_LIMITS[user.tier].leadSourcing;
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="leads" />
 
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Lead Sourcing</h1>
+        <div className="mb-8 anim-fade-up">
+          <span className="eyebrow">Growth</span>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Lead Sourcing</h1>
           <p className="mt-3 text-text-muted">
             Describe your ideal customer. Fortify searches the web and scores each match against your ICP — with a personalized outreach hook for every lead.
           </p>

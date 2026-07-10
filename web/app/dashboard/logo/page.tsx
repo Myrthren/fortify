@@ -16,7 +16,7 @@ export default async function LogoPage() {
 
   if (user.tier === "FREE") {
     return (
-      <div className="min-h-screen bg-bg">
+      <div className="min-h-screen">
         <DashboardNav user={user} active="logo" />
         <main className="mx-auto max-w-3xl px-4 py-20 sm:px-6 text-center">
           {/* Glow orb */}
@@ -67,7 +67,7 @@ export default async function LogoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen">
       <DashboardNav user={user} active="logo" />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-8">
