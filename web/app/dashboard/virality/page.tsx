@@ -52,8 +52,9 @@ export default async function ViralityPage() {
       <DashboardNav user={user} active="virality" />
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-2">
+        <div className="anim-fade-up mb-8">
+          <span className="eyebrow">Content</span>
+          <div className="mt-2 flex items-center gap-3 mb-2">
             <h1 className="text-2xl font-bold tracking-tight">Virality Engine</h1>
             <TierBadge tier={canAutoPublish ? "APEX" : "ELITE"} />
           </div>

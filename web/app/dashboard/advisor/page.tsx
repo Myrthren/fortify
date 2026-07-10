@@ -58,8 +58,9 @@ export default async function AdvisorPage() {
       <DashboardNav user={user} active="advisor" />
 
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-1">
+        <div className="anim-fade-up mb-8">
+          <span className="eyebrow">Strategy</span>
+          <div className="mt-2 flex items-center gap-2 mb-1">
             <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">AI Advisor</h1>
             <span className="rounded-md border border-bg-border bg-bg-panel px-2 py-0.5 text-xs font-medium text-text-muted">
               Apex

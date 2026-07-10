@@ -22,9 +22,10 @@ export default async function RevenuePage() {
       <DashboardNav user={user} active="revenue" />
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
-        <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div className="anim-fade-up mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Revenue</h1>
+            <span className="eyebrow">Business</span>
+            <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Revenue</h1>
             <p className="mt-3 text-text-muted">MRR, active subscriptions, and recent charges from Stripe.</p>
           </div>
           {stripeConn && (
