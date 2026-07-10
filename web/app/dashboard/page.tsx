@@ -4,8 +4,41 @@ import { db } from "@/lib/db";
 import { HookGenerator } from "@/components/hook-generator";
 import { TIERS } from "@/lib/tiers";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight, Sparkles, Send, ClipboardCheck, Radar, TrendingUp, Search,
+  Lightbulb, BarChart3, ShoppingBag, LineChart, Clapperboard, Dna, MapPin,
+  Eye, Workflow, Zap, Activity, MessagesSquare, Users, Handshake, UserCircle,
+  Briefcase, UsersRound, MessageSquare, Network, Gem, Flame, Trophy, CreditCard,
+} from "lucide-react";
 import Link from "next/link";
+
+const TOOLS = [
+  { href: "/dashboard/voice", name: "Brand Voice Studio", desc: "Train Claude on your tone", icon: Sparkles },
+  { href: "/dashboard/outreach", name: "Cold Outreach", desc: "Messages that get replies", icon: Send },
+  { href: "/dashboard/audit", name: "Funnel Auditor", desc: "Score + fix any landing page", icon: ClipboardCheck },
+  { href: "/dashboard/competitors", name: "Competitor Scanner", desc: "Intel reports on rivals", icon: Radar },
+  { href: "/dashboard/trends", name: "Trend Radar", desc: "Track topics across the web", icon: TrendingUp },
+  { href: "/dashboard/leads", name: "Lead Sourcing", desc: "Score prospects against your ICP", icon: Search },
+  { href: "/dashboard/inspiration", name: "Content Inspiration", desc: "Mine Reddit + YouTube angles", icon: Lightbulb },
+  { href: "/dashboard/ads", name: "Meta Ads", desc: "Campaign performance + ad intel", icon: BarChart3 },
+  { href: "/dashboard/shopify", name: "Shopify", desc: "Revenue, orders, products", icon: ShoppingBag },
+  { href: "/dashboard/revenue", name: "Revenue", desc: "MRR, subs, and charges", icon: LineChart },
+  { href: "/dashboard/virality", name: "Virality Engine", desc: "AI video scoring + publishing", icon: Clapperboard },
+  { href: "/dashboard/company-dna", name: "Company DNA", desc: "Give AI context about you", icon: Dna },
+  { href: "/dashboard/recon", name: "Fortify Recon", desc: "Find local businesses", icon: MapPin },
+  { href: "/dashboard/competitor-tracking", name: "Competitor Watch", desc: "Monitor pages for changes", icon: Eye },
+  { href: "/dashboard/workflows", name: "Workflows", desc: "Multi-step AI automations", icon: Workflow },
+  { href: "/dashboard/advisor", name: "AI Advisor", desc: "Claude Opus strategy briefings", icon: Zap },
+  { href: "/dashboard/analytics", name: "Analytics", desc: "GA4 + Search Console", icon: Activity },
+  { href: "/dashboard/forums", name: "Forums", desc: "Community discussion boards", icon: MessagesSquare },
+  { href: "/dashboard/members", name: "Member Directory", desc: "Founders, operators, creators", icon: Users },
+  { href: "/dashboard/matchmaking", name: "AI Matchmaking", desc: "Members worth talking to", icon: Handshake },
+  { href: "/dashboard/profile", name: "Your Profile", desc: "Niche, skills, what you offer", icon: UserCircle },
+  { href: "/dashboard/deals", name: "Deal Board", desc: "Post and browse deals", icon: Briefcase },
+  { href: "/dashboard/pods", name: "Mastermind Pods", desc: "Apex accountability circles", icon: UsersRound },
+  { href: "/dashboard/messages", name: "Messages", desc: "Chat with members", icon: MessageSquare },
+  { href: "/dashboard/connections", name: "Connections", desc: "Your Fortify network", icon: Network },
+];
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -19,137 +52,113 @@ export default async function DashboardPage() {
 
   const tierMeta = TIERS[user.tier];
   const profileIncomplete = !user.profile || (!user.profile.niche && user.profile.skills.length === 0 && user.profile.canOffer.length === 0);
+  const firstName = user.name?.split(" ")[0] ?? "operator";
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="relative min-h-screen bg-bg">
       <DashboardNav user={user} active="dashboard" />
 
-      <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
+      {/* Ambient header glow */}
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-[420px] overflow-hidden">
+        <div className="aurora aurora-violet left-1/2 top-[-160px] h-[420px] w-[720px] -translate-x-1/2 opacity-70" />
+        <div className="bg-grid-fade absolute inset-0" />
+      </div>
+
+      <main className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
         {profileIncomplete && (
-          <div className="mb-6 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+          <div className="anim-fade-up mb-6 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
             Your profile is incomplete —{" "}
-            <Link href="/dashboard/profile" className="underline underline-offset-2">
-              fill it in
-            </Link>{" "}
+            <Link href="/dashboard/profile" className="underline underline-offset-2">fill it in</Link>{" "}
             to get the most out of AI Matchmaking and Member Directory.
           </div>
         )}
-        <div className="mb-10">
-          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Welcome, {user.name?.split(" ")[0] ?? "operator"}.
+
+        {/* Header */}
+        <div className="anim-fade-up mb-8">
+          <span className="eyebrow"><Sparkles className="h-3.5 w-3.5" /> Dashboard</span>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
+            Welcome back, {firstName}.
           </h1>
-          <p className="mt-3 text-text-muted">
-            You're on <span className="text-text">{tierMeta.name}</span>.{" "}
+          <p className="mt-2 text-text-muted">
+            You're on <span className="font-medium text-text">{tierMeta.name}</span>.{" "}
             {user.tier === "FREE" && (
-              <Link href="/pricing" className="text-text underline-offset-4 hover:underline">
+              <Link href="/pricing" className="text-[var(--accent)] underline-offset-4 hover:underline">
                 Upgrade for unlimited →
               </Link>
             )}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <Card title="Hook Generator" subtitle="Type a topic. Get 5 viral hooks.">
-              <HookGenerator />
-            </Card>
+        {/* Stat tiles */}
+        <div className="anim-fade-up anim-d1 mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <StatTile icon={<Gem className="h-4 w-4" />} label="Tier" value={tierMeta.name} accent="#ffffff" />
+          <StatTile icon={<Trophy className="h-4 w-4" />} label="XP" value={user.xp.toLocaleString()} accent="#ffffff" />
+          <StatTile icon={<Flame className="h-4 w-4" />} label="Streak" value={`${user.streak} days`} accent="#ffffff" />
+          <StatTile icon={<CreditCard className="h-4 w-4" />} label="Subscription" value={user.subscription?.status ?? "Free"} accent="#ffffff" />
+        </div>
+
+        {/* Hook generator — featured */}
+        <div className="anim-fade-up anim-d2 mb-10">
+          <div className="bento p-5 sm:p-6">
+            <div className="mb-5 flex items-center gap-3">
+              <span className="icon-tile h-10 w-10 text-[var(--accent)]"><Sparkles className="h-5 w-5" /></span>
+              <div>
+                <h2 className="text-base font-semibold tracking-tight">Hook Generator</h2>
+                <p className="text-sm text-text-muted">Type a topic. Get 5 viral hooks.</p>
+              </div>
+            </div>
+            <HookGenerator />
           </div>
+        </div>
 
-          <div className="space-y-5">
-            <Card title="Your stats">
-              <dl className="space-y-3 text-sm">
-                <Stat label="Tier" value={tierMeta.name} />
-                <Stat label="XP" value={user.xp.toString()} />
-                <Stat label="Streak" value={`${user.streak} days`} />
-                <Stat label="Subscription" value={user.subscription?.status ?? "—"} />
-              </dl>
-            </Card>
-
-            <Card title="Your tools">
-              <ul className="space-y-2 text-sm">
-                <ToolLink href="/dashboard/voice" name="Brand Voice Studio" desc="Train Claude on your tone" />
-                <ToolLink href="/dashboard/outreach" name="Cold Outreach" desc="Personalised messages that get replies" />
-                <ToolLink href="/dashboard/audit" name="Funnel Auditor" desc="Score + fix any landing page" />
-                <ToolLink href="/dashboard/competitors" name="Competitor Scanner" desc="Intel reports on rivals" />
-                <ToolLink href="/dashboard/trends" name="Trend Radar" desc="Track topics across the web" />
-                <ToolLink href="/dashboard/leads" name="Lead Sourcing" desc="Find + score prospects against your ICP" />
-                <ToolLink href="/dashboard/inspiration" name="Content Inspiration" desc="Mine Reddit + YouTube for content angles" />
-                <ToolLink href="/dashboard/ads" name="Meta Ads" desc="Real campaign performance + competitor ad intel" />
-                <ToolLink href="/dashboard/shopify" name="Shopify" desc="Revenue, orders, and product performance" />
-                <ToolLink href="/dashboard/revenue" name="Revenue" desc="MRR, subscriptions, and charges from Stripe" />
-                <ToolLink href="/dashboard/virality" name="Virality Engine" desc="AI video scoring, trend analysis, and social publishing" />
-                <ToolLink href="/dashboard/company-dna" name="Company DNA" desc="Business memory — give AI context about your company" />
-                <ToolLink href="/dashboard/recon" name="Fortify Recon" desc="Find local businesses by location and category" />
-                <ToolLink href="/dashboard/competitor-tracking" name="Competitor Watch" desc="Monitor competitor pages for content changes" />
-                <ToolLink href="/dashboard/workflows" name="Workflows" desc="Automate tasks with multi-step AI workflows" />
-                <ToolLink href="/dashboard/advisor" name="AI Advisor" desc="Claude Opus strategic briefings using all your Fortify data (Apex)" />
-                <ToolLink href="/dashboard/analytics" name="Analytics" desc="GA4, Search Console, and YouTube in one place" />
-                <ToolLink href="/dashboard/forums" name="Forums" desc="Community discussion boards" />
-                <ToolLink href="/dashboard/members" name="Member Directory" desc="Find founders, operators, creators" />
-                <ToolLink href="/dashboard/matchmaking" name="AI Matchmaking" desc="Top members worth talking to" />
-                <ToolLink href="/dashboard/profile" name="Your profile" desc="Set niche, skills, what you offer" />
-                <ToolLink href="/dashboard/deals" name="Deal Board" desc="Post and browse community deals" />
-                <ToolLink href="/dashboard/pods" name="Mastermind Pods" desc="Apex accountability circles" />
-                <ToolLink href="/dashboard/messages" name="Messages" desc="Chat with other Fortify members" />
-                <ToolLink href="/dashboard/connections" name="Connections" desc="Your network of Fortify members" />
-              </ul>
-            </Card>
-
-            <Card title="Coming soon">
-              <ul className="space-y-1.5 text-sm text-text-muted">
-                <li>· Weekly digest emails</li>
-                <li>· Milestone badges</li>
-              </ul>
-            </Card>
+        {/* Tools grid */}
+        <div className="anim-fade-up anim-d3 mb-4 flex items-end justify-between">
+          <div>
+            <span className="eyebrow"><Workflow className="h-3.5 w-3.5" /> Your arsenal</span>
+            <h2 className="mt-1 text-xl font-bold tracking-tight">Every tool, one click away</h2>
           </div>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {TOOLS.map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className="bento group flex items-start gap-3 p-4"
+            >
+              <span className="icon-tile h-10 w-10 shrink-0 text-text-muted">
+                <t.icon className="h-[18px] w-[18px]" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-medium leading-tight">{t.name}</p>
+                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-text-dim transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--accent)]" />
+                </div>
+                <p className="mt-0.5 text-xs leading-snug text-text-muted">{t.desc}</p>
+              </div>
+            </Link>
+          ))}
         </div>
       </main>
     </div>
   );
 }
 
-function Card({
-  title,
-  subtitle,
-  children,
+function StatTile({
+  icon, label, value, accent,
 }: {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
+  icon: React.ReactNode; label: string; value: string; accent: string;
 }) {
   return (
-    <div className="card p-5 sm:p-6">
-      <div className="mb-5">
-        <h2 className="text-base font-semibold tracking-tight">{title}</h2>
-        {subtitle && <p className="mt-1 text-sm text-text-muted">{subtitle}</p>}
+    <div className="card-elevated relative overflow-hidden p-4">
+      <div
+        className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full opacity-40 blur-2xl"
+        style={{ background: accent }}
+      />
+      <div className="relative flex items-center gap-2 text-text-muted">
+        <span style={{ color: accent }}>{icon}</span>
+        <span className="text-xs uppercase tracking-wide">{label}</span>
       </div>
-      {children}
+      <p className="relative mt-2 text-xl font-bold tracking-tight tabular-nums">{value}</p>
     </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <dt className="text-text-muted">{label}</dt>
-      <dd className="font-medium">{value}</dd>
-    </div>
-  );
-}
-
-function ToolLink({ href, name, desc }: { href: string; name: string; desc: string }) {
-  return (
-    <li>
-      <Link
-        href={href}
-        className="group -mx-2 flex items-center justify-between rounded-md px-2 py-1.5 transition hover:bg-white/[0.04]"
-      >
-        <div>
-          <p className="font-medium">{name}</p>
-          <p className="text-xs text-text-muted">{desc}</p>
-        </div>
-        <ArrowRight className="h-3.5 w-3.5 text-text-muted transition-transform duration-200 group-hover:translate-x-1 group-hover:text-text" />
-      </Link>
-    </li>
   );
 }
