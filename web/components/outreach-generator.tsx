@@ -81,11 +81,7 @@ export function OutreachGenerator({
               key={c.value}
               onClick={() => setChannel(c.value)}
               disabled={loading}
-              className={`rounded-md border px-3 py-1.5 text-sm transition ${
-                channel === c.value
-                  ? "border-white/40 bg-white/10 text-white"
-                  : "border-bg-border bg-bg-elevated text-text-muted hover:text-text"
-              }`}
+              className={`seg ${channel === c.value ? "seg-active" : ""}`}
             >
               {c.label}
             </button>
@@ -130,11 +126,7 @@ export function OutreachGenerator({
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               onClick={() => setSelectedVoiceId("")}
-              className={`rounded-md border px-3 py-1.5 text-sm transition ${
-                selectedVoiceId === ""
-                  ? "border-white/40 bg-white/10 text-white"
-                  : "border-bg-border bg-bg-elevated text-text-muted hover:text-text"
-              }`}
+              className={`seg ${selectedVoiceId === "" ? "seg-active" : ""}`}
             >
               No voice
             </button>
@@ -142,11 +134,7 @@ export function OutreachGenerator({
               <button
                 key={v.id}
                 onClick={() => setSelectedVoiceId(v.id)}
-                className={`rounded-md border px-3 py-1.5 text-sm transition ${
-                  selectedVoiceId === v.id
-                    ? "border-white/40 bg-white/10 text-white"
-                    : "border-bg-border bg-bg-elevated text-text-muted hover:text-text"
-                }`}
+                className={`seg ${selectedVoiceId === v.id ? "seg-active" : ""}`}
               >
                 {v.name}
                 {v.isActive && <span className="ml-1 text-[10px] opacity-60">(active)</span>}
