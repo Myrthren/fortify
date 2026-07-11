@@ -10,6 +10,7 @@ import { AdminAnnouncementManager } from "@/components/admin-announcement-manage
 import { AdminResetLimits } from "@/components/admin-reset-limits";
 import { Gavel, Flag, Activity, UsersRound } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default async function AdminPage() {
   const session = await auth();
@@ -48,8 +49,8 @@ export default async function AdminPage() {
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
           <div className="flex items-center gap-4">
             <Logo withWord />
-            <span className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2 py-0.5 text-xs font-medium text-yellow-200">
-              Admin
+            <span className="admin-emblem flex items-center rounded-md p-1" title="Admin" aria-label="Admin">
+              <Image src="/fortify-admin.png" alt="Admin" width={22} height={22} className="admin-emblem-icon" />
             </span>
           </div>
           <Link href="/dashboard" className="text-sm text-text-muted hover:text-text">
@@ -62,17 +63,33 @@ export default async function AdminPage() {
 
         {/* Quick links */}
         <div className="flex flex-wrap gap-3">
-          <Link href="/admin/bans" className="inline-flex items-center gap-1.5 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-300 hover:bg-red-500/20 transition">
-            <Gavel className="h-3.5 w-3.5" /> Ban Manager
+          <Link
+            href="/admin/bans"
+            className="inline-flex items-center gap-1.5 rounded-md border border-red-500/30 bg-red-500/10 px-3 py-1.5 text-sm font-medium text-red-300 transition hover:bg-red-500/20"
+            style={{ ["--tier-a" as string]: "#f87171", ["--tier-b" as string]: "#fecaca", ["--tier-glow" as string]: "rgba(239,68,68,0.55)" } as React.CSSProperties}
+          >
+            <Gavel className="h-3.5 w-3.5" /> <span className="tier-text">Ban Manager</span>
           </Link>
-          <Link href="/admin/moderation" className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-300 hover:bg-amber-500/20 transition">
-            <Flag className="h-3.5 w-3.5" /> Forum Moderation
+          <Link
+            href="/admin/moderation"
+            className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-sm font-medium text-amber-300 transition hover:bg-amber-500/20"
+            style={{ ["--tier-a" as string]: "#fbbf24", ["--tier-b" as string]: "#fde68a", ["--tier-glow" as string]: "rgba(245,158,11,0.55)" } as React.CSSProperties}
+          >
+            <Flag className="h-3.5 w-3.5" /> <span className="tier-text">Forum Moderation</span>
           </Link>
-          <Link href="/admin/usage" className="inline-flex items-center gap-1.5 rounded-md border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 hover:bg-purple-500/20 transition">
-            <Activity className="h-3.5 w-3.5" /> Usage &amp; Abuse
+          <Link
+            href="/admin/usage"
+            className="inline-flex items-center gap-1.5 rounded-md border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-sm font-medium text-purple-300 transition hover:bg-purple-500/20"
+            style={{ ["--tier-a" as string]: "#c084fc", ["--tier-b" as string]: "#e9d5ff", ["--tier-glow" as string]: "rgba(168,85,247,0.55)" } as React.CSSProperties}
+          >
+            <Activity className="h-3.5 w-3.5" /> <span className="tier-text">Usage &amp; Abuse</span>
           </Link>
-          <Link href="/admin/pods" className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-sm font-medium text-cyan-300 hover:bg-cyan-500/20 transition">
-            <UsersRound className="h-3.5 w-3.5" /> Mastermind Pods
+          <Link
+            href="/admin/pods"
+            className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-sm font-medium text-cyan-300 transition hover:bg-cyan-500/20"
+            style={{ ["--tier-a" as string]: "#22d3ee", ["--tier-b" as string]: "#a5f3fc", ["--tier-glow" as string]: "rgba(34,211,238,0.55)" } as React.CSSProperties}
+          >
+            <UsersRound className="h-3.5 w-3.5" /> <span className="tier-text">Mastermind Pods</span>
           </Link>
         </div>
 
