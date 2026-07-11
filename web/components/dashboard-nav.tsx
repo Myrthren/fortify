@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Lock, MessageSquare, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { TIERS } from "@/lib/tiers";
@@ -6,6 +7,14 @@ import { isOwner } from "@/lib/owner";
 import { handleSignOut } from "@/app/actions/auth";
 import { NotificationBell } from "@/components/notification-bell";
 import type { Tier } from "@prisma/client";
+
+// Per-tier gradient + glow palette for the subscription badge
+const TIER_STYLE: Record<Tier, { a: string; b: string; glow: string; border: string; bg: string }> = {
+  FREE:  { a: "#9ca3af", b: "#e5e7eb", glow: "rgba(156,163,175,0.5)",  border: "rgba(156,163,175,0.35)", bg: "rgba(156,163,175,0.08)" },
+  PRO:   { a: "#d69130", b: "#f7d477", glow: "rgba(214,145,48,0.6)",   border: "rgba(214,145,48,0.45)",  bg: "rgba(214,145,48,0.10)" },
+  ELITE: { a: "#35d9e2", b: "#8ee7ff", glow: "rgba(53,217,226,0.6)",   border: "rgba(53,217,226,0.45)",  bg: "rgba(53,217,226,0.10)" },
+  APEX:  { a: "#e74c3c", b: "#ff9a6b", glow: "rgba(231,76,60,0.65)",   border: "rgba(231,76,60,0.5)",    bg: "rgba(231,76,60,0.12)" },
+};
 
 
 type ActiveKey =
@@ -181,6 +190,7 @@ export function DashboardNav({
   active: ActiveKey;
 }) {
   const tierMeta        = TIERS[user.tier];
+  const tierStyle       = TIER_STYLE[user.tier];
   const userIsOwner     = isOwner(user.discordId);
   const toolsActive     = TOOLS_KEYS.includes(active as string);
   const communityActive = COMMUNITY_KEYS.includes(active as string);
@@ -319,16 +329,33 @@ export function DashboardNav({
             {displayName}
           </span>
 
-          <span className="rounded-md border border-bg-border bg-bg-panel px-2 py-1 text-xs font-medium">
-            {tierMeta.name}
+          <span
+            className="tier-badge"
+            style={{
+              ["--tier-a" as string]: tierStyle.a,
+              ["--tier-b" as string]: tierStyle.b,
+              ["--tier-glow" as string]: tierStyle.glow,
+              borderColor: tierStyle.border,
+              background: tierStyle.bg,
+            } as React.CSSProperties}
+          >
+            <span className="tier-text">{tierMeta.name}</span>
           </span>
 
           {userIsOwner && (
             <Link
               href="/admin"
-              className="rounded-md border border-yellow-500/30 bg-yellow-500/10 px-2 py-1 text-xs font-medium text-yellow-200 transition hover:bg-yellow-500/20"
+              title="Admin"
+              aria-label="Admin"
+              className="admin-emblem flex items-center rounded-md p-1 transition hover:bg-white/[0.04]"
             >
-              Admin
+              <Image
+                src="/fortify-admin.png"
+                alt="Admin"
+                width={22}
+                height={22}
+                className="admin-emblem-icon"
+              />
             </Link>
           )}
 
