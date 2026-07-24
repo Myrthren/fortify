@@ -2,10 +2,10 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { ViralityEngine } from "@/components/virality-engine";
 import { AutoSlideshow } from "@/components/auto-slideshow";
 import { TIER_LIMITS } from "@/lib/tiers";
 import { LockedPage } from "@/components/locked-page";
+import { ComingSoonCard } from "@/components/coming-soon";
 import { TierBadge } from "@/components/tier-badge";
 import { Clapperboard, Brain, CalendarClock, Rocket } from "lucide-react";
 import Link from "next/link";
@@ -59,16 +59,14 @@ export default async function ViralityPage() {
             <TierBadge tier={canAutoPublish ? "APEX" : "ELITE"} />
           </div>
           <p className="text-sm text-text-muted">
-            Upload videos to your Media Pool, get AI virality scores per platform, and{" "}
-            {canAutoPublish
-              ? "auto-publish at the optimal time."
-              : "publish manually with AI-optimised tags and titles."}
+            Upload videos to your Media Pool, get AI virality scores per platform, and
+            publish to TikTok, YouTube, and Facebook.
           </p>
         </div>
 
-        <ViralityEngine
-          initialConnections={connections}
-          canAutoPublish={canAutoPublish}
+        <ComingSoonCard
+          title="Virality Engine"
+          description="AI video scoring, optimal-timing publishing, and direct posting to TikTok, YouTube, and Facebook are being finalised and will be available soon."
         />
 
         <div className="mt-6">

@@ -42,6 +42,7 @@ type NodeDef = {
   accent: string;
   ports: PortKey[];
   configFields?: ConfigField[];
+  comingSoon?: boolean; // hidden from the palette until the integration is available
 };
 
 // ── Node registry ─────────────────────────────────────────────────────────────
@@ -167,7 +168,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_notion: {
-    label: "Notion Create", icon: <NotebookPen className={ni} />, category: "action", accent: "#e2e8f0", ports: ["out"],
+    label: "Notion Create", icon: <NotebookPen className={ni} />, category: "action", accent: "#e2e8f0", ports: ["out"], comingSoon: true,
     configFields: [
       { key: "database", label: "Database ID", placeholder: "abc123def456…", previewInNode: true,
         hint: "Found in the Notion page URL after the workspace name and before the '?' query string." },
@@ -178,7 +179,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_twitter: {
-    label: "X / Twitter", icon: "𝕏", category: "action", accent: "#e2e8f0", ports: ["out"],
+    label: "X / Twitter", icon: "𝕏", category: "action", accent: "#e2e8f0", ports: ["out"], comingSoon: true,
     configFields: [
       { key: "message", label: "Tweet Text (max 280 chars)", type: "textarea", rows: 4,
         placeholder: "{{generated_text}}", previewInNode: true,
@@ -750,7 +751,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
           >
             <p className="px-3 pb-2 text-[10px] font-semibold uppercase tracking-widest text-text-dim">Add node</p>
             {CATEGORY_ORDER.map(cat => {
-              const items = Object.entries(DEFS).filter(([, d]) => d.category === cat);
+              const items = Object.entries(DEFS).filter(([, d]) => d.category === cat && !d.comingSoon);
               return (
                 <div key={cat} className="mb-3">
                   <p className="px-3 pb-1 text-[10px] font-medium uppercase tracking-wider text-text-dim">
