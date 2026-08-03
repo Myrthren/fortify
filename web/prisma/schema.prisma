@@ -111,6 +111,7 @@ model User {
   notifications        Notification[]
   reconSearches          ReconSearch[]
   leadStatuses           LeadStatus[]
+  revenueEvents          RevenueEvent[]
   competitorWatches      CompetitorWatch[]
   workflows              Workflow[]
   workflowCapacityPacks  WorkflowCapacityPack[]
@@ -161,6 +162,21 @@ model Subscription {
   paymentFailedAt   DateTime?
   paymentRescueStep Int       @default(0)
   user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Fortify's own subscription revenue (owner accounting) ───────────────────
+model RevenueEvent {
+  id         String   @id @default(cuid())
+  userId     String?
+  provider   String // "paypal" | "whop"
+  externalId String   @unique // provider payment id — dedupes webhook retries
+  amount     Float
+  currency   String   @default("GBP")
+  tier       Tier?
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
 }
 
 model BrandVoice {

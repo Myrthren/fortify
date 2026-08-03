@@ -118,9 +118,33 @@ export async function POST(req: Request) {
       break;
     }
 
-    case "PAYMENT.SALE.COMPLETED":
-      // TODO: log revenue
+    case "PAYMENT.SALE.COMPLETED": {
+      // For a sale, resource.id is the sale id — the subscription is billing_agreement_id.
+      const saleId: string | undefined = event.resource?.id;
+      const agreementId: string | undefined = event.resource?.billing_agreement_id;
+      const amount = Number(event.resource?.amount?.total);
+      const currency: string = event.resource?.amount?.currency ?? "GBP";
+      if (!saleId || !Number.isFinite(amount)) break;
+
+      const sub = agreementId
+        ? await db.subscription.findUnique({ where: { paypalSubId: agreementId } })
+        : null;
+
+      // externalId is unique, so PayPal webhook retries can't double-count.
+      await db.revenueEvent.upsert({
+        where: { externalId: saleId },
+        update: {},
+        create: {
+          externalId: saleId,
+          provider: "paypal",
+          amount,
+          currency,
+          userId: sub?.userId ?? null,
+          tier: sub?.tier ?? null,
+        },
+      });
       break;
+    }
   }
 
   return NextResponse.json({ ok: true });
