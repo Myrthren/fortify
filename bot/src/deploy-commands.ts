@@ -3,6 +3,7 @@ import { REST, Routes } from "discord.js";
 import * as hook from "./commands/hook";
 import * as upgrade from "./commands/upgrade";
 import * as profile from "./commands/profile";
+import * as profileEdit from "./commands/profile-edit";
 import * as voice from "./commands/voice";
 import * as outreach from "./commands/outreach";
 import * as audit from "./commands/audit";
@@ -16,6 +17,7 @@ const commands = [
   hook.data.toJSON(),
   upgrade.data.toJSON(),
   profile.data.toJSON(),
+  profileEdit.data.toJSON(),
   voice.data.toJSON(),
   outreach.data.toJSON(),
   audit.data.toJSON(),

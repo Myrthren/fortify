@@ -20,6 +20,8 @@ import {
 import * as hook from "./commands/hook";
 import * as upgrade from "./commands/upgrade";
 import * as profile from "./commands/profile";
+import * as profileEdit from "./commands/profile-edit";
+import { handleProfileEditModal } from "./commands/profile-edit";
 import * as voice from "./commands/voice";
 import * as outreach from "./commands/outreach";
 import * as audit from "./commands/audit";
@@ -36,7 +38,7 @@ const OWNER_ID = "731207920007643167";
 
 const commands = new Collection<string, Command>();
 for (const cmd of [
-  hook, upgrade, profile, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup,
+  hook, upgrade, profile, profileEdit, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup,
 ] as Command[]) {
   commands.set(cmd.data.name, cmd);
 }
@@ -275,6 +277,11 @@ async function handleButtonInteraction(interaction: ButtonInteraction) {
 
 // ── Support: user submits the modal from #support embed ──────────────────────
 async function handleModalSubmit(interaction: ModalSubmitInteraction) {
+  if (interaction.customId.startsWith("profile_edit_modal_")) {
+    await handleProfileEditModal(interaction);
+    return;
+  }
+
   if (!interaction.customId.startsWith("support_modal_")) return;
 
   await interaction.deferReply({ ephemeral: true });
