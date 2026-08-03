@@ -8,6 +8,7 @@ import { TierSwitcher } from "@/components/tier-switcher";
 import { AdminCreditAdjuster } from "@/components/admin-credit-adjuster";
 import { AdminAnnouncementManager } from "@/components/admin-announcement-manager";
 import { AdminResetLimits } from "@/components/admin-reset-limits";
+import { AdminPodManager } from "@/components/admin-pod-manager";
 import { Gavel, Flag, Activity, UsersRound } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -28,6 +29,25 @@ export default async function AdminPage() {
     orderBy: { createdAt: "asc" },
     select: { id: true, message: true, expiresAt: true },
   });
+
+  const [pods, apexUsers] = await Promise.all([
+    db.pod.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        members: {
+          include: {
+            user: { select: { id: true, email: true, username: true, tier: true, discordId: true } },
+          },
+        },
+      },
+    }),
+    // Pod membership is Apex-only — the API rejects anyone else.
+    db.user.findMany({
+      where: { tier: "APEX" },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, name: true, email: true },
+    }),
+  ]);
 
   const allUsers = await db.user.findMany({
     orderBy: { createdAt: "desc" },
@@ -129,6 +149,25 @@ export default async function AdminPage() {
                 message: a.message,
                 expiresAt: a.expiresAt ? a.expiresAt.toISOString() : null,
               }))}
+            />
+          </div>
+        </section>
+
+        {/* Mastermind pods */}
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">Mastermind pods</h2>
+          <p className="mt-1 text-sm text-text-muted">
+            Create pods and assign Apex members. A member can only be in one pod — adding
+            them to a new pod moves them.
+          </p>
+          <div className="card mt-4 p-5">
+            <AdminPodManager
+              initial={pods.map((p) => ({
+                id: p.id,
+                name: p.name,
+                members: p.members.map((m) => ({ user: m.user })),
+              }))}
+              apexUsers={apexUsers}
             />
           </div>
         </section>
