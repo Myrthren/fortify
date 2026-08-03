@@ -32,18 +32,25 @@ export default async function ReconPage() {
     );
   }
 
-  const pastSearches = await db.reconSearch.findMany({
-    where: { userId },
-    orderBy: { createdAt: "desc" },
-    take: 10,
-    select: {
-      id: true,
-      location: true,
-      category: true,
-      totalLeads: true,
-      createdAt: true,
-    },
-  });
+  const [pastSearches, leadStatuses] = await Promise.all([
+    db.reconSearch.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+      select: {
+        id: true,
+        location: true,
+        category: true,
+        totalLeads: true,
+        createdAt: true,
+        leads: true,
+      },
+    }),
+    db.leadStatus.findMany({
+      where: { userId },
+      select: { url: true, status: true },
+    }),
+  ]);
 
   const serialisedSearches = pastSearches.map((s) => ({
     id: s.id,
@@ -51,6 +58,7 @@ export default async function ReconPage() {
     category: s.category,
     totalLeads: s.totalLeads,
     createdAt: s.createdAt.toISOString(),
+    leads: s.leads as unknown as any[],
   }));
 
   return (
@@ -60,6 +68,7 @@ export default async function ReconPage() {
         <ReconClient
           pastSearches={serialisedSearches}
           userCredits={user.credits}
+          initialLeadStatuses={leadStatuses}
         />
       </main>
     </div>

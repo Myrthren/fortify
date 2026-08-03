@@ -58,6 +58,7 @@ model User {
   emailVerified       DateTime?
   image               String?
   discordId           String?   @unique
+  whopUserId          String?   @unique // Whop OAuth sub, e.g. "user_xxx"
   avatarUrl           String?
   username            String?   @unique
   usernameChangesUsed Int       @default(0)
@@ -109,6 +110,7 @@ model User {
   chatSessions         ChatSession[]
   notifications        Notification[]
   reconSearches          ReconSearch[]
+  leadStatuses           LeadStatus[]
   competitorWatches      CompetitorWatch[]
   workflows              Workflow[]
   workflowCapacityPacks  WorkflowCapacityPack[]
@@ -148,7 +150,9 @@ model Profile {
 model Subscription {
   id                String    @id @default(cuid())
   userId            String    @unique
-  paypalSubId       String    @unique
+  provider          String    @default("paypal") // "paypal" | "whop"
+  paypalSubId       String?   @unique
+  whopMembershipId  String?   @unique
   tier              Tier
   status            String    // ACTIVE, CANCELLED, SUSPENDED, EXPIRED
   startedAt         DateTime  @default(now())
@@ -511,6 +515,19 @@ model ReconSearch {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
+}
+
+// ─── Recon lead status (persists across searches, keyed by business URL) ──────
+model LeadStatus {
+  id        String   @id @default(cuid())
+  userId    String
+  url       String
+  status    String
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, url])
+  @@index([userId])
 }
 
 // ─── Competitor Watch (change tracking) ──────────────

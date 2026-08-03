@@ -55,16 +55,18 @@ type PastSearch = {
   category: string | null;
   totalLeads: number;
   createdAt: string;
+  leads: Lead[];
 };
 
 interface ReconClientProps {
   pastSearches: PastSearch[];
   userCredits: number;
+  initialLeadStatuses: { url: string; status: string }[];
 }
 
 const COUNT_OPTIONS = [10, 20, 30, 50] as const;
 
-export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
+export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: ReconClientProps) {
   const [location, setLocation] = useState("");
   const [category, setCategory] = useState("");
   const [leadCount, setLeadCount] = useState<number>(10);
@@ -86,8 +88,10 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
   // Expanded context cards
   const [expandedContext, setExpandedContext] = useState<Set<number>>(new Set());
 
-  // Lead status tracking (keyed by URL)
-  const [leadStatuses, setLeadStatuses] = useState<Map<string, LeadStatus>>(new Map());
+  // Lead status tracking (keyed by URL, persisted server-side across all searches)
+  const [leadStatuses, setLeadStatuses] = useState<Map<string, LeadStatus>>(
+    () => new Map(initialLeadStatuses.map((s) => [s.url, s.status as LeadStatus]))
+  );
 
   // Status filter
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
@@ -106,7 +110,6 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
     setResults([]);
     setRawCount(0);
     setExpandedContext(new Set());
-    setLeadStatuses(new Map());
     setStatusFilter("all");
 
     try {
@@ -194,6 +197,11 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
       next.set(url, status);
       return next;
     });
+    fetch("/api/recon/lead-status", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, status }),
+    }).catch(() => {});
   }
 
   function exportCSV() {
@@ -650,7 +658,10 @@ export function ReconClient({ pastSearches, userCredits }: ReconClientProps) {
                 onClick={() => {
                   setLocation(s.location);
                   setCategory(s.category ?? "");
-                  setResults([]);
+                  setResults(s.leads);
+                  setRawCount(s.leads.length);
+                  setExpandedContext(new Set());
+                  setStatusFilter("all");
                   setError(null);
                   setShowSuggestions(false);
                 }}
