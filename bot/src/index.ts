@@ -48,6 +48,7 @@ const client = new Client({
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent, // privileged — must be enabled in Discord Dev Portal
+    GatewayIntentBits.GuildMembers, // privileged — needed for admin find_member lookups
   ],
 });
 
