@@ -71,11 +71,13 @@ export type TriggerPayload = {
 };
 
 // ── Variable interpolation ────────────────────────────────────────────────────
-function interp(template: string, vars: Record<string, string>): string {
+function interp(template: unknown, vars: Record<string, string>): string {
+  // Config values can be numbers/booleans (e.g. minScore: 60), so coerce first.
+  if (typeof template !== "string") return template == null ? "" : String(template);
   return template.replace(/\{\{([^}]+)\}\}/g, (_, key) => vars[key.trim()] ?? "");
 }
 
-function interpObj(obj: Record<string, string>, vars: Record<string, string>): Record<string, string> {
+function interpObj(obj: Record<string, unknown>, vars: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(obj)) out[k] = interp(v, vars);
   return out;
