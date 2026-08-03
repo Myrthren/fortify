@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
+import { uploadToR2 } from "@/lib/r2";
 
 // GET — list user's media pool
 export async function GET() {
@@ -48,9 +50,10 @@ export async function POST(req: Request) {
     );
   }
 
-  // TODO: In production, upload to Cloudflare R2 and store the CDN URL instead.
-  // For now, store a placeholder reference with filename and size.
-  const videoUrl = `[uploaded:${file.name}:${file.size}]`;
+  const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
+  const key = `videos/${userId}/${randomUUID()}${extension}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const videoUrl = await uploadToR2(key, buffer, file.type);
 
   const item = await db.mediaItem.create({
     data: { userId, title, videoUrl, description, category, targetPlatforms },
