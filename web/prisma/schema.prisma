@@ -112,6 +112,8 @@ model User {
   reconSearches          ReconSearch[]
   leadStatuses           LeadStatus[]
   revenueEvents          RevenueEvent[]
+  milestoneAwards        MilestoneAward[]
+  matchNotifications     MatchNotification[]
   competitorWatches      CompetitorWatch[]
   workflows              Workflow[]
   workflowCapacityPacks  WorkflowCapacityPack[]
@@ -191,11 +193,35 @@ model BrandVoice {
 }
 
 model WatchTerm {
+  id            String    @id @default(cuid())
+  userId        String
+  term          String
+  createdAt     DateTime  @default(now())
+  baselineCount Int? // rolling recent-coverage baseline, set on first scan
+  lastAlertAt   DateTime? // throttles repeat spike alerts for the same term
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ─── Milestone awards (dedupes dmMilestones DMs) ─────────────────────────────
+model MilestoneAward {
   id        String   @id @default(cuid())
   userId    String
-  term      String
+  key       String
+  awardedAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+}
+
+// ─── Matchmaking DMs already sent (dedupes dmMatchmaking) ────────────────────
+model MatchNotification {
+  id        String   @id @default(cuid())
+  userId    String
+  matchedId String
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, matchedId])
 }
 
 model Competitor {

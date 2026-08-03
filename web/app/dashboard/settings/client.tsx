@@ -59,10 +59,10 @@ const TOGGLES: { key: keyof Prefs; label: string; desc: string; comingSoon?: boo
   { key: "dmWeeklyReport",    label: "Weekly strategy report",desc: "Your weekly AI digest delivered straight to DMs." },
   { key: "dmRenewalReminder", label: "Renewal reminder",      desc: "3 days before your next billing date.", comingSoon: true },
   { key: "dmLimitWarning",    label: "Usage limit warning",   desc: "When you hit 80% of your monthly quota.", comingSoon: true },
-  { key: "dmTrendAlerts",     label: "Trend alerts",          desc: "When a term you're tracking spikes across the web.", comingSoon: true },
+  { key: "dmTrendAlerts",     label: "Trend alerts",          desc: "When a term you're tracking spikes across the web." },
   { key: "dmOnboarding",      label: "Onboarding tips",       desc: "Day 1 / 3 / 7 messages to help you get set up.", comingSoon: true },
-  { key: "dmMilestones",      label: "Milestone achievements",desc: "First audit, profile completed, etc.", comingSoon: true },
-  { key: "dmMatchmaking",     label: "New match found",       desc: "When a member matches your niche and skills.", comingSoon: true },
+  { key: "dmMilestones",      label: "Milestone achievements",desc: "First audit, profile completed, etc." },
+  { key: "dmMatchmaking",     label: "New match found",       desc: "When a member matches your niche and skills." },
 ];
 
 const OWNER_TOGGLES: { key: keyof Prefs; label: string; desc: string }[] = [

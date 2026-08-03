@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
 import { checkMonthly, logGeneration } from "@/lib/usage";
 import { auditUrl } from "@/lib/audit";
+import { awardMilestone } from "@/lib/notifications";
 import { sendDMConditional } from "@/lib/notifications";
 
 export async function POST(req: Request) {
@@ -54,6 +55,12 @@ export async function POST(req: Request) {
     input: url,
     output: JSON.stringify(result),
   });
+
+  awardMilestone(
+    userId,
+    "first_audit",
+    "🏆 **First audit complete.** You've run your first funnel audit — the findings are in your dashboard.\n\nRun another: https://fortify-io.com/dashboard/audit"
+  ).catch(() => {});
 
   return NextResponse.json({ audit: result });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { awardMilestone } from "@/lib/notifications";
 
 const SOCIAL_KEYS = [
   "twitter",
@@ -71,6 +72,16 @@ export async function PATCH(req: Request) {
     create: { userId, niche, skills, lookingFor, canOffer, socials },
     update: { niche, skills, lookingFor, canOffer, socials },
   });
+
+  // A profile counts as complete once it has a niche plus something to offer
+  // and something to look for — that's the minimum matchmaking needs.
+  if (niche && canOffer.length > 0 && lookingFor.length > 0) {
+    awardMilestone(
+      userId,
+      "profile_completed",
+      "🏆 **Profile complete.** You're now visible to matchmaking — Elite and Apex members can be matched with you based on your niche and skills.\n\nSee your matches: https://fortify-io.com/dashboard/matchmaking"
+    ).catch(() => {});
+  }
 
   return NextResponse.json({ profile });
 }
