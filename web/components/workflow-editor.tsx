@@ -168,7 +168,7 @@ const DEFS: Record<string, NodeDef> = {
     ],
   },
   action_notion: {
-    label: "Notion Create", icon: <NotebookPen className={ni} />, category: "action", accent: "#e2e8f0", ports: ["out"], comingSoon: true,
+    label: "Notion Create", icon: <NotebookPen className={ni} />, category: "action", accent: "#e2e8f0", ports: ["out"],
     configFields: [
       { key: "database", label: "Database ID", placeholder: "abc123def456…", previewInNode: true,
         hint: "Found in the Notion page URL after the workspace name and before the '?' query string." },
