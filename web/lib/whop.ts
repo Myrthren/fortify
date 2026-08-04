@@ -168,8 +168,19 @@ export function highestTier(memberships: WhopMembership[]): {
 // ── Webhooks (Standard Webhooks spec) ──────────────────────────────────────────
 
 /**
- * Verify a Whop webhook. Signature is HMAC-SHA256("{id}.{timestamp}.{body}")
- * with the base64-decoded secret, compared against the `v1,<b64>` header.
+ * Verify a Whop webhook (Standard Webhooks: HMAC-SHA256 over
+ * "{id}.{timestamp}.{body}", compared against the `v1,<b64>` header).
+ *
+ * KEY DERIVATION: Whop's own SDK examples base64-ENCODE the secret before
+ * handing it to the Standard Webhooks verifier (`btoa(WHOP_WEBHOOK_SECRET)`),
+ * and SW verifiers base64-DECODE what they're given — so the two cancel and
+ * the real HMAC key is the raw UTF-8 secret, `ws_` prefix included.
+ *
+ * We also try the prefix-stripped form, because Whop's docs are inconsistent
+ * about whether `ws_` is part of the secret proper. Both candidates derive
+ * from the same secret, so accepting either costs nothing security-wise.
+ * Once a real delivery lands, check which variant the log reports and drop
+ * the other.
  */
 export function verifyWebhook(headers: Headers, rawBody: string): boolean {
   const secret = process.env.WHOP_WEBHOOK_SECRET;
@@ -181,25 +192,45 @@ export function verifyWebhook(headers: Headers, rawBody: string): boolean {
   const id = headers.get("webhook-id");
   const timestamp = headers.get("webhook-timestamp");
   const sigHeader = headers.get("webhook-signature");
-  if (!id || !timestamp || !sigHeader) return false;
+  if (!id || !timestamp || !sigHeader) {
+    // The dashboard's "send test webhook" button omits webhook-signature
+    // entirely and sends an empty data field — a 401 here is expected for
+    // test sends and does NOT mean the secret is wrong. Test with a real
+    // membership event instead.
+    console.error("[whop] webhook missing Standard-Webhooks headers");
+    return false;
+  }
 
   // Reject stale/replayed deliveries (5 min tolerance).
   const age = Math.abs(Date.now() / 1000 - Number(timestamp));
   if (!Number.isFinite(age) || age > 300) return false;
 
-  // Secret is "whsec_<base64>" or bare base64.
-  const key = Buffer.from(secret.replace(/^whsec_/, ""), "base64");
-  const expected = createHmac("sha256", key)
-    .update(`${id}.${timestamp}.${rawBody}`)
-    .digest("base64");
+  const signed = `${id}.${timestamp}.${rawBody}`;
+  const candidates: Array<[string, Buffer]> = [
+    ["raw", Buffer.from(secret, "utf8")],
+    ["stripped", Buffer.from(secret.replace(/^ws_/, ""), "utf8")],
+  ];
 
   // Header may carry several space-separated "v1,<sig>" versions.
-  return sigHeader.split(" ").some((part) => {
-    const sig = part.startsWith("v1,") ? part.slice(3) : part;
-    const a = Buffer.from(sig);
+  const sigs = sigHeader
+    .split(" ")
+    .map((part) => (part.startsWith("v1,") ? part.slice(3) : part));
+
+  for (const [variant, key] of candidates) {
+    const expected = createHmac("sha256", key).update(signed).digest("base64");
     const b = Buffer.from(expected);
-    return a.length === b.length && timingSafeEqual(a, b);
-  });
+    const hit = sigs.some((sig) => {
+      const a = Buffer.from(sig);
+      return a.length === b.length && timingSafeEqual(a, b);
+    });
+    if (hit) {
+      console.log(`[whop] webhook signature verified (${variant} key)`);
+      return true;
+    }
+  }
+
+  console.error("[whop] webhook signature mismatch — check WHOP_WEBHOOK_SECRET");
+  return false;
 }
 
 /** Pull the fields we care about out of a membership webhook payload. */
