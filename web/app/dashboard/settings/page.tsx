@@ -34,6 +34,7 @@ export default async function SettingsPage() {
         workspaceName: notionConn?.workspaceName ?? null,
         rootPageId: notionConn?.rootPageId ?? null,
       }}
+      whop={{ connected: !!user.whopUserId, whopUserId: user.whopUserId ?? null }}
       username={user.username ?? null}
       usernameChangesUsed={user.usernameChangesUsed}
       credits={user.credits}

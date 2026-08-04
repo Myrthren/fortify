@@ -7,6 +7,7 @@ import { GoogleConnectSection } from "@/components/google-connect";
 import { ShopifyConnectSection } from "@/components/shopify-connect";
 import { StripeConnectSection } from "@/components/stripe-connect";
 import { NotionConnectSection } from "@/components/notion-connect";
+import { WhopConnectSection } from "@/components/whop-connect";
 import type { Tier } from "@prisma/client";
 import { Download, Trash2 } from "lucide-react";
 import { OwnerLeadExtractorSettings } from "./owner-lead-extractor";
@@ -111,6 +112,7 @@ export function SettingsClient({
   shopify,
   stripe,
   notion,
+  whop,
   username: initialUsername,
   usernameChangesUsed,
   credits,
@@ -122,6 +124,7 @@ export function SettingsClient({
   shopify: { connected: boolean; shop: string | null };
   stripe: { connected: boolean };
   notion: { connected: boolean; workspaceName: string | null; rootPageId: string | null };
+  whop: { connected: boolean; whopUserId: string | null };
   username: string | null;
   usernameChangesUsed: number;
   credits: number;
@@ -268,6 +271,9 @@ export function SettingsClient({
           workspaceName={notion.workspaceName}
           rootPageId={notion.rootPageId}
         />
+
+        {/* Whop connection */}
+        <WhopConnectSection connected={whop.connected} whopUserId={whop.whopUserId} />
 
         {/* Meta Ads connection */}
         <MetaConnectSection connected={meta.connected} accountName={meta.accountName} />
