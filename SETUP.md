@@ -37,7 +37,13 @@ cd ../bot && npm install
 ### A. Bot
 1. https://discord.com/developers/applications → your Fortify app → **Bot**
 2. Reset token, copy → `DISCORD_BOT_TOKEN` (in both `web/.env.local` and `bot/.env.local`)
-3. Enable: Server Members Intent
+3. Under **Privileged Gateway Intents**, enable **both**:
+   - **Server Members Intent**
+   - **Message Content Intent**
+
+   ⚠️ Both are required. The bot requests them at startup, so if either is off
+   Discord rejects the connection with a "disallowed intents" error and the bot
+   never comes online.
 
 ### B. OAuth2
 1. **OAuth2 → General** → copy Client Secret → `DISCORD_CLIENT_SECRET`
@@ -58,8 +64,16 @@ Right-click each → Copy ID → fill into `.env.local`:
 ### D. Invite bot to server
 Use this URL (replace CLIENT_ID):
 ```
-https://discord.com/oauth2/authorize?client_id=1497398931930349809&permissions=268435456&scope=bot%20applications.commands
+https://discord.com/oauth2/authorize?client_id=1497398931930349809&permissions=268512272&scope=bot%20applications.commands
 ```
+
+`268512272` covers View Channel, Send Messages, Manage Messages, Read Message
+History, **Manage Channels** and **Manage Roles**. The last two are needed for the
+owner-only admin tools (`bot/src/lib/admin-tools.ts`) — without them those tools
+fail at the Discord API rather than in the bot.
+
+Re-running this URL on a server the bot is already in just updates its permissions;
+it does not remove or reset the bot.
 
 ---
 
@@ -74,12 +88,21 @@ openssl rand -base64 32
 
 ---
 
-## 5. Migrate the database
+## 5. Apply the database schema
+
+There is **no migrations directory** — the schema is applied with `db push`.
 
 ```bash
 cd web
-npx prisma migrate dev --name init
+npx prisma db push
 npx prisma generate
+```
+
+⚠️ The Prisma CLI only auto-loads `.env`, **not** `.env.local`. Without passing the
+vars explicitly it fails with `Environment variable not found: DIRECT_URL`:
+
+```bash
+set -a && source <(grep -E "^(DATABASE_URL|DIRECT_URL)=" .env.local) && set +a && npx prisma db push
 ```
 
 ---
@@ -91,7 +114,10 @@ cd ../bot
 npm run deploy-commands
 ```
 
-Should print `✅ Deployed 3 commands.`
+Should print `✅ Deployed 12 commands.`
+
+Re-run this whenever a command is added or its definition changes — new slash
+commands do not appear in Discord until it is run.
 
 ---
 
@@ -146,25 +172,32 @@ Open http://localhost:3000.
 
 ## What's built
 
-✅ Landing page  
-✅ Pricing page with PayPal subscription buttons  
-✅ Discord OAuth login  
-✅ Dashboard  
-✅ Hook generator (OpenAI, web + Discord)  
-✅ PayPal activate + webhook + Discord role sync  
-✅ Free-tier daily limits  
-✅ Welcome email (Resend)  
-✅ Bot commands: `/hook`, `/upgrade`, `/profile`
+Billing and accounts, the full dashboard tool set (Hook Generator, Brand Voice,
+Funnel Auditor, Outreach, Trend Radar, Competitor tools, Recon, Workflows, Lead
+Extractor, Company DNA, Matchmaking and more), the member directory, forums, deal
+board, mastermind pods, the notification system, and 12 Discord slash commands.
 
-## What's next (build incrementally)
+The dashboard nav is the accurate inventory — it is generated from what actually
+exists, so it beats any list kept here.
 
-- Brand Voice Studio (Claude with prompt caching)
-- Funnel Auditor (Brave + Claude)
-- Trend Radar (daily Brave scrapes + email digest)
-- Cold Outreach Generator
-- Competitor Scanner
-- Weekly Strategy Reports (Sunday cron)
-- Member directory + AI matchmaking
-- Deal board
-- Mastermind pods
-- More Discord commands (`/voice`, `/audit`, `/research`, etc.)
+## Known gaps
+
+- **Analytics** — built, but blocked on Google OAuth (app unpublished / no test
+  users, so Connect Google returns Error 400). Gated behind the coming-soon page.
+- **Virality Engine** — media now uploads to R2, but TikTok publishing returns
+  "coming soon" pending Content Posting API approval. YouTube and Facebook publish
+  paths are complete. Gated behind the coming-soon page.
+- **Whop billing** — built and DB-migrated, not yet committed or deployed. Blocked
+  on webhook secret, redirect URIs and Netlify env vars.
+- **Twitter / Notion workflow nodes** — real implementations, need env vars only.
+
+## Gotchas worth knowing
+
+- **Prisma uses `db push`, not `migrate`** — and the CLI won't read `.env.local`.
+  See step 5.
+- **`CRON_SECRET` changes need a redeploy.** Until then every scheduled job 401s,
+  and a 401 looks like a healthy HTTP response to the scheduler.
+- **Railway doesn't auto-deploy.** Push bot changes, then redeploy by hand.
+- **Both Discord intents must be enabled** or the bot won't start. See step 3A.
+- **Don't keep the repo in OneDrive.** It corrupts `node_modules` and creates
+  `*-DESKTOP-*.*` conflict files.

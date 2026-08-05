@@ -1,8 +1,12 @@
 import type { Config } from "@netlify/functions";
 
 /**
- * Fires every 15 minutes.
+ * Fires every hour at :45.
  * Calls the auto-publish cron endpoint on the Fortify web app.
+ *
+ * Hourly rather than every 15 minutes: the Virality Engine is behind the
+ * coming-soon gate, so nothing can be scheduled for publishing yet. Raise the
+ * frequency when that ships and publish timing starts to matter.
  */
 export default async function handler() {
   const secret = process.env.CRON_SECRET ?? "";
@@ -17,5 +21,5 @@ export default async function handler() {
 }
 
 export const config: Config = {
-  schedule: "*/15 * * * *",
+  schedule: "45 * * * *",
 };
