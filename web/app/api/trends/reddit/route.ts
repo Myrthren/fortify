@@ -3,6 +3,9 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
 import { startRun, getRunStatus, getDatasetItems } from "@/lib/apify";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+
+const SCAN_COST = 15; // credits per Reddit signal run
 
 // Fields returned by trudax/reddit-scraper-lite
 type RedditPost = {
@@ -30,6 +33,10 @@ export async function GET(req: Request) {
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id;
 
+  // 10 Reddit runs per minute per user
+  const rl = rateLimit(`trends-reddit:${userId}`, 10, 60_000);
+  if (!rl.ok) return rateLimitResponse(rl.resetMs);
+
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return new NextResponse("Not found", { status: 404 });
 
@@ -38,6 +45,13 @@ export async function GET(req: Request) {
     return NextResponse.json(
       { error: "Reddit signals are an Elite+ feature.", upgrade: true },
       { status: 403 }
+    );
+  }
+
+  if (user.credits < SCAN_COST) {
+    return NextResponse.json(
+      { error: `Reddit signals cost ${SCAN_COST} credits. You have ${user.credits}.`, upgrade: true },
+      { status: 402 }
     );
   }
 
@@ -85,7 +99,13 @@ export async function GET(req: Request) {
       subreddit: p.subreddit ?? "",
     }));
 
-    return NextResponse.json({ term: term.term, posts });
+    // Only charge for a run that returned data
+    await db.$transaction([
+      db.user.update({ where: { id: userId }, data: { credits: { decrement: SCAN_COST } } }),
+      db.creditTransaction.create({ data: { userId, amount: -SCAN_COST, source: "trends-reddit" } }),
+    ]);
+
+    return NextResponse.json({ term: term.term, posts, creditsUsed: SCAN_COST });
   } catch (e: any) {
     console.error("[trends/reddit] failed", e);
     return new NextResponse(`Reddit search failed: ${e.message}`, { status: 500 });

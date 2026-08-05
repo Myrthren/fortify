@@ -34,6 +34,18 @@ const FRESHNESS_LABELS: Record<Freshness, string> = {
   py: "1y",
 };
 
+/** Reads an error response as JSON `{ error }` when possible, plain text otherwise. */
+async function readError(res: Response): Promise<string> {
+  const body = await res.text();
+  try {
+    const parsed = JSON.parse(body);
+    if (parsed && typeof parsed.error === "string") return parsed.error;
+  } catch {
+    /* not JSON — fall through to raw text */
+  }
+  return body;
+}
+
 export function TrendRadar({
   initialTerms,
   limit,
@@ -67,7 +79,7 @@ export function TrendRadar({
     setWebResults(null);
     try {
       const res = await fetch(`/api/trends/search?termId=${termId}&freshness=${fresh}`);
-      if (!res.ok) { setWebResults([]); setError(await res.text()); return; }
+      if (!res.ok) { setWebResults([]); setError(await readError(res)); return; }
       const data = await res.json();
       setWebResults(data.results);
       setError(null);
@@ -81,7 +93,7 @@ export function TrendRadar({
     setRedditPosts(null);
     try {
       const res = await fetch(`/api/trends/reddit?termId=${termId}&freshness=${fresh}`);
-      if (!res.ok) { setRedditPosts([]); setError(await res.text()); return; }
+      if (!res.ok) { setRedditPosts([]); setError(await readError(res)); return; }
       const data = await res.json();
       setRedditPosts(data.posts);
       setError(null);

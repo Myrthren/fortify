@@ -3,8 +3,10 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { startRun, getRunStatus, getDatasetItems } from "@/lib/apify";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const META_ADS_ACTOR = "UeNJ51UGugQ9Cwgtd"; // nourishing_courier/meta-ads-scraper-pro
+const SCAN_COST = 50; // credits per Meta Ads scan
 
 type MetaAd = {
   adArchiveID?: string;
@@ -36,9 +38,21 @@ export async function POST(
   const userId = (session.user as any).id as string;
   const { id } = await params;
 
+  // 5 ad scans per minute per user
+  const rl = rateLimit(`scan-ads:${userId}`, 5, 60_000);
+  if (!rl.ok) return rateLimitResponse(rl.resetMs);
+
   const competitor = await db.competitor.findUnique({ where: { id } });
   if (!competitor || competitor.userId !== userId) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  const user = await db.user.findUnique({ where: { id: userId }, select: { credits: true } });
+  if (!user || user.credits < SCAN_COST) {
+    return NextResponse.json(
+      { error: `This scan costs ${SCAN_COST} credits. You have ${user?.credits ?? 0}.`, upgrade: true },
+      { status: 402 }
+    );
   }
 
   // Search by competitor name in Meta Ad Library
@@ -70,7 +84,13 @@ export async function POST(
     return NextResponse.json({ error: e.message ?? "Failed to start scan." }, { status: 502 });
   }
 
-  return NextResponse.json({ runId });
+  // Only charge once the Apify run actually started
+  await db.$transaction([
+    db.user.update({ where: { id: userId }, data: { credits: { decrement: SCAN_COST } } }),
+    db.creditTransaction.create({ data: { userId, amount: -SCAN_COST, source: "scan-ads" } }),
+  ]);
+
+  return NextResponse.json({ runId, creditsUsed: SCAN_COST });
 }
 
 // ── GET — poll Apify status, process report when done ────────────────────────

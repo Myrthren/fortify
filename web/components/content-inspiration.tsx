@@ -335,6 +335,7 @@ export function ContentInspiration({
       {tab === "ads" && canAds && !loading && !adFrames && (
         <p className="text-center text-sm text-text-muted py-6">
           Enter your niche and hit Find inspiration to extract winning ad frameworks from Meta.
+          <span className="mt-1 block text-xs text-text-dim">Costs 50 credits per scan.</span>
         </p>
       )}
     </div>

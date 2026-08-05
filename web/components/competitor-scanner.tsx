@@ -369,6 +369,7 @@ function CompetitorDetail({
         setAdsScanning(false);
         return;
       }
+      onCreditsSpent(50);
       const { runId } = data as { runId: string };
 
       if (adsPollRef.current) clearInterval(adsPollRef.current);
@@ -426,6 +427,7 @@ function CompetitorDetail({
         setSerpScanning(false);
         return;
       }
+      onCreditsSpent(35);
       const { runId } = data as { runId: string };
 
       if (serpPollRef.current) clearInterval(serpPollRef.current);
@@ -746,10 +748,13 @@ function CompetitorDetail({
               <p className="text-xs text-text-muted mt-0.5">
                 Google rankings, paid ads, and SEO opportunities
               </p>
+              <p className="text-xs text-text-dim mt-0.5">
+                Costs 35 credits · You have {credits.toLocaleString()}
+              </p>
             </div>
             <button
               onClick={doSerpScan}
-              disabled={serpScanning}
+              disabled={serpScanning || credits < 35}
               className="btn-secondary text-xs"
             >
               {serpScanning
@@ -850,10 +855,13 @@ function CompetitorDetail({
               <p className="text-xs text-text-muted mt-0.5">
                 Pulls active ads from Meta Ad Library — AI-analysed
               </p>
+              <p className="text-xs text-text-dim mt-0.5">
+                Costs 50 credits · You have {credits.toLocaleString()}
+              </p>
             </div>
             <button
               onClick={doAdsScan}
-              disabled={adsScanning}
+              disabled={adsScanning || credits < 50}
               className="btn-secondary text-xs"
             >
               {adsScanning

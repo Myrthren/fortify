@@ -4,8 +4,10 @@ import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
 import { getRunStatus, getDatasetItems } from "@/lib/apify";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
+import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const META_ADS_ACTOR = "UeNJ51UGugQ9Cwgtd"; // nourishing_courier/meta-ads-scraper-pro
+const SCAN_COST = 50; // credits per Ad Intelligence scrape
 
 type MetaAd = {
   snapshot?: {
@@ -45,6 +47,10 @@ export async function POST(req: Request) {
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id as string;
 
+  // 5 ad scrapes per minute per user
+  const rl = rateLimit(`inspiration-ads:${userId}`, 5, 60_000);
+  if (!rl.ok) return rateLimitResponse(rl.resetMs);
+
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return new NextResponse("Not found", { status: 404 });
 
@@ -60,6 +66,13 @@ export async function POST(req: Request) {
   const niche = (body.niche ?? "").trim();
   if (!niche || niche.length < 2) {
     return NextResponse.json({ error: "Niche is required (min 2 chars)." }, { status: 400 });
+  }
+
+  if (user.credits < SCAN_COST) {
+    return NextResponse.json(
+      { error: `This scan costs ${SCAN_COST} credits. You have ${user.credits}.`, upgrade: true },
+      { status: 402 }
+    );
   }
 
   const token = process.env.APIFY_API_TOKEN;
@@ -84,7 +97,14 @@ export async function POST(req: Request) {
     if (!res.ok) throw new Error(`Apify start failed (${res.status}): ${await res.text()}`);
     const json = await res.json();
     const runId = json.data.id as string;
-    return NextResponse.json({ runId });
+
+    // Only charge once the Apify run actually started
+    await db.$transaction([
+      db.user.update({ where: { id: userId }, data: { credits: { decrement: SCAN_COST } } }),
+      db.creditTransaction.create({ data: { userId, amount: -SCAN_COST, source: "inspiration-ads" } }),
+    ]);
+
+    return NextResponse.json({ runId, creditsUsed: SCAN_COST });
   } catch (e: any) {
     console.error("[inspiration/ads] startRun failed:", e);
     return new NextResponse(`Failed: ${e.message}`, { status: 500 });
