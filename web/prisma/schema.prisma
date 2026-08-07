@@ -71,53 +71,56 @@ model User {
   xp                  Int       @default(0)
   streak              Int       @default(0)
   credits             Int       @default(100)
-  creditsResetAt      DateTime?               // tracks last monthly credit top-up
+  creditsResetAt      DateTime? // tracks last monthly credit top-up
   freeAiUsed          Boolean   @default(false) // one-time £0.20 Fortify AI trial for FREE tier
   leRaiseBatch        Boolean   @default(false) // owner-only: lift Lead Extractor per-batch account cap
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  accounts             Account[]
-  sessions             Session[]
-  subscription         Subscription?
-  brandVoices          BrandVoice[]
-  watchTerms           WatchTerm[]
-  competitors          Competitor[]
-  generations          Generation[]
-  profile              Profile?
-  notificationPrefs    NotificationPrefs?
-  dealPosts            DealPost[]
-  pods                 PodMember[]
-  creditTransactions   CreditTransaction[]
-  metaConnection       MetaConnection?
-  googleConnection     GoogleConnection?
-  shopifyConnection    ShopifyConnection?
-  stripeConnection     StripeConnection?
-  notionConnection     NotionConnection?
-  socialConnections    SocialConnection[]
-  mediaItems           MediaItem[]
-  companyDna           CompanyDna?
-  aiSessions           AiSession[]
-  aiCreditPacks        AiCreditPack[]
-  forumPosts           ForumPost[]
-  forumComments        ForumComment[]
-  sentMessages         UserMessage[]    @relation("SentMessages")
-  receivedMessages     UserMessage[]    @relation("ReceivedMessages")
-  sentConnections      UserConnection[] @relation("SentConnections")
-  receivedConnections  UserConnection[] @relation("ReceivedConnections")
-  bans                 BanRecord[]
-  paypalConnections    PaypalConnection[]
-  chatSessions         ChatSession[]
-  notifications        Notification[]
-  reconSearches          ReconSearch[]
-  leadStatuses           LeadStatus[]
-  revenueEvents          RevenueEvent[]
-  milestoneAwards        MilestoneAward[]
-  matchNotifications     MatchNotification[]
-  competitorWatches      CompetitorWatch[]
-  workflows              Workflow[]
-  workflowCapacityPacks  WorkflowCapacityPack[]
-  abuseAlerts            AbuseAlert[]
+  accounts              Account[]
+  sessions              Session[]
+  subscription          Subscription?
+  brandVoices           BrandVoice[]
+  watchTerms            WatchTerm[]
+  competitors           Competitor[]
+  generations           Generation[]
+  profile               Profile?
+  notificationPrefs     NotificationPrefs?
+  dealPosts             DealPost[]
+  pods                  PodMember[]
+  creditTransactions    CreditTransaction[]
+  metaConnection        MetaConnection?
+  googleConnection      GoogleConnection?
+  shopifyConnection     ShopifyConnection?
+  stripeConnection      StripeConnection?
+  notionConnection      NotionConnection?
+  socialConnections     SocialConnection[]
+  mediaItems            MediaItem[]
+  companyDna            CompanyDna?
+  aiSessions            AiSession[]
+  aiCreditPacks         AiCreditPack[]
+  forumPosts            ForumPost[]
+  forumComments         ForumComment[]
+  sentMessages          UserMessage[]          @relation("SentMessages")
+  receivedMessages      UserMessage[]          @relation("ReceivedMessages")
+  sentConnections       UserConnection[]       @relation("SentConnections")
+  receivedConnections   UserConnection[]       @relation("ReceivedConnections")
+  bans                  BanRecord[]
+  paypalConnections     PaypalConnection[]
+  chatSessions          ChatSession[]
+  notifications         Notification[]
+  reconSearches         ReconSearch[]
+  leadStatuses          LeadStatus[]
+  revenueEvents         RevenueEvent[]
+  milestoneAwards       MilestoneAward[]
+  matchNotifications    MatchNotification[]
+  competitorWatches     CompetitorWatch[]
+  workflows             Workflow[]
+  workflowCapacityPacks WorkflowCapacityPack[]
+  abuseAlerts           AbuseAlert[]
+  outboundCampaigns     OutboundCampaign[]
+  outboundLeads         OutboundLead[]
+  outboundSuppressions  OutboundSuppression[]
 }
 
 model Announcement {
@@ -130,9 +133,9 @@ model Announcement {
 model CreditTransaction {
   id        String   @id @default(cuid())
   userId    String
-  amount    Int      // positive = purchased, negative = spent
-  source    String   // "purchase_800", "spend_hook", etc.
-  orderId   String?  // PayPal order ID
+  amount    Int // positive = purchased, negative = spent
+  source    String // "purchase_800", "spend_hook", etc.
+  orderId   String? // PayPal order ID
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -140,14 +143,14 @@ model CreditTransaction {
 }
 
 model Profile {
-  userId       String   @id
-  niche        String?
-  skills       String[]
-  lookingFor   String[]
-  canOffer     String[]
-  socials      Json?
-  reputation   Int      @default(0)
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String   @id
+  niche      String?
+  skills     String[]
+  lookingFor String[]
+  canOffer   String[]
+  socials    Json?
+  reputation Int      @default(0)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Subscription {
@@ -157,7 +160,7 @@ model Subscription {
   paypalSubId       String?   @unique
   whopMembershipId  String?   @unique
   tier              Tier
-  status            String    // ACTIVE, CANCELLED, SUSPENDED, EXPIRED
+  status            String // ACTIVE, CANCELLED, SUSPENDED, EXPIRED
   startedAt         DateTime  @default(now())
   cancelledAt       DateTime?
   nextBillingAt     DateTime?
@@ -242,17 +245,17 @@ model Competitor {
   changeDetectedAt DateTime?
   reviewReport     Json?
   reviewScannedAt  DateTime?
-  metaAdReport      Json?
-  metaAdScanAt      DateTime?
-  instagramHandle   String?
-  instagramReport   Json?
-  instagramScanAt   DateTime?
-  twitterHandle     String?
-  twitterReport     Json?
-  twitterScanAt     DateTime?
-  serpReport        Json?
-  serpScanAt        DateTime?
-  createdAt         DateTime  @default(now())
+  metaAdReport     Json?
+  metaAdScanAt     DateTime?
+  instagramHandle  String?
+  instagramReport  Json?
+  instagramScanAt  DateTime?
+  twitterHandle    String?
+  twitterReport    Json?
+  twitterScanAt    DateTime?
+  serpReport       Json?
+  serpScanAt       DateTime?
+  createdAt        DateTime  @default(now())
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
@@ -262,7 +265,7 @@ model MetaConnection {
   id          String   @id @default(cuid())
   userId      String   @unique
   accessToken String   @db.Text
-  accountId   String?  // primary ad account ID e.g. act_123456
+  accountId   String? // primary ad account ID e.g. act_123456
   accountName String?
   connectedAt DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -271,7 +274,7 @@ model MetaConnection {
 model ShopifyConnection {
   id                  String   @id @default(cuid())
   userId              String   @unique
-  shop                String   // e.g. "mystore.myshopify.com"
+  shop                String // e.g. "mystore.myshopify.com"
   accessToken         String   @db.Text
   lastMilestoneAmount Float    @default(0) // last revenue milestone crossed (monthly), for dedup
   connectedAt         DateTime @default(now())
@@ -288,42 +291,42 @@ model StripeConnection {
 }
 
 model GoogleConnection {
-  id              String   @id @default(cuid())
-  userId          String   @unique
-  accessToken     String   @db.Text
-  refreshToken    String   @db.Text
-  tokenExpiresAt  DateTime
-  gaPropertyId    String?  // e.g. "properties/123456789"
-  gaPropertyName  String?
-  scSiteUrl       String?  // e.g. "https://example.com/"
-  ytChannelId     String?
-  ytChannelName   String?
-  connectedAt     DateTime @default(now())
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  accessToken    String   @db.Text
+  refreshToken   String   @db.Text
+  tokenExpiresAt DateTime
+  gaPropertyId   String? // e.g. "properties/123456789"
+  gaPropertyName String?
+  scSiteUrl      String? // e.g. "https://example.com/"
+  ytChannelId    String?
+  ytChannelName  String?
+  connectedAt    DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model NotionConnection {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  accessToken String   @db.Text
-  botId       String
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  accessToken   String   @db.Text
+  botId         String
   workspaceName String?
   workspaceIcon String?
-  rootPageId  String?  // user-selected root export page
-  connectedAt DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  rootPageId    String? // user-selected root export page
+  connectedAt   DateTime @default(now())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model SocialConnection {
   id           String    @id @default(cuid())
   userId       String
-  platform     String    // "tiktok" | "youtube" | "facebook"
+  platform     String // "tiktok" | "youtube" | "facebook"
   accessToken  String    @db.Text
   refreshToken String?   @db.Text
   expiresAt    DateTime?
   channelId    String?
   channelName  String?
-  pageId       String?   // Facebook Page ID
+  pageId       String? // Facebook Page ID
   connectedAt  DateTime  @default(now())
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -362,18 +365,18 @@ model MediaItem {
 }
 
 model NotificationPrefs {
-  userId            String  @id
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                 String  @id
+  user                   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   // Toggleable — all default true
-  dmPaymentFailed   Boolean @default(true)
-  dmWeeklyReport    Boolean @default(true)
-  dmTrendAlerts     Boolean @default(true)
-  dmCompetitorDone  Boolean @default(true)
-  dmLimitWarning    Boolean @default(true)
-  dmRenewalReminder Boolean @default(true)
-  dmOnboarding      Boolean @default(true)
-  dmMilestones      Boolean @default(true)
-  dmMatchmaking     Boolean @default(true)
+  dmPaymentFailed        Boolean @default(true)
+  dmWeeklyReport         Boolean @default(true)
+  dmTrendAlerts          Boolean @default(true)
+  dmCompetitorDone       Boolean @default(true)
+  dmLimitWarning         Boolean @default(true)
+  dmRenewalReminder      Boolean @default(true)
+  dmOnboarding           Boolean @default(true)
+  dmMilestones           Boolean @default(true)
+  dmMatchmaking          Boolean @default(true)
   dmOwnerNewSub          Boolean @default(true)
   dmOwnerChurn           Boolean @default(true)
   dmAdReport             Boolean @default(true)
@@ -411,7 +414,7 @@ model AiSession {
 model AiCreditPack {
   id          String    @id @default(cuid())
   userId      String
-  pack        Int       // 1 | 2 | 3
+  pack        Int // 1 | 2 | 3
   budgetGbp   Float
   usedCostGbp Float     @default(0)
   purchasedAt DateTime  @default(now())
@@ -507,15 +510,15 @@ enum BanType {
 }
 
 model BanRecord {
-  id          String    @id @default(cuid())
-  userId      String
-  type        BanType
-  reason      String?
-  permanent   Boolean   @default(false)
-  expiresAt   DateTime?
-  createdAt   DateTime  @default(now())
-  unbannedAt  DateTime?
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  userId     String
+  type       BanType
+  reason     String?
+  permanent  Boolean   @default(false)
+  expiresAt  DateTime?
+  createdAt  DateTime  @default(now())
+  unbannedAt DateTime?
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -535,7 +538,7 @@ model PaypalConnection {
 model Generation {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // hook, caption, audit, voice, etc.
+  type      String // hook, caption, audit, voice, etc.
   input     String   @db.Text
   output    String   @db.Text
   createdAt DateTime @default(now())
@@ -574,27 +577,27 @@ model LeadStatus {
 
 // ─── Competitor Watch (change tracking) ──────────────
 model CompetitorWatch {
-  id          String   @id @default(cuid())
+  id          String                @id @default(cuid())
   userId      String
   name        String
-  links       Json     @default("[]") // [{id,url,label,type,lastHash?,lastScanAt?}]
-  creditsPaid Int      @default(0)
-  active      Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  links       Json                  @default("[]") // [{id,url,label,type,lastHash?,lastScanAt?}]
+  creditsPaid Int                   @default(0)
+  active      Boolean               @default(true)
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   scans       CompetitorWatchScan[]
 
   @@index([userId])
 }
 
 model CompetitorWatchScan {
-  id        String   @id @default(cuid())
+  id        String          @id @default(cuid())
   watchId   String
   url       String
-  summary   String?  @db.Text
-  hasChange Boolean  @default(false)
-  scannedAt DateTime @default(now())
+  summary   String?         @db.Text
+  hasChange Boolean         @default(false)
+  scannedAt DateTime        @default(now())
   watch     CompetitorWatch @relation(fields: [watchId], references: [id], onDelete: Cascade)
 
   @@index([watchId, scannedAt])
@@ -602,17 +605,17 @@ model CompetitorWatchScan {
 
 // ─── Automation Workflows ─────────────────────────────
 model Workflow {
-  id          String    @id @default(cuid())
+  id          String        @id @default(cuid())
   userId      String
   name        String
   description String?
-  nodes       Json      @default("[]") // WorkflowNode[]
-  active      Boolean   @default(false)
-  dailyUsage  Int       @default(0)
+  nodes       Json          @default("[]") // WorkflowNode[]
+  active      Boolean       @default(false)
+  dailyUsage  Int           @default(0)
   lastUsageAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   runs        WorkflowRun[]
 
   @@index([userId])
@@ -659,11 +662,11 @@ model Pod {
 }
 
 model PodMember {
-  podId     String
-  userId    String
-  joinedAt  DateTime @default(now())
-  pod       Pod      @relation(fields: [podId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  podId    String
+  userId   String
+  joinedAt DateTime @default(now())
+  pod      Pod      @relation(fields: [podId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([podId, userId])
 }
@@ -673,7 +676,7 @@ model ChatSession {
   id        String   @id @default(cuid())
   userId    String
   title     String
-  messages  Json     // {role, content, actions?}[]
+  messages  Json // {role, content, actions?}[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -685,7 +688,7 @@ model ChatSession {
 model WorkflowCapacityPack {
   id          String   @id @default(cuid())
   userId      String
-  units       Int      // 5000 or 12000
+  units       Int // 5000 or 12000
   pricePounds Float
   orderId     String?  @unique
   purchasedAt DateTime @default(now())
@@ -698,7 +701,7 @@ model WorkflowCapacityPack {
 model AbuseAlert {
   id          String   @id @default(cuid())
   userId      String
-  feature     String   // "ai_chat" | "outreach" | "recon" | "credits" | etc.
+  feature     String // "ai_chat" | "outreach" | "recon" | "credits" | etc.
   description String   @db.Text
   alertCount  Int      @default(1)
   dismissed   Boolean  @default(false)
@@ -714,7 +717,7 @@ model AbuseAlert {
 model Notification {
   id        String   @id @default(cuid())
   userId    String
-  type      String   // "connection_request" | "connection_accepted" | "new_message" | "system"
+  type      String // "connection_request" | "connection_accepted" | "new_message" | "system"
   title     String
   body      String?
   link      String?
@@ -724,4 +727,231 @@ model Notification {
 
   @@index([userId, read])
   @@index([userId, createdAt])
+}
+
+// ─── Outbound (autonomous AI cold email) ──────────────────
+// A lead moves through OutboundStage in one direction. Every stage transition
+// is driven by the engine tick, never by a user action, so the whole pipeline
+// is resumable: a crash mid-stage leaves the lead on its previous stage and the
+// next tick picks it up again.
+enum OutboundStage {
+  DISCOVERED // sourced, nothing fetched yet
+  SCRAPED // website content captured
+  ANALYSED // AI analysis + opportunities stored
+  DRAFTED // first email written, awaiting approval or queue
+  QUEUED // approved, waiting for its send slot
+  SENT // at least one email delivered to the provider
+  REPLIED // human replied
+  BOUNCED // hard bounce
+  UNSUBSCRIBED // opted out
+  DISQUALIFIED // engine or human ruled it out (no email, no fit, blocklist)
+}
+
+enum OutboundCampaignStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum OutboundEmailStatus {
+  DRAFT
+  QUEUED
+  SENDING
+  SENT
+  DELIVERED
+  OPENED
+  REPLIED
+  BOUNCED
+  FAILED
+  SKIPPED
+}
+
+enum OutboundReplySentiment {
+  POSITIVE
+  NEUTRAL
+  NEGATIVE
+  AUTO_REPLY
+  UNSUBSCRIBE
+}
+
+model OutboundCampaign {
+  id     String                 @id @default(cuid())
+  userId String
+  name   String
+  status OutboundCampaignStatus @default(DRAFT)
+
+  // Who we are looking for. Consumed by the discovery provider.
+  targetQuery String? // free text, e.g. "dental practices in Manchester"
+  industry    String?
+  location    String?
+
+  // What we are selling. Fed into analysis + composition.
+  offer        String? @db.Text
+  senderName   String?
+  senderEmail  String?
+  senderTitle  String?
+  brandVoiceId String?
+
+  // Behaviour
+  discoveryProvider    String  @default("google-maps") // registry key
+  sendProvider         String  @default("resend") // registry key
+  dailySendCap         Int     @default(30)
+  minHoursBetweenSends Int     @default(0) // 0 = spread evenly across the window
+  sendWindowStartUtc   Int     @default(8) // hour of day, UTC
+  sendWindowEndUtc     Int     @default(17)
+  sendOnWeekends       Boolean @default(false)
+  autoSend             Boolean @default(false) // false = drafts wait for approval
+  followUpDelaysDays   Json    @default("[3,7,14]") // one entry per follow-up step
+  maxFollowUps         Int     @default(3)
+  minOpportunityScore  Int     @default(40) // below this, the lead is disqualified
+
+  // How many live leads to keep sourced. Discovery tops up towards this.
+  leadTarget Int @default(100)
+
+  // In-flight two-phase discovery run (see DiscoveryProvider). Held on the
+  // campaign so a timed-out tick loses nothing — the next tick collects it.
+  discoveryJobId        String?
+  discoveryJobStartedAt DateTime?
+  lastDiscoveryAt       DateTime?
+  lastTickAt            DateTime?
+  lastError             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  leads  OutboundLead[]
+  emails OutboundEmail[]
+
+  @@index([userId, status])
+}
+
+model OutboundLead {
+  id         String        @id @default(cuid())
+  userId     String
+  campaignId String
+  stage      OutboundStage @default(DISCOVERED)
+
+  // Identity
+  company     String
+  website     String?
+  domain      String? // normalised, used for dedupe
+  contactName String?
+  email       String?
+  phone       String?
+  industry    String?
+  location    String?
+  source      String? // which discovery provider produced it
+
+  // Scrape output
+  scrapedText  String?   @db.Text
+  scrapedPages Json? // [{url,title,chars}]
+  scrapedAt    DateTime?
+
+  // Analysis output — see lib/outbound/types.ts LeadAnalysis
+  analysis         Json?
+  opportunities    Json? // [{title,evidence,impact,fortifyService,score}]
+  opportunityScore Int?
+  summary          String?   @db.Text
+  suggestedService String?
+  analysedAt       DateTime?
+
+  // Progress
+  emailsSent     Int                     @default(0)
+  followUpStep   Int                     @default(0)
+  lastSentAt     DateTime?
+  nextActionAt   DateTime? // when the engine should next touch this lead
+  repliedAt      DateTime?
+  replySentiment OutboundReplySentiment?
+  meetingBooked  Boolean                 @default(false)
+
+  notes              String? @db.Text
+  disqualifiedReason String?
+  lastError          String?
+  errorCount         Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  campaign OutboundCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  emails   OutboundEmail[]
+  events   OutboundEvent[]
+
+  // Dedupe is per-user, not per-campaign: emailing the same business from two
+  // campaigns is the failure mode this is here to prevent.
+  @@unique([userId, domain])
+  @@index([campaignId, stage])
+  @@index([stage, nextActionAt])
+  @@index([userId, createdAt])
+}
+
+model OutboundEmail {
+  id         String              @id @default(cuid())
+  leadId     String
+  campaignId String
+  step       Int                 @default(0) // 0 = first touch, 1+ = follow-ups
+  status     OutboundEmailStatus @default(DRAFT)
+
+  subject String
+  body    String @db.Text
+
+  // Which variation dice were rolled — lets the UI show why two emails differ
+  // and lets a future optimiser learn which combinations perform.
+  variation Json?
+  model     String?
+  wordCount Int?
+
+  providerId String? @unique // message id from the send provider
+  messageId  String? @unique // RFC Message-ID, used to thread replies
+  fromEmail  String?
+  toEmail    String?
+
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  openedAt    DateTime?
+  repliedAt   DateTime?
+  bouncedAt   DateTime?
+  failReason  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lead     OutboundLead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  campaign OutboundCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId, status])
+  @@index([status, scheduledAt])
+  @@index([leadId, step])
+}
+
+model OutboundEvent {
+  id        String   @id @default(cuid())
+  leadId    String
+  emailId   String?
+  type      String // "discovered" | "scraped" | "analysed" | "drafted" | "sent" | "opened" | "replied" | "bounced" | "disqualified" | "error"
+  detail    String?  @db.Text
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  lead OutboundLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId, createdAt])
+}
+
+// Global per-user do-not-contact list. Survives lead deletion, which is the
+// whole point — an unsubscribe must outlive the record that caused it.
+model OutboundSuppression {
+  id        String   @id @default(cuid())
+  userId    String
+  value     String // lowercased email or domain
+  kind      String // "email" | "domain"
+  reason    String? // "unsubscribed" | "bounced" | "manual" | "blocklist"
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, value])
+  @@index([userId, kind])
 }

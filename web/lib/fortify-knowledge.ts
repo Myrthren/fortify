@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-05-31";
+export const KNOWLEDGE_VERSION = "2026-08-07";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -20,7 +20,7 @@ export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 SUBSCRIPTION TIERS
 - Free (£0/mo): limited access, Hook Generator only
 - Pro (£29/mo): Core AI tools, 500 credits/mo, Brand Voice Studio (1 voice), Funnel Auditor (5/mo), Cold Outreach (50/mo), Competitor Scanner (3 tracked), Lead Sourcing, Inspiration Engine, Meta Ads dashboard, Shopify dashboard, Revenue/Stripe dashboard, Company DNA, Analytics, Matchmaking, Logo Intelligence, Lead Extractor (10 accounts/batch)
-- Elite (£79/mo): Everything in Pro, 1500 credits/mo, 3 brand voices, unlimited audits & outreach, Trend Radar (10 watch terms), 10 competitors tracked, Virality Engine, Fortify Recon, Competitor Watch, Workflows (automation builder), Lead Extractor (25 accounts/batch + web search fallback + AI approach strategy), live web search in Discord chat
+- Elite (£79/mo): Everything in Pro, 1500 credits/mo, 3 brand voices, unlimited audits & outreach, Trend Radar (10 watch terms), 10 competitors tracked, Virality Engine, Fortify Recon, Competitor Watch, Workflows (automation builder), Lead Extractor (25 accounts/batch + web search fallback + AI approach strategy), Outbound Engine (autonomous AI cold email), live web search in Discord chat
 - Apex (£199/mo): Everything unlimited — unlimited brand voices, watch terms, competitors, workflows, 5000 credits/mo, Mastermind Pods access, auto-publish, Lead Extractor (50 accounts/batch + optional deep scan), live web search in Discord chat
 
 PLATFORM FEATURES
@@ -37,6 +37,7 @@ Growth:
 - Lead Extractor — paste TikTok and Instagram profile URLs in bulk; Fortify researches each business (bio, linked website, contact/about pages, link-in-bio pages) and extracts their email and phone number. Pro: 10 accounts/batch. Elite: 25/batch plus web-search fallback and optional AI "approach strategy" per lead found (best angle to pitch them). Apex: 50/batch plus an optional deep scan that crawls extra pages and widens the search. (Pro+)
 - AI Matchmaking — Claude surfaces top Fortune Fortress members worth talking to (Pro+)
 - Fortify Recon — find local and niche businesses by location and category via Google Maps; returns name, address, phone, website, and rating, ready to prospect (Elite+)
+- Outbound Engine — a fully autonomous AI cold email system. You describe your target and your offer; it finds matching businesses, reads their websites, analyses them across 11 dimensions (website quality, lead capture, booking, CRM, chatbot, automation, SEO and more), works out where automation would genuinely help, and writes a completely unique email to each one. Every email varies its greeting, opening, structure, tone, sign-off and call to action, is checked against a banned-phrase and fabrication filter before it can send, and is capped at 70-140 words. It sends inside your chosen hours at your daily cap, runs the follow-up sequence, and stops instantly the moment someone replies. Positive replies are DMed to you. Drafts wait for your approval unless you switch on auto-send. (Elite+)
 
 Research:
 - Funnel Auditor — score and fix any landing page URL with AI (Pro+)
