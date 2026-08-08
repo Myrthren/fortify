@@ -40,9 +40,16 @@ const COMPOSE: Record<string, ComposeProvider> = {
   [claudeComposer.key]: claudeComposer,
 };
 
+/**
+ * SMTP first, deliberately. Cold outbound run through the same sender as the
+ * product's transactional mail couples their reputations: spam complaints from
+ * outreach degrade delivery of password resets and receipts. A real mailbox
+ * keeps the two apart. Order matters here because it decides the fallback when
+ * nothing is explicitly configured.
+ */
 const SEND: Record<string, SendProvider> = {
-  [resendSender.key]: resendSender,
   [smtpSender.key]: smtpSender,
+  [resendSender.key]: resendSender,
 };
 
 /**
@@ -88,6 +95,28 @@ export function getComposeProvider(key?: string | null): ComposeProvider {
 
 export function getSendProvider(key?: string | null): SendProvider {
   return resolve("send", SEND, key, process.env.OUTBOUND_SEND_PROVIDER);
+}
+
+/**
+ * What a send provider can report back, looked up without the availability
+ * filtering `getSendProvider` applies. The dashboard needs this to tell the
+ * difference between "no opens yet" and "opens are not measurable" — showing 0%
+ * for the second is a lie, and it is the kind of lie someone acts on.
+ */
+export function describeSendProvider(key?: string | null): {
+  key: string;
+  label: string;
+  tracksOpens: boolean;
+  tracksBounces: boolean;
+} | null {
+  const p = key ? SEND[key] : undefined;
+  if (!p) return null;
+  return {
+    key: p.key,
+    label: p.label,
+    tracksOpens: p.tracksOpens,
+    tracksBounces: p.tracksBounces,
+  };
 }
 
 /** Used by the campaign form to show only providers that will actually work. */

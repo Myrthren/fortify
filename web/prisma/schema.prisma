@@ -795,7 +795,7 @@ model OutboundCampaign {
 
   // Behaviour
   discoveryProvider    String  @default("google-maps") // registry key
-  sendProvider         String  @default("resend") // registry key
+  sendProvider         String  @default("smtp") // registry key
   dailySendCap         Int     @default(30)
   minHoursBetweenSends Int     @default(0) // 0 = spread evenly across the window
   sendWindowStartUtc   Int     @default(8) // hour of day, UTC

@@ -61,7 +61,7 @@ export async function POST(req: Request) {
       senderTitle: str(body.senderTitle, 120),
       brandVoiceId: str(body.brandVoiceId, 60),
       discoveryProvider: str(body.discoveryProvider, 40) ?? "google-maps",
-      sendProvider: str(body.sendProvider, 40) ?? "resend",
+      sendProvider: str(body.sendProvider, 40) ?? "smtp",
       dailySendCap: num(body.dailySendCap, 1, 500, 30),
       sendWindowStartUtc: num(body.sendWindowStartUtc, 0, 23, 8),
       sendWindowEndUtc: num(body.sendWindowEndUtc, 0, 23, 17),

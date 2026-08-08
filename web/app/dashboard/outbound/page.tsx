@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { LockedPage } from "@/components/locked-page";
 import { OutboundClient } from "@/components/outbound-client";
-import { listProviders } from "@/lib/outbound/registry";
+import { describeSendProvider, listProviders } from "@/lib/outbound/registry";
 import { Send, Search, Brain, MessagesSquare } from "lucide-react";
 
 export default async function OutboundPage() {
@@ -83,11 +83,19 @@ export default async function OutboundPage() {
     }),
   ]);
 
+  // Whether any campaign sends through something that reports opens/bounces at
+  // all. If none do, those rates are unmeasurable rather than zero.
+  const tracking = {
+    opens: campaigns.some((c) => describeSendProvider(c.sendProvider)?.tracksOpens),
+    bounces: campaigns.some((c) => describeSendProvider(c.sendProvider)?.tracksBounces),
+  };
+
   return (
     <div className="min-h-screen">
       <DashboardNav user={user} active="outbound" />
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
         <OutboundClient
+          tracking={tracking}
           campaigns={campaigns.map((c) => ({
             id: c.id,
             name: c.name,

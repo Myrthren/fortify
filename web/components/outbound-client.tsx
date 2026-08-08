@@ -90,12 +90,14 @@ export function OutboundClient({
   stats,
   leads,
   providers,
+  tracking,
 }: {
   campaigns: Campaign[];
   voices: { id: string; name: string }[];
   stats: Stats;
   leads: Lead[];
   providers: Providers;
+  tracking: { opens: boolean; bounces: boolean };
 }) {
   const router = useRouter();
   const [campaigns, setCampaigns] = useState(initialCampaigns);
@@ -243,8 +245,14 @@ export function OutboundClient({
         <Metric label="Meetings booked" value={stats.meetings} />
         <Metric
           label="Open rate"
-          value={sendRate(stats.opened)}
-          hint={stats.emailsSent < 20 ? "too few sends to read into" : undefined}
+          value={tracking.opens ? sendRate(stats.opened) : "—"}
+          hint={
+            !tracking.opens
+              ? "your sender does not report opens"
+              : stats.emailsSent < 20
+                ? "too few sends to read into"
+                : undefined
+          }
         />
         <Metric
           label="Reply rate"
@@ -253,12 +261,18 @@ export function OutboundClient({
         />
         <Metric
           label="Bounce rate"
-          value={sendRate(stats.bounced)}
-          warn={stats.emailsSent >= 20 && stats.bounced / Math.max(1, stats.emailsSent) > 0.03}
+          value={tracking.bounces ? sendRate(stats.bounced) : "—"}
+          warn={
+            tracking.bounces &&
+            stats.emailsSent >= 20 &&
+            stats.bounced / Math.max(1, stats.emailsSent) > 0.03
+          }
           hint={
-            stats.emailsSent >= 20 && stats.bounced / Math.max(1, stats.emailsSent) > 0.03
-              ? "above 3% — pause and check your list"
-              : undefined
+            !tracking.bounces
+              ? "bounces arrive in your mailbox, not here"
+              : stats.emailsSent >= 20 && stats.bounced / Math.max(1, stats.emailsSent) > 0.03
+                ? "above 3% — pause and check your list"
+                : undefined
           }
         />
       </div>
@@ -716,7 +730,14 @@ function NewCampaignModal({
                 ))}
               </select>
             </Field>
-            <Field label="Send with">
+            <Field
+              label="Send with"
+              hint={
+                form.sendProvider === "smtp"
+                  ? "Sends from your own mailbox, so outreach complaints cannot hurt the sender that carries Fortify's account emails. No open tracking, and bounces land in that mailbox rather than here."
+                  : "Reports opens, bounces and replies automatically. Shares sender reputation with Fortify's own account emails."
+              }
+            >
               <select
                 className="input"
                 value={form.sendProvider}
