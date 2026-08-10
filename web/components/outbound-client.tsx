@@ -97,7 +97,7 @@ export function OutboundClient({
   stats: Stats;
   leads: Lead[];
   providers: Providers;
-  tracking: { opens: boolean; bounces: boolean };
+  tracking: { opens: boolean; bounces: boolean; repliesAutomatic: boolean };
 }) {
   const router = useRouter();
   const [campaigns, setCampaigns] = useState(initialCampaigns);
@@ -233,6 +233,18 @@ export function OutboundClient({
           <button onClick={() => setNotice(null)} className="ml-auto">
             <X className="h-4 w-4" />
           </button>
+        </div>
+      )}
+
+      {/* Reply capture is the one guarantee that must not be silently manual. */}
+      {!tracking.repliesAutomatic && campaigns.length > 0 && (
+        <div className="mb-6 flex items-start gap-2 rounded-lg border border-border-strong bg-bg-elevated px-4 py-3 text-sm">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-text-muted" />
+          <span className="text-text-muted">
+            <span className="font-medium text-text">Replies are not being collected.</span> Nothing
+            is reading the sending mailbox, so a reply only stops the follow-up sequence once you
+            paste it into that lead. Set the IMAP variables to have it happen automatically.
+          </span>
         </div>
       )}
 

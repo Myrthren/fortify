@@ -4,7 +4,11 @@ import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { LockedPage } from "@/components/locked-page";
 import { OutboundClient } from "@/components/outbound-client";
-import { describeSendProvider, listProviders } from "@/lib/outbound/registry";
+import {
+  describeSendProvider,
+  hasInboxProvider,
+  listProviders,
+} from "@/lib/outbound/registry";
 import { Send, Search, Brain, MessagesSquare } from "lucide-react";
 
 export default async function OutboundPage() {
@@ -85,9 +89,18 @@ export default async function OutboundPage() {
 
   // Whether any campaign sends through something that reports opens/bounces at
   // all. If none do, those rates are unmeasurable rather than zero.
+  //
+  // Mailbox polling counts for bounces but not opens: a delivery failure comes
+  // back as a message that can be read, an open leaves no trace anywhere.
+  const inbox = hasInboxProvider();
+  const providerBounces = campaigns.some(
+    (c) => describeSendProvider(c.sendProvider)?.tracksBounces
+  );
   const tracking = {
     opens: campaigns.some((c) => describeSendProvider(c.sendProvider)?.tracksOpens),
-    bounces: campaigns.some((c) => describeSendProvider(c.sendProvider)?.tracksBounces),
+    bounces: inbox || providerBounces,
+    /** False means replies only reach the system when someone pastes them in. */
+    repliesAutomatic: inbox || providerBounces,
   };
 
   return (

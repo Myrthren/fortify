@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { pollInbox } from "@/lib/outbound/engine/inbox";
+import { hasInboxProvider } from "@/lib/outbound/registry";
 import { tickAllCampaigns } from "@/lib/outbound/engine/tick";
 
 export const maxDuration = 60;
@@ -6,9 +8,10 @@ export const maxDuration = 60;
 /**
  * POST /api/cron/outbound-tick
  *
- * The heartbeat of the outbound employee. Every run advances each active
- * campaign by one bounded step: source leads, read a few sites, analyse, draft,
- * and send at most one email per campaign.
+ * The heartbeat of the outbound employee. Every run reads replies out of the
+ * sending mailbox, then advances each active campaign by one bounded step:
+ * source leads, read a few sites, analyse, draft, and send at most one email
+ * per campaign.
  *
  * Runs frequently and does little each time, rather than rarely and a lot. That
  * keeps every invocation inside the function timeout, spreads sends naturally
@@ -22,8 +25,22 @@ export async function POST(req: Request) {
   }
 
   try {
+    // Read replies BEFORE advancing anything. A reply that arrived since the
+    // last run has to close its lead before the tick reaches the follow-up
+    // that is due for it — otherwise the chase goes out to someone who already
+    // answered, which is the single worst thing this system could do.
+    let inbox = null;
+    if (hasInboxProvider()) {
+      try {
+        inbox = await pollInbox();
+      } catch (e) {
+        // A mailbox that will not open must not stop the pipeline.
+        console.error("[cron/outbound-tick] inbox poll failed", e);
+      }
+    }
+
     // Leave headroom under maxDuration so the response still gets written.
-    const results = await tickAllCampaigns({ budgetMs: 45_000 });
+    const results = await tickAllCampaigns({ budgetMs: 35_000 });
 
     const totals = results.reduce(
       (acc, r) => ({
@@ -39,10 +56,17 @@ export async function POST(req: Request) {
 
     console.log(
       `[cron/outbound-tick] ${results.length} campaign(s):`,
-      JSON.stringify(totals)
+      JSON.stringify(totals),
+      inbox ? `inbox: ${JSON.stringify(inbox)}` : "inbox: not configured"
     );
 
-    return NextResponse.json({ ok: true, campaigns: results.length, totals, results });
+    return NextResponse.json({
+      ok: true,
+      campaigns: results.length,
+      totals,
+      inbox,
+      results,
+    });
   } catch (e) {
     console.error("[cron/outbound-tick] failed", e);
     return NextResponse.json(

@@ -2,6 +2,7 @@ import { braveDiscovery } from "@/lib/outbound/providers/discovery/brave";
 import { googleMapsDiscovery } from "@/lib/outbound/providers/discovery/google-maps";
 import { claudeAnalysis } from "@/lib/outbound/providers/analysis/claude";
 import { claudeComposer } from "@/lib/outbound/providers/compose/claude";
+import { imapInbox } from "@/lib/outbound/providers/inbox/imap";
 import { fetchScraper } from "@/lib/outbound/providers/scrape/fetch";
 import { resendSender } from "@/lib/outbound/providers/send/resend";
 import { smtpSender } from "@/lib/outbound/providers/send/smtp";
@@ -9,6 +10,7 @@ import type {
   AnalysisProvider,
   ComposeProvider,
   DiscoveryProvider,
+  InboxProvider,
   ScrapeProvider,
   SendProvider,
 } from "@/lib/outbound/types";
@@ -50,6 +52,10 @@ const COMPOSE: Record<string, ComposeProvider> = {
 const SEND: Record<string, SendProvider> = {
   [smtpSender.key]: smtpSender,
   [resendSender.key]: resendSender,
+};
+
+const INBOX: Record<string, InboxProvider> = {
+  [imapInbox.key]: imapInbox,
 };
 
 /**
@@ -97,6 +103,15 @@ export function getSendProvider(key?: string | null): SendProvider {
   return resolve("send", SEND, key, process.env.OUTBOUND_SEND_PROVIDER);
 }
 
+export function getInboxProvider(key?: string | null): InboxProvider {
+  return resolve("inbox", INBOX, key, process.env.OUTBOUND_INBOX_PROVIDER);
+}
+
+/** True when replies can be collected automatically rather than pasted in. */
+export function hasInboxProvider(): boolean {
+  return Object.values(INBOX).some((p) => p.isAvailable());
+}
+
 /**
  * What a send provider can report back, looked up without the availability
  * filtering `getSendProvider` applies. The dashboard needs this to tell the
@@ -134,5 +149,6 @@ export function listProviders() {
     analysis: describe(ANALYSIS),
     compose: describe(COMPOSE),
     send: describe(SEND),
+    inbox: describe(INBOX),
   };
 }

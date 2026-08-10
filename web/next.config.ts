@@ -9,6 +9,10 @@ const nextConfig: NextConfig = {
   // Avoids spurious build failures on Netlify when CI environments differ.
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
+  // Mail libraries resolve modules dynamically at runtime, which webpack cannot
+  // trace — bundling them produces a build that works locally and fails on
+  // Netlify. Keep them external so they load from node_modules as written.
+  serverExternalPackages: ["imapflow", "mailparser", "nodemailer"],
   images: {
     remotePatterns: [{ protocol: "https", hostname: "cdn.discordapp.com" }],
   },

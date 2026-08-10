@@ -265,3 +265,58 @@ export interface SendProvider {
   readonly tracksBounces: boolean;
   send(message: OutboundMessage): Promise<SendResult>;
 }
+
+// ─── Inbox (reading replies back) ─────────────────────────
+
+/**
+ * A message pulled from the sending mailbox.
+ *
+ * This exists because a plain mailbox has no webhook. Providers that push
+ * events (Resend) never need it; providers that are just SMTP do, and without
+ * it "a reply stops the sequence" would depend on someone pasting replies in by
+ * hand — which is the one guarantee in this system that cannot be manual.
+ */
+export type InboundMessage = {
+  /** IMAP UID within the mailbox. Used as the resume point, not as an id. */
+  uid: number;
+  /** RFC Message-ID of this reply. */
+  messageId: string | null;
+  /** Message-IDs this is a reply to, newest intent first. */
+  inReplyTo: string[];
+  from: string | null;
+  fromName: string | null;
+  to: string[];
+  subject: string;
+  /** Body with quoted history and signature already stripped. */
+  text: string;
+  receivedAt: Date;
+  /** True when this is a delivery status notification rather than a human. */
+  isBounce: boolean;
+  /** For a DSN, the address that actually failed. */
+  bouncedRecipient: string | null;
+  /** True when the DSN reports a permanent failure. */
+  isHardBounce: boolean;
+};
+
+export type InboxCursor = {
+  uidValidity: string | null;
+  lastUid: number;
+};
+
+export type InboxFetch = {
+  messages: InboundMessage[];
+  cursor: InboxCursor;
+};
+
+export interface InboxProvider {
+  readonly key: string;
+  readonly label: string;
+  isAvailable(): boolean;
+  /** Identifies the mailbox, so its read cursor can be stored against it. */
+  identity(): { host: string; username: string; mailbox: string };
+  /**
+   * Everything arrived since `cursor`. Must not mutate the mailbox — no marking
+   * as read, no moving, no deleting. It is the user's real inbox.
+   */
+  fetchSince(cursor: InboxCursor, limit: number): Promise<InboxFetch>;
+}

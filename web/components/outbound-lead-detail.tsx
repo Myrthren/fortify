@@ -376,8 +376,9 @@ export function OutboundLeadDetail({
         ) : (
           <>
             <p className="mb-3 text-sm text-text-muted">
-              If they replied somewhere the engine cannot see, paste it here. It classifies the
-              reply and stops all further follow-ups to this lead.
+              Replies to the sending mailbox are picked up automatically. Paste one here only if it
+              reached you some other way — forwarded, or sent to a different address. Either route
+              classifies the reply and stops all further follow-ups to this lead.
             </p>
             {replyBox ? (
               <>

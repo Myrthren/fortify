@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-08-07";
+export const KNOWLEDGE_VERSION = "2026-08-09";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -37,7 +37,7 @@ Growth:
 - Lead Extractor — paste TikTok and Instagram profile URLs in bulk; Fortify researches each business (bio, linked website, contact/about pages, link-in-bio pages) and extracts their email and phone number. Pro: 10 accounts/batch. Elite: 25/batch plus web-search fallback and optional AI "approach strategy" per lead found (best angle to pitch them). Apex: 50/batch plus an optional deep scan that crawls extra pages and widens the search. (Pro+)
 - AI Matchmaking — Claude surfaces top Fortune Fortress members worth talking to (Pro+)
 - Fortify Recon — find local and niche businesses by location and category via Google Maps; returns name, address, phone, website, and rating, ready to prospect (Elite+)
-- Outbound Engine — a fully autonomous AI cold email system. You describe your target and your offer; it finds matching businesses, reads their websites, analyses them across 11 dimensions (website quality, lead capture, booking, CRM, chatbot, automation, SEO and more), works out where automation would genuinely help, and writes a completely unique email to each one. Every email varies its greeting, opening, structure, tone, sign-off and call to action, is checked against a banned-phrase and fabrication filter before it can send, and is capped at 70-140 words. It sends inside your chosen hours at your daily cap, runs the follow-up sequence, and stops instantly the moment someone replies. Positive replies are DMed to you. Drafts wait for your approval unless you switch on auto-send. (Elite+)
+- Outbound Engine — a fully autonomous AI cold email system. You describe your target and your offer; it finds matching businesses, reads their websites, analyses them across 11 dimensions (website quality, lead capture, booking, CRM, chatbot, automation, SEO and more), works out where automation would genuinely help, and writes a completely unique email to each one. Every email varies its greeting, opening, structure, tone, sign-off and call to action, is checked against a banned-phrase and fabrication filter before it can send, and is capped at 70-140 words. It sends inside your chosen hours at your daily cap, runs the follow-up sequence, reads replies straight out of your sending mailbox, and stops instantly the moment someone replies. Positive replies are DMed to you, and bounced addresses are never contacted again. Drafts wait for your approval unless you switch on auto-send. (Elite+)
 
 Research:
 - Funnel Auditor — score and fix any landing page URL with AI (Pro+)

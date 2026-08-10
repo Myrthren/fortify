@@ -2,7 +2,8 @@ import type { Config } from "@netlify/functions";
 
 /**
  * Fires every 15 minutes.
- * Advances every active outbound campaign by one bounded step.
+ * Collects replies from the sending mailbox, then advances every active
+ * outbound campaign by one bounded step.
  *
  * The cadence is the pacing mechanism: the engine sends at most one email per
  * campaign per tick, so four ticks an hour across a 9-hour window is a natural

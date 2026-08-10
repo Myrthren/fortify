@@ -940,6 +940,27 @@ model OutboundEvent {
   @@index([leadId, createdAt])
 }
 
+// Resume point for reading replies out of the sending mailbox.
+//
+// Tracking a UID rather than flagging messages as read is deliberate: this is
+// the owner's real inbox, and a background job must not change what looks unread
+// in it. UIDs only mean anything within one uidValidity generation, so that is
+// stored alongside and a change resets the cursor.
+model OutboundInbox {
+  id          String    @id @default(cuid())
+  host        String
+  username    String
+  mailbox     String    @default("INBOX")
+  uidValidity String?
+  lastUid     Int       @default(0)
+  lastPolledAt DateTime?
+  lastError   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([host, username, mailbox])
+}
+
 // Global per-user do-not-contact list. Survives lead deletion, which is the
 // whole point — an unsubscribe must outlive the record that caused it.
 model OutboundSuppression {
