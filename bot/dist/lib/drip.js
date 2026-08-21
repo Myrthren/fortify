@@ -316,7 +316,16 @@ async function handleJoin(member) {
         });
         return;
     }
-    // 3. Queue the delayed message before any sending at all.
+    // 3. Queue the delayed message before any sending at all. A rejoin finds its
+    //    old enrolment and stops here rather than welcoming the same person twice.
+    const existing = await db_1.db.dripEnrollment.findUnique({
+        where: { discordId_campaign: { discordId, campaign: client_1.DripCampaign.WELCOME } },
+        select: { id: true },
+    });
+    if (existing) {
+        await bump("rejoin_skipped");
+        return;
+    }
     await enroll(discordId, "WELCOME", 2, jittered(Date.now() + STAGE_GAP_MS));
     // 4 & 5. Opener, then quiz in its own try/catch (inside sendStage).
     const result = await sendStage(member.client, discordId, "WELCOME", 1);
