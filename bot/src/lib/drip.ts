@@ -86,10 +86,11 @@ export async function metricsFor(periodStart: Date) {
 
 // ── Campaign state ──────────────────────────────────────────────────────────
 
+/** Both campaigns start paused (the schema default) — see `/drip resume`. */
 export async function getState(campaign: DripCampaign) {
   return db.dripCampaignState.upsert({
     where: { campaign },
-    create: { campaign, paused: campaign === "ACTIVATION" },
+    create: { campaign },
     update: {},
   });
 }
@@ -329,6 +330,16 @@ export async function handleJoin(member: GuildMember) {
   const discordId = member.id;
   if (member.user.bot || discordId === OWNER_ID) return;
   await bump("joined");
+
+  // The pause flag gates the join flow as well as the sweeps, so the campaign
+  // can be deployed and previewed before a single real member is messaged.
+  // Joins during a pause are counted and skipped rather than backfilled — a
+  // welcome that arrives days late reads worse than none at all.
+  const state = await getState("WELCOME");
+  if (state.paused) {
+    await bump("join_while_paused");
+    return;
+  }
 
   if (await isOptedOut(discordId)) return;
 

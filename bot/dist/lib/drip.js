@@ -78,10 +78,11 @@ async function metricsFor(periodStart) {
     return Object.fromEntries(rows.map((r) => [r.key, r.count]));
 }
 // ── Campaign state ──────────────────────────────────────────────────────────
+/** Both campaigns start paused (the schema default) — see `/drip resume`. */
 async function getState(campaign) {
     return db_1.db.dripCampaignState.upsert({
         where: { campaign },
-        create: { campaign, paused: campaign === "ACTIVATION" },
+        create: { campaign },
         update: {},
     });
 }
@@ -284,6 +285,15 @@ async function handleJoin(member) {
     if (member.user.bot || discordId === exports.OWNER_ID)
         return;
     await bump("joined");
+    // The pause flag gates the join flow as well as the sweeps, so the campaign
+    // can be deployed and previewed before a single real member is messaged.
+    // Joins during a pause are counted and skipped rather than backfilled — a
+    // welcome that arrives days late reads worse than none at all.
+    const state = await getState("WELCOME");
+    if (state.paused) {
+        await bump("join_while_paused");
+        return;
+    }
     if (await isOptedOut(discordId))
         return;
     // 1. Someone can pay before joining — checkout lives outside Discord, so the
