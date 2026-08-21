@@ -232,3 +232,61 @@ model PodMember {
 
   @@id([podId, userId])
 }
+// ─── Drip DM campaigns (Discord) ─────────────────────────
+enum DripCampaign {
+  WELCOME     // fires on join, one person at a time
+  ACTIVATION  // owner-triggered sweep over members without a plan
+}
+
+enum DripStatus {
+  PENDING
+  DONE
+  STOPPED
+}
+
+// One row per person per campaign. The original design kept the whole queue as
+// a single JSON blob because its store had no prefix scan; Postgres does, so the
+// due-at index replaces that workaround and removes the single-writer limit.
+model DripEnrollment {
+  id        String       @id @default(cuid())
+  discordId String
+  campaign  DripCampaign
+  stage     Int          @default(1)
+  dueAt     DateTime
+  status    DripStatus   @default(PENDING)
+  sentCount Int          @default(0)
+  lastError String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@unique([discordId, campaign]) // re-running a rollout tops up, never restarts
+  @@index([campaign, status, dueAt])
+}
+
+model DripCampaignState {
+  campaign            DripCampaign @id
+  paused              Boolean      @default(true)
+  pausedReason        String?
+  consecutiveFailures Int          @default(0)
+  rolledOutAt         DateTime?
+  updatedAt           DateTime     @updatedAt
+}
+
+// Permanent and keyed by Discord ID, so it survives re-seeding and applies to
+// people who never created a Fortify account.
+model DripOptOut {
+  discordId String   @id
+  source    String   @default("button")
+  createdAt DateTime @default(now())
+}
+
+// Counters are period-keyed rather than reset in place, so a failed weekly
+// report cannot destroy a week of data.
+model DripMetric {
+  periodStart DateTime
+  key         String
+  count       Int      @default(0)
+
+  @@id([periodStart, key])
+}
+

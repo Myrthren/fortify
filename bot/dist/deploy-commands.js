@@ -38,6 +38,7 @@ const discord_js_1 = require("discord.js");
 const hook = __importStar(require("./commands/hook"));
 const upgrade = __importStar(require("./commands/upgrade"));
 const profile = __importStar(require("./commands/profile"));
+const profileEdit = __importStar(require("./commands/profile-edit"));
 const voice = __importStar(require("./commands/voice"));
 const outreach = __importStar(require("./commands/outreach"));
 const audit = __importStar(require("./commands/audit"));
@@ -46,10 +47,12 @@ const competitors = __importStar(require("./commands/competitors"));
 const matchmake = __importStar(require("./commands/matchmake"));
 const ticket = __importStar(require("./commands/ticket"));
 const supportsetup = __importStar(require("./commands/supportsetup"));
+const drip = __importStar(require("./commands/drip"));
 const commands = [
     hook.data.toJSON(),
     upgrade.data.toJSON(),
     profile.data.toJSON(),
+    profileEdit.data.toJSON(),
     voice.data.toJSON(),
     outreach.data.toJSON(),
     audit.data.toJSON(),
@@ -58,6 +61,7 @@ const commands = [
     matchmake.data.toJSON(),
     ticket.data.toJSON(),
     supportsetup.data.toJSON(),
+    drip.data.toJSON(),
 ];
 const rest = new discord_js_1.REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN);
 (async () => {

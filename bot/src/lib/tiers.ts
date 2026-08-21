@@ -14,3 +14,12 @@ export const TIER_NAMES: Record<Tier, string> = {
   ELITE: "Elite",
   APEX: "Apex",
 };
+
+// Mirrors web/lib/tiers.ts — the bot assigns these on join when a member
+// already has an active plan.
+export const TIER_TO_ROLE_ID: Record<Tier, string | undefined> = {
+  FREE: undefined,
+  PRO: "1497408012816744568",
+  ELITE: "1497408076486148247",
+  APEX: "1497408133444931664",
+};

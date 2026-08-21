@@ -38,6 +38,8 @@ const discord_js_1 = require("discord.js");
 const hook = __importStar(require("./commands/hook"));
 const upgrade = __importStar(require("./commands/upgrade"));
 const profile = __importStar(require("./commands/profile"));
+const profileEdit = __importStar(require("./commands/profile-edit"));
+const profile_edit_1 = require("./commands/profile-edit");
 const voice = __importStar(require("./commands/voice"));
 const outreach = __importStar(require("./commands/outreach"));
 const audit = __importStar(require("./commands/audit"));
@@ -46,11 +48,15 @@ const competitors = __importStar(require("./commands/competitors"));
 const matchmake = __importStar(require("./commands/matchmake"));
 const ticket = __importStar(require("./commands/ticket"));
 const supportsetup = __importStar(require("./commands/supportsetup"));
+const drip = __importStar(require("./commands/drip"));
 const chat_1 = require("./lib/chat");
+const drip_1 = require("./lib/drip");
+const drip_quiz_1 = require("./lib/drip-quiz");
+const drip_scheduler_1 = require("./lib/drip-scheduler");
 const OWNER_ID = "731207920007643167";
 const commands = new discord_js_1.Collection();
 for (const cmd of [
-    hook, upgrade, profile, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup,
+    hook, upgrade, profile, profileEdit, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup, drip,
 ]) {
     commands.set(cmd.data.name, cmd);
 }
@@ -59,10 +65,16 @@ const client = new discord_js_1.Client({
         discord_js_1.GatewayIntentBits.Guilds,
         discord_js_1.GatewayIntentBits.GuildMessages,
         discord_js_1.GatewayIntentBits.MessageContent, // privileged — must be enabled in Discord Dev Portal
+        discord_js_1.GatewayIntentBits.GuildMembers, // privileged — needed for admin find_member lookups
     ],
 });
 client.once(discord_js_1.Events.ClientReady, (c) => {
-    console.log(`✅ Fortify bot online as ${c.user.tag}`);
+    console.log(`✅ Fortify bot online as ${c.user.tag} — build includes role-toggle handler`);
+    (0, drip_scheduler_1.startDripScheduler)(c);
+});
+// ── Drip: someone joins the server ───────────────────────────────────────────
+client.on(discord_js_1.Events.GuildMemberAdd, async (member) => {
+    await (0, drip_1.handleJoin)(member).catch((e) => console.error("[drip] join handler failed:", e));
 });
 client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
     if (interaction.isChatInputCommand()) {
@@ -83,7 +95,19 @@ client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
         }
     }
     else if (interaction.isButton()) {
-        await handleButtonInteraction(interaction).catch((e) => console.error("[button] error:", e));
+        await handleButtonInteraction(interaction).catch(async (e) => {
+            console.error("[button] error:", e);
+            try {
+                const msg = { content: "Something went wrong. Please try again.", ephemeral: true };
+                if (interaction.deferred || interaction.replied) {
+                    await interaction.editReply(msg.content);
+                }
+                else {
+                    await interaction.reply(msg);
+                }
+            }
+            catch { }
+        });
     }
     else if (interaction.isModalSubmit()) {
         await handleModalSubmit(interaction).catch((e) => console.error("[modal] error:", e));
@@ -92,6 +116,38 @@ client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
 // ── Support: user clicks "Open a Ticket" from #support embed ─────────────────
 async function handleButtonInteraction(interaction) {
     const id = interaction.customId;
+    // ── Onboarding quiz: every answer lives in the button's own ID ────────────
+    if (id.startsWith(drip_quiz_1.QUIZ_PREFIX)) {
+        const outcome = await (0, drip_quiz_1.handleQuizClick)(interaction);
+        if (outcome === "quiz_started" || outcome === "quiz_completed")
+            await (0, drip_1.bump)(outcome);
+        return;
+    }
+    // ── Drip opt-out ─────────────────────────────────────────────────────────
+    if (id === "drip_stop") {
+        await (0, drip_1.optOut)(interaction.user.id);
+        return interaction.reply({
+            content: "Done — no more Fortify DMs from me. The bot still answers you in the server and by mention.",
+            ephemeral: true,
+        });
+    }
+    // ── Role toggle button (e.g. "role_toggle_1469480118912024791") ───────────
+    if (id.startsWith("role_toggle_")) {
+        const roleId = id.slice("role_toggle_".length);
+        const guild = interaction.guild;
+        if (!guild)
+            return interaction.reply({ content: "Server not found.", ephemeral: true });
+        const member = await guild.members.fetch(interaction.user.id);
+        const hasRole = member.roles.cache.has(roleId);
+        if (hasRole) {
+            await member.roles.remove(roleId);
+            return interaction.reply({ content: "✅ Role removed — you'll no longer receive update notifications.", ephemeral: true });
+        }
+        else {
+            await member.roles.add(roleId);
+            return interaction.reply({ content: "✅ You now have the **Fortify Updates** role and will be notified of platform changes.", ephemeral: true });
+        }
+    }
     // ── User clicks "Open a Ticket" from #support channel embed ──────────────
     if (id === "support_open_modal") {
         const modal = new discord_js_1.ModalBuilder()
@@ -229,6 +285,10 @@ async function handleButtonInteraction(interaction) {
 }
 // ── Support: user submits the modal from #support embed ──────────────────────
 async function handleModalSubmit(interaction) {
+    if (interaction.customId.startsWith("profile_edit_modal_")) {
+        await (0, profile_edit_1.handleProfileEditModal)(interaction);
+        return;
+    }
     if (!interaction.customId.startsWith("support_modal_"))
         return;
     await interaction.deferReply({ ephemeral: true });

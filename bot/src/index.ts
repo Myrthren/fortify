@@ -30,7 +30,11 @@ import * as competitors from "./commands/competitors";
 import * as matchmake from "./commands/matchmake";
 import * as ticket from "./commands/ticket";
 import * as supportsetup from "./commands/supportsetup";
+import * as drip from "./commands/drip";
 import { handleMention } from "./lib/chat";
+import { bump, handleJoin, optOut } from "./lib/drip";
+import { QUIZ_PREFIX, handleQuizClick } from "./lib/drip-quiz";
+import { startDripScheduler } from "./lib/drip-scheduler";
 
 type Command = { data: { name: string }; execute: (i: any) => Promise<void> };
 
@@ -38,7 +42,7 @@ const OWNER_ID = "731207920007643167";
 
 const commands = new Collection<string, Command>();
 for (const cmd of [
-  hook, upgrade, profile, profileEdit, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup,
+  hook, upgrade, profile, profileEdit, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup, drip,
 ] as Command[]) {
   commands.set(cmd.data.name, cmd);
 }
@@ -54,6 +58,12 @@ const client = new Client({
 
 client.once(Events.ClientReady, (c) => {
   console.log(`✅ Fortify bot online as ${c.user.tag} — build includes role-toggle handler`);
+  startDripScheduler(c);
+});
+
+// ── Drip: someone joins the server ───────────────────────────────────────────
+client.on(Events.GuildMemberAdd, async (member) => {
+  await handleJoin(member).catch((e) => console.error("[drip] join handler failed:", e));
 });
 
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
@@ -92,6 +102,22 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 // ── Support: user clicks "Open a Ticket" from #support embed ─────────────────
 async function handleButtonInteraction(interaction: ButtonInteraction) {
   const id = interaction.customId;
+
+  // ── Onboarding quiz: every answer lives in the button's own ID ────────────
+  if (id.startsWith(QUIZ_PREFIX)) {
+    const outcome = await handleQuizClick(interaction);
+    if (outcome === "quiz_started" || outcome === "quiz_completed") await bump(outcome);
+    return;
+  }
+
+  // ── Drip opt-out ─────────────────────────────────────────────────────────
+  if (id === "drip_stop") {
+    await optOut(interaction.user.id);
+    return interaction.reply({
+      content: "Done — no more Fortify DMs from me. The bot still answers you in the server and by mention.",
+      ephemeral: true,
+    });
+  }
 
   // ── Role toggle button (e.g. "role_toggle_1469480118912024791") ───────────
   if (id.startsWith("role_toggle_")) {

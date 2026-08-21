@@ -12,6 +12,7 @@ import * as competitors from "./commands/competitors";
 import * as matchmake from "./commands/matchmake";
 import * as ticket from "./commands/ticket";
 import * as supportsetup from "./commands/supportsetup";
+import * as drip from "./commands/drip";
 
 const commands = [
   hook.data.toJSON(),
@@ -26,6 +27,7 @@ const commands = [
   matchmake.data.toJSON(),
   ticket.data.toJSON(),
   supportsetup.data.toJSON(),
+  drip.data.toJSON(),
 ];
 
 const rest = new REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN!);

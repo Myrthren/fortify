@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.TIER_NAMES = exports.TIER_LIMITS = void 0;
+exports.TIER_TO_ROLE_ID = exports.TIER_NAMES = exports.TIER_LIMITS = void 0;
 // Same source of truth as web/lib/tiers.ts
 exports.TIER_LIMITS = {
     FREE: { dailyGenerations: 10, brandVoices: 0, monthlyAudits: 0, monthlyOutreach: 0, watchTerms: 0, competitors: 0 },
@@ -13,4 +13,12 @@ exports.TIER_NAMES = {
     PRO: "Pro",
     ELITE: "Elite",
     APEX: "Apex",
+};
+// Mirrors web/lib/tiers.ts — the bot assigns these on join when a member
+// already has an active plan.
+exports.TIER_TO_ROLE_ID = {
+    FREE: undefined,
+    PRO: "1497408012816744568",
+    ELITE: "1497408076486148247",
+    APEX: "1497408133444931664",
 };
