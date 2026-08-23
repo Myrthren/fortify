@@ -33,6 +33,8 @@ Both share the same Postgres database (Supabase). The site is the product surfac
 | Elite | £79/mo | Elite |
 | Apex | £199/mo | Apex |
 
+Billed through **PayPal or Whop** — both grant the same tiers and Discord roles.
+
 ## Setup
 
 ### 1. Install
@@ -120,6 +122,24 @@ After deploy, set webhook URL in PayPal Developer Dashboard:
 `https://fortify-io.com/api/paypal/webhook`
 
 Subscribe to: `BILLING.SUBSCRIPTION.ACTIVATED`, `BILLING.SUBSCRIPTION.CANCELLED`, `BILLING.SUBSCRIPTION.SUSPENDED`, `BILLING.SUBSCRIPTION.PAYMENT.FAILED`, `PAYMENT.SALE.COMPLETED`.
+
+### Whop Billing
+Whop runs alongside PayPal — either provider can grant a tier. Users connect
+from `/dashboard/settings`; `Subscription.provider` records which one owns the
+row, and a lapsed Whop membership never downgrades a PayPal customer.
+
+Webhook URL: `https://fortify-io.com/api/whop/webhook` (the **full path** — a
+bare domain 200s from the homepage and grants nothing).
+Events: `membership_went_valid`, `membership_went_invalid`.
+
+Tiers are separate **plans under one product**, so `WHOP_PLAN_PRO` / `_ELITE` /
+`_APEX` hold plan ids, not product ids. Full setup in `SETUP.md`.
+
+### Affiliate programme
+Whop-native: tracked links, attribution and payouts are all handled by Whop, so
+there is no Fortify code for it. Enabled and priced per-product in the Whop
+dashboard. Caveat: it only attributes **Whop** checkouts — PayPal signups are
+invisible to it, so affiliate traffic has to land on Whop checkout.
 
 ## Notes for contributors
 

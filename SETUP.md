@@ -158,6 +158,61 @@ Open http://localhost:3000.
 4. Events: `BILLING.SUBSCRIPTION.ACTIVATED`, `CANCELLED`, `SUSPENDED`, `EXPIRED`, `PAYMENT.FAILED`, `PAYMENT.SALE.COMPLETED`
 5. Copy the Webhook ID → `PAYPAL_WEBHOOK_ID` in Netlify env vars
 
+### Whop Billing
+Whop runs **alongside** PayPal, not instead of it. A user connects their Whop
+account from `/dashboard/settings`; a server-side membership lookup resolves
+their tier. PayPal keeps ownership of the `Subscription` row if one exists, and
+a lapsed Whop membership can never downgrade a paying PayPal customer.
+
+1. **App** — https://whop.com/dashboard → Developer → Apps. Register redirect
+   URIs (exact, no trailing slash):
+   `https://<your-domain>/api/whop/callback` and
+   `http://localhost:3000/api/whop/callback`. Scopes: `openid`, `profile`, `email`.
+2. **API key** — Developer → API keys, company-scoped (`apik_` prefix). Enable
+   permission `access_pass:basic:read`. Despite the env var being named
+   `WHOP_APP_API_KEY`, this is a **company** key, not an App key — `/v5/app/*`
+   403s with it, which is fine because the code uses `/v2/memberships`.
+3. **Plans** — all three paid tiers are separate renewal **plans under one
+   product**, so the tier is carried by the plan id, not the product id.
+4. **Webhook** — Developer → Webhooks → Create. URL must be the **full path**
+   `https://<your-domain>/api/whop/webhook` (a bare domain returns a cheerful
+   200 from the homepage and silently grants nothing). Events:
+   `membership_went_valid`, `membership_went_invalid`. Copy the `ws_` secret →
+   `WHOP_WEBHOOK_SECRET`.
+5. **Env vars** (Netlify): `WHOP_CLIENT_ID`, `WHOP_APP_API_KEY`,
+   `WHOP_REDIRECT_URI` (production URL), `WHOP_PLAN_PRO`, `WHOP_PLAN_ELITE`,
+   `WHOP_PLAN_APEX`, `WHOP_WEBHOOK_SECRET`.
+
+Two things about the public storefront, both true as of 2026-08-23 and both
+verified against the API rather than the dashboard:
+
+- **No custom route is set.** `GET /api/v2/company` returns
+  `"route": "biz_qe2CAq2m6FpqX8"`, so the public page is literally
+  `whop.com/biz_qe2CAq2m6FpqX8`. Claim a slug before that URL is put in front
+  of anyone.
+- **The product is hidden.** `GET /api/v2/products/prod_31wBhBvvQRh1x` returns
+  `"visibility": "hidden"` — reachable by direct link, absent from listings and
+  from anything that relies on discovery.
+
+### Affiliate programme (Whop-native)
+Whop has a built-in affiliate system — tracked links, attribution and payouts
+are handled by Whop, so there is **no Fortify code involved**. Configure it on
+the product in the Whop dashboard: enable affiliates, set the commission rate,
+and choose recurring vs. first-payment-only.
+
+Two things to decide before switching it on:
+
+- **It only sees Whop checkouts.** PayPal signups are invisible to Whop's
+  attribution, so affiliate links must point at Whop checkout (or at a page
+  that sends people there) or commissions will silently never trigger.
+- **Commission has to clear per-user cost.** AI spend per user is real and
+  varies by tier — price the rate against the heaviest user on each tier, not
+  the average, and remember a recurring rate compounds on a £199/mo Apex sub.
+
+Do not invite affiliates until a real membership has been tested end to end. An
+affiliate link pointing at a checkout that doesn't provision a tier costs you
+commission and a customer at the same time.
+
 ---
 
 ## 9. Smoke test
@@ -187,8 +242,11 @@ exists, so it beats any list kept here.
 - **Virality Engine** — media now uploads to R2, but TikTok publishing returns
   "coming soon" pending Content Posting API approval. YouTube and Facebook publish
   paths are complete. Gated behind the coming-soon page.
-- **Whop billing** — built and DB-migrated, not yet committed or deployed. Blocked
-  on webhook secret, redirect URIs and Netlify env vars.
+- **Whop billing** — live. OAuth, membership lookup, webhook grant/revoke and
+  the settings UI are deployed. Not yet exercised against a real membership, so
+  the shape of the `plan` field on a live membership row is still inferred.
+- **Affiliate programme** — not enabled. Whop-native, dashboard-only; blocked on
+  the commission decision and on the end-to-end membership test above.
 - **Twitter / Notion workflow nodes** — real implementations, need env vars only.
 
 ## Gotchas worth knowing
@@ -197,6 +255,14 @@ exists, so it beats any list kept here.
   See step 5.
 - **`CRON_SECRET` changes need a redeploy.** Until then every scheduled job 401s,
   and a 401 looks like a healthy HTTP response to the scheduler.
+- **The Whop webhook secret is used as a RAW UTF-8 key**, `ws_` prefix included
+  — do not base64-decode it. Whop's SDK examples base64-*encode* the secret
+  before handing it to the Standard Webhooks verifier, which base64-*decodes*
+  it, so the two cancel out. Decoding it yourself yields a garbage key and every
+  delivery 401s with nothing in the logs explaining why.
+- **Whop's dashboard "send test webhook" button omits the signature header** and
+  sends an empty `data` field, so it always 401s. That is expected and does not
+  mean the secret is wrong — only a real membership event proves the path.
 - **Railway doesn't auto-deploy.** Push bot changes, then redeploy by hand.
 - **Both Discord intents must be enabled** or the bot won't start. See step 3A.
 - **Don't keep the repo in OneDrive.** It corrupts `node_modules` and creates
