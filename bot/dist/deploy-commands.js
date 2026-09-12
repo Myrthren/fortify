@@ -48,6 +48,7 @@ const matchmake = __importStar(require("./commands/matchmake"));
 const ticket = __importStar(require("./commands/ticket"));
 const supportsetup = __importStar(require("./commands/supportsetup"));
 const drip = __importStar(require("./commands/drip"));
+const infosetup = __importStar(require("./commands/infosetup"));
 const commands = [
     hook.data.toJSON(),
     upgrade.data.toJSON(),
@@ -62,6 +63,7 @@ const commands = [
     ticket.data.toJSON(),
     supportsetup.data.toJSON(),
     drip.data.toJSON(),
+    infosetup.data.toJSON(),
 ];
 const rest = new discord_js_1.REST({ version: "10" }).setToken(process.env.DISCORD_BOT_TOKEN);
 (async () => {

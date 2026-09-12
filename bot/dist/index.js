@@ -49,6 +49,7 @@ const matchmake = __importStar(require("./commands/matchmake"));
 const ticket = __importStar(require("./commands/ticket"));
 const supportsetup = __importStar(require("./commands/supportsetup"));
 const drip = __importStar(require("./commands/drip"));
+const infosetup = __importStar(require("./commands/infosetup"));
 const chat_1 = require("./lib/chat");
 const drip_1 = require("./lib/drip");
 const drip_quiz_1 = require("./lib/drip-quiz");
@@ -56,7 +57,7 @@ const drip_scheduler_1 = require("./lib/drip-scheduler");
 const OWNER_ID = "731207920007643167";
 const commands = new discord_js_1.Collection();
 for (const cmd of [
-    hook, upgrade, profile, profileEdit, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup, drip,
+    hook, upgrade, profile, profileEdit, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup, drip, infosetup,
 ]) {
     commands.set(cmd.data.name, cmd);
 }
@@ -116,6 +117,13 @@ client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
 // ── Support: user clicks "Open a Ticket" from #support embed ─────────────────
 async function handleButtonInteraction(interaction) {
     const id = interaction.customId;
+    // ── Quiz started from a channel post (the #info embed) ───────────────────
+    // Replies ephemerally so the public message is never edited: each member
+    // gets their own private copy to click through.
+    if (id === "fq_start") {
+        await (0, drip_1.bump)("quiz_offered_channel");
+        return interaction.reply({ ...(0, drip_quiz_1.quizOpener)(), ephemeral: true });
+    }
     // ── Onboarding quiz: every answer lives in the button's own ID ────────────
     if (id.startsWith(drip_quiz_1.QUIZ_PREFIX)) {
         const outcome = await (0, drip_quiz_1.handleQuizClick)(interaction);

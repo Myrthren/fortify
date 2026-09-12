@@ -31,9 +31,10 @@ import * as matchmake from "./commands/matchmake";
 import * as ticket from "./commands/ticket";
 import * as supportsetup from "./commands/supportsetup";
 import * as drip from "./commands/drip";
+import * as infosetup from "./commands/infosetup";
 import { handleMention } from "./lib/chat";
 import { bump, handleJoin, optOut } from "./lib/drip";
-import { QUIZ_PREFIX, handleQuizClick } from "./lib/drip-quiz";
+import { QUIZ_PREFIX, handleQuizClick, quizOpener } from "./lib/drip-quiz";
 import { startDripScheduler } from "./lib/drip-scheduler";
 
 type Command = { data: { name: string }; execute: (i: any) => Promise<void> };
@@ -42,7 +43,7 @@ const OWNER_ID = "731207920007643167";
 
 const commands = new Collection<string, Command>();
 for (const cmd of [
-  hook, upgrade, profile, profileEdit, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup, drip,
+  hook, upgrade, profile, profileEdit, voice, outreach, audit, trends, competitors, matchmake, ticket, supportsetup, drip, infosetup,
 ] as Command[]) {
   commands.set(cmd.data.name, cmd);
 }
@@ -102,6 +103,14 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
 // ── Support: user clicks "Open a Ticket" from #support embed ─────────────────
 async function handleButtonInteraction(interaction: ButtonInteraction) {
   const id = interaction.customId;
+
+  // ── Quiz started from a channel post (the #info embed) ───────────────────
+  // Replies ephemerally so the public message is never edited: each member
+  // gets their own private copy to click through.
+  if (id === "fq_start") {
+    await bump("quiz_offered_channel");
+    return interaction.reply({ ...quizOpener(), ephemeral: true });
+  }
 
   // ── Onboarding quiz: every answer lives in the button's own ID ────────────
   if (id.startsWith(QUIZ_PREFIX)) {
