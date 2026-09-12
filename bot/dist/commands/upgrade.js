@@ -11,7 +11,7 @@ async function execute(interaction) {
         .setTitle("Fortify · Tiers")
         .setColor(0xffffff)
         .setDescription("Pay monthly. Cancel anytime.")
-        .addFields({ name: "Free", value: "10 generations/day · basic profile", inline: false }, { name: "Pro · $29/mo", value: "Unlimited AI · brand voice · trend radar · audits", inline: false }, { name: "Elite · $79/mo", value: "+ competitor scanner · weekly strategy report · alerts", inline: false }, { name: "Apex · $199/mo", value: "+ Claude Opus · custom workflows · concierge", inline: false })
+        .addFields({ name: "Free", value: "10 generations/day · basic profile", inline: false }, { name: "Pro · £29/mo", value: "Unlimited AI · brand voice · trend radar · audits", inline: false }, { name: "Elite · £79/mo", value: "+ competitor scanner · weekly strategy report · alerts", inline: false }, { name: "Apex · £199/mo", value: "+ Claude Opus · custom workflows · concierge", inline: false })
         .setURL("https://fortify-io.com/pricing")
         .setFooter({ text: "Subscribe at fortify-io.com/pricing" });
     await interaction.reply({ embeds: [embed], ephemeral: true });

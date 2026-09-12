@@ -164,9 +164,9 @@ function upgradeNudge() {
                 .setColor(0xffffff)
                 .setTitle("The part most people miss")
                 .setDescription("Free covers ten generations a day, which is enough to prove the tools work and not enough to run on.\n\n" +
-                "**Pro — $29/mo** · unlimited generations, Brand Voice (trains on your own writing so every output sounds like you), five funnel audits a month, trend radar.\n" +
-                "**Elite — $79/mo** · adds the competitor scanner, unlimited audits and weekly strategy reports.\n" +
-                "**Apex — $199/mo** · adds Claude Opus, custom workflows and auto-publish.\n\n" +
+                "**Pro — £29/mo** · unlimited generations, Brand Voice (trains on your own writing so every output sounds like you), five funnel audits a month, trend radar.\n" +
+                "**Elite — £79/mo** · adds the competitor scanner, unlimited audits and weekly strategy reports.\n" +
+                "**Apex — £199/mo** · adds Claude Opus, custom workflows and auto-publish.\n\n" +
                 "Monthly, cancel anytime.")
                 .setFooter({ text: "Fortify · fortify-io.com/pricing" }),
         ],

@@ -55,16 +55,16 @@ const TOOLS_BY_BOTTLENECK: string[][] = [
 function recommendTier(a: number[]): { tier: string; why: string } {
   const [, bottleneck, volume, team] = a;
   if (team === 3) {
-    return { tier: "Apex — $199/mo", why: "At five or more people the concierge setup and custom workflows pay for themselves in a week." };
+    return { tier: "Apex — £199/mo", why: "At five or more people the concierge setup and custom workflows pay for themselves in a week." };
   }
   if (team === 2 || volume === 3) {
-    return { tier: "Elite — $79/mo", why: "Daily output or a team means you need the competitor scanner and weekly strategy reports, not just generation." };
+    return { tier: "Elite — £79/mo", why: "Daily output or a team means you need the competitor scanner and weekly strategy reports, not just generation." };
   }
   if (volume === 0 && team === 0) {
     return { tier: "Start on Free", why: "Ten generations a day is enough to prove the thing works before you pay for anything. Move to Pro when you hit the ceiling." };
   }
   return {
-    tier: "Pro — $29/mo",
+    tier: "Pro — £29/mo",
     why: bottleneck === 1
       ? "Unlimited audits-adjacent work plus Brand Voice is the fastest fix for a page that gets traffic and no conversions."
       : "Unlimited generations and Brand Voice are the two things you will hit first.",
