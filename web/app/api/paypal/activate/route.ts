@@ -38,6 +38,8 @@ export async function POST(req: Request) {
               : null,
           },
           update: {
+            provider: "paypal",
+            whopMembershipId: null,
             paypalSubId: subscriptionID,
             tier,
             status: "ACTIVE",

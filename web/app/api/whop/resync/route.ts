@@ -15,8 +15,8 @@ export async function POST() {
   if (!user?.whopUserId) return NextResponse.json({ error: "Whop not connected" }, { status: 400 });
 
   try {
-    const { tier, membershipId, applied } = await syncWhopTier(userId, user.whopUserId);
-    return NextResponse.json({ ok: true, tier, membershipId, applied });
+    const { tier, membershipId, applied, effectiveTier } = await syncWhopTier(userId, user.whopUserId);
+    return NextResponse.json({ ok: true, tier, membershipId, applied, effectiveTier });
   } catch (e: any) {
     console.error("[whop/resync]", e);
     return NextResponse.json({ error: e.message ?? "Re-sync failed" }, { status: 500 });

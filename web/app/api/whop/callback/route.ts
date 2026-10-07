@@ -36,7 +36,9 @@ export async function GET(req: Request) {
     const { membershipId } = await syncWhopTier(userId, whopUserId);
     if (!membershipId) {
       // Account linked, but no active Fortify membership on Whop.
-      return done("whop=linked_no_membership");
+      const res = done("whop=linked_no_membership");
+      res.cookies.delete("whop_pkce");
+      return res;
     }
 
     const res = done("whop=connected");
@@ -44,6 +46,6 @@ export async function GET(req: Request) {
     return res;
   } catch (e: any) {
     console.error("[whop/callback]", e);
-    return done(`error=${encodeURIComponent(e.message ?? "Whop OAuth failed")}`);
+    return done("error=whop_connection_failed");
   }
 }

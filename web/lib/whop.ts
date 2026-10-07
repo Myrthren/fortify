@@ -127,19 +127,29 @@ export type WhopMembership = { id: string; planId: string; tier: Tier };
  */
 export async function getMemberships(whopUserId: string): Promise<WhopMembership[]> {
   const map = planToTier();
-  if (Object.keys(map).length === 0) {
-    console.error("[whop] no WHOP_PLAN_* env vars set — every user resolves to FREE");
-    return [];
+  if (Object.keys(map).length !== 3) {
+    throw new Error("Whop plan mapping is not configured; refusing to change access");
   }
 
   const url = `${MEMBERSHIPS_URL}?user_id=${encodeURIComponent(whopUserId)}&valid=true`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${appApiKey()}` } });
+  const res = await fetch(url, {
+    headers: { Authorization: `Bearer ${appApiKey()}` },
+    cache: "no-store",
+    signal: AbortSignal.timeout(10000),
+  });
   if (!res.ok) {
     throw new Error(`Whop memberships lookup failed (${res.status}): ${await res.text()}`);
   }
 
   const json = await res.json();
-  const rows: any[] = json.data ?? [];
+  if (!Array.isArray(json.data)) throw new Error("Invalid Whop membership response");
+  // Never revoke access from an incomplete result set. The legacy endpoint
+  // exposes pagination metadata; fail safely if another page is present.
+  if (json.pagination?.next_page || json.pagination?.has_more || json.has_more ||
+      (json.pagination?.total_pages > (json.pagination?.current_page ?? 1))) {
+    throw new Error("Whop membership response is paginated; refusing partial reconciliation");
+  }
+  const rows: any[] = json.data;
   const found: WhopMembership[] = [];
   for (const row of rows) {
     // v2 returns related records as bare id strings (e.g. plan: "plan_xxx").
@@ -252,70 +262,52 @@ export async function resolveTier(whopUserId: string) {
   return highestTier(await getMemberships(whopUserId));
 }
 
-/**
- * Apply a user's Whop membership to their Fortify account.
- * Never downgrades — an existing PayPal sub may already grant a higher tier.
- */
+/** Reconcile upgrades, downgrades and expiry against current Whop membership. */
 export async function syncWhopTier(userId: string, whopUserId: string) {
   const { tier, membershipId } = await resolveTier(whopUserId);
-  if (tier === "FREE" || !membershipId) return { tier, membershipId, applied: false };
-
-  const me = await db.user.findUnique({
-    where: { id: userId },
-    select: { tier: true, discordId: true, subscription: true },
-  });
-  if (!me) return { tier, membershipId, applied: false };
-
-  let applied = false;
-  if (TIER_RANK[tier] > TIER_RANK[me.tier]) {
-    await db.user.update({ where: { id: userId }, data: { tier } });
-    if (me.discordId) await syncTierRole(me.discordId, tier);
-    applied = true;
-  }
-
-  // Only record a Whop subscription if PayPal doesn't already own the row.
-  if (!me.subscription) {
-    await db.subscription.create({
-      data: { userId, provider: "whop", whopMembershipId: membershipId, tier, status: "ACTIVE" },
+  const result = await db.$transaction(async (tx) => {
+    const me = await tx.user.findUnique({
+      where: { id: userId },
+      select: { tier: true, discordId: true, whopUserId: true, subscription: true },
     });
-  } else if (me.subscription.provider === "whop") {
-    await db.subscription.update({
-      where: { userId },
-      data: { whopMembershipId: membershipId, tier, status: "ACTIVE", cancelledAt: null },
-    });
-  }
-
-  return { tier, membershipId, applied };
+    // A delayed webhook/lookup must not re-grant access after disconnect.
+    if (!me || me.whopUserId !== whopUserId) {
+      return { applied: false, revoked: false, discordId: null, effectiveTier: me?.tier ?? "FREE" as Tier };
+    }
+    // Fortify has one subscription row. Preserve PayPal ownership and access;
+    // do not grant an unrecorded Whop upgrade that cannot later be revoked.
+    if (me.subscription && me.subscription.provider !== "whop") {
+      return { applied: false, revoked: false, discordId: null, effectiveTier: me.tier };
+    }
+    if (!membershipId && me.subscription?.provider !== "whop") {
+      return { applied: false, revoked: false, discordId: null, effectiveTier: me.tier };
+    }
+    if (membershipId) {
+      await tx.subscription.upsert({
+        where: { userId },
+        create: { userId, provider: "whop", whopMembershipId: membershipId, tier, status: "ACTIVE" },
+        update: { whopMembershipId: membershipId, tier, status: "ACTIVE", cancelledAt: null },
+      });
+    } else {
+      await tx.subscription.update({
+        where: { userId },
+        data: { status: "CANCELLED", cancelledAt: me.subscription?.cancelledAt ?? new Date() },
+      });
+    }
+    await tx.user.update({ where: { id: userId }, data: { tier } });
+    return {
+      applied: TIER_RANK[tier] > TIER_RANK[me.tier],
+      revoked: tier === "FREE" && me.tier !== "FREE",
+      discordId: me.discordId,
+      effectiveTier: tier,
+    };
+  }, { isolationLevel: "Serializable" });
+  // Repeat role sync even on an unchanged tier so reconciliation repairs missed roles.
+  if (result.discordId) await syncTierRole(result.discordId, result.effectiveTier);
+  return { tier, membershipId, ...result };
 }
 
-/**
- * Re-check Whop and downgrade if their membership is gone.
- *
- * Only ever touches users whose tier actually CAME from Whop — if the
- * Subscription row belongs to PayPal we leave everything alone, so a lapsed
- * Whop membership can't strip a paying PayPal customer.
- */
+/** Membership-invalid webhooks use the same current-state reconciliation. */
 export async function revokeWhopTier(userId: string, whopUserId: string) {
-  const { tier } = await resolveTier(whopUserId);
-  if (tier !== "FREE") {
-    // Still has a valid membership (e.g. downgraded, not cancelled) — re-apply.
-    return syncWhopTier(userId, whopUserId);
-  }
-
-  const me = await db.user.findUnique({
-    where: { id: userId },
-    select: { discordId: true, subscription: true },
-  });
-  if (me?.subscription?.provider !== "whop") return { revoked: false };
-
-  await db.$transaction([
-    db.subscription.update({
-      where: { userId },
-      data: { status: "CANCELLED", cancelledAt: new Date() },
-    }),
-    db.user.update({ where: { id: userId }, data: { tier: "FREE" } }),
-  ]);
-  if (me.discordId) await syncTierRole(me.discordId, "FREE");
-
-  return { revoked: true };
+  return syncWhopTier(userId, whopUserId);
 }
