@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { WorkflowEditor } from "@/components/workflow-editor";
 
-export default async function WorkflowDetailPage({ params }: { params: { id: string } }) {
+export default async function WorkflowDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const userId = (session.user as any).id as string;
@@ -13,7 +13,7 @@ export default async function WorkflowDetailPage({ params }: { params: { id: str
   if (!user) redirect("/login");
 
   const workflow = await db.workflow.findFirst({
-    where: { id: params.id, userId },
+    where: { id: (await params).id, userId },
     include: {
       runs: { orderBy: { startedAt: "desc" }, take: 20 },
     },

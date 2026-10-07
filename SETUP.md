@@ -196,7 +196,9 @@ verified against the API rather than the dashboard:
 
 ### Affiliate programme (Whop-native)
 Whop has a built-in affiliate system — tracked links, attribution and payouts
-are handled by Whop, so there is **no Fortify code involved**. Configure it on
+are handled by Whop. Fortify provides checkout and activation guidance at
+`/whop`, optional Whop buttons at `/pricing`, and a programme page at
+`/affiliates`. Configure the commission settings on
 the product in the Whop dashboard: enable affiliates, set the commission rate,
 and choose recurring vs. first-payment-only.
 
@@ -245,7 +247,7 @@ exists, so it beats any list kept here.
 - **Whop billing** — live. OAuth, membership lookup, webhook grant/revoke and
   the settings UI are deployed. Not yet exercised against a real membership, so
   the shape of the `plan` field on a live membership row is still inferred.
-- **Affiliate programme** — not enabled. Whop-native, dashboard-only; blocked on
+- **Affiliate programme** — Whop-native; checkout and account-access fixes prepared, but live dashboard settings and attribution remain unverified. Previously blocked on
   the commission decision and on the end-to-end membership test above.
 - **Twitter / Notion workflow nodes** — real implementations, need env vars only.
 
@@ -267,3 +269,52 @@ exists, so it beats any list kept here.
 - **Both Discord intents must be enabled** or the bot won't start. See step 3A.
 - **Don't keep the repo in OneDrive.** It corrupts `node_modules` and creates
   `*-DESKTOP-*.*` conflict files.
+
+
+### Affiliate launch changes (2026-10-07)
+
+Whop reconciliation now applies the exact current tier, including downgrades and
+expiry, and updates subscription/access atomically. Missing plan mappings,
+invalid membership responses and detected partial pages fail without changing
+access. All three `WHOP_PLAN_*` values must be set and distinct.
+
+The single subscription row still belongs to one payment provider. A PayPal-owned
+row is preserved completely by Whop reconciliation; simultaneous subscriptions
+and switching a PayPal customer to Whop require support. The UI warns customers
+before buying twice. PayPal activation explicitly sets provider ownership.
+
+Disconnect removes Whop identity and Whop-provided access in one transaction,
+then removes paid Discord roles. It does **not** cancel billing on Whop. The
+local CANCELLED status records disconnected access, not confirmation that Whop
+billing was cancelled. Reconnecting restores access if membership is still valid.
+
+An hourly Netlify scheduled function calls `/api/cron/whop-reconcile` using
+`CRON_SECRET`. It checks linked accounts in pages of 50 with concurrency 5,
+repairs Discord roles even when the tier is unchanged, and reports failures.
+Monitor runtime and Whop API limits as account count grows; large installations
+need a durable paginated worker rather than a single scheduled invocation.
+
+Launch configuration:
+
+1. Copy the three exact checkout links from Whop into `WHOP_CHECKOUT_PRO`,
+   `WHOP_CHECKOUT_ELITE`, `WHOP_CHECKOUT_APEX` on Netlify. Verify each charges
+   the correct GBP price and uses its corresponding mapped plan.
+2. Set Whop's checkout success destination to
+   `https://fortify-io.com/whop` where supported; otherwise include that URL in
+   the product's welcome/access instructions. Purchases made before linking are
+   recovered by the OAuth callback's server-side membership lookup.
+3. Confirm affiliate availability, commission percentage, renewal eligibility,
+   payout and refund terms in Whop. Do not infer current settings from the
+   historical August notes above. No commission rate is hardcoded in Fortify.
+4. Give affiliates their personal links from Whop's View assets. They must share
+   those exact links, not `/pricing` or the generic `/whop` purchase links.
+   Fortify does not invent referral parameters or claim generic links are tracked.
+5. Test a real referred purchase: Whop attribution/commission, login and linking,
+   correct website tier and Discord role, renewal, downgrade, cancellation at
+   access expiry, reconnect and disconnect. Verify a PayPal account remains intact.
+6. Only then set `WHOP_AFFILIATE_URL` to the verified Whop programme URL to open
+   enrolment, deploy, and verify the hourly function runs on Netlify.
+
+Local regression tests: `cd web && npm run test:whop`. Tests mock Whop, Prisma,
+Discord and auth; they do not prove live billing or affiliate payouts. Full
+TypeScript checking is `npx prisma generate && npx tsc --noEmit`.

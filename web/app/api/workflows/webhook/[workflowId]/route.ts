@@ -12,10 +12,10 @@ import { runWorkflow } from "@/lib/workflow-runner";
 
 export async function POST(
   req: Request,
-  { params }: { params: { workflowId: string } },
+  { params }: { params: Promise<{ workflowId: string }> },
 ) {
   const workflow = await db.workflow.findUnique({
-    where: { id: params.workflowId },
+    where: { id: (await params).workflowId },
     select: { id: true, userId: true, active: true, nodes: true },
   });
 
@@ -64,15 +64,15 @@ export async function POST(
 // GET returns a simple info page about this webhook
 export async function GET(
   _req: Request,
-  { params }: { params: { workflowId: string } },
+  { params }: { params: Promise<{ workflowId: string }> },
 ) {
   const workflow = await db.workflow.findUnique({
-    where: { id: params.workflowId },
+    where: { id: (await params).workflowId },
     select: { active: true },
   });
 
   return NextResponse.json({
-    endpoint: `/api/workflows/webhook/${params.workflowId}`,
+    endpoint: `/api/workflows/webhook/${(await params).workflowId}`,
     method: "POST",
     active: workflow?.active ?? false,
     description: "POST JSON to this endpoint to trigger the workflow.",

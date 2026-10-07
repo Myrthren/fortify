@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle, Unplug, RefreshCw, Loader2 } from "lucide-react";
 
 export function WhopConnectSection({
@@ -10,19 +10,40 @@ export function WhopConnectSection({
   connected: boolean;
   whopUserId: string | null;
 }) {
+  const [notice, setNotice] = useState<string | null>(null);
+  useEffect(() => {
+    const query = new URLSearchParams(window.location.search);
+    if (query.get("whop") === "connected") setNotice("Whop is connected. Your membership has been checked.");
+    if (query.get("whop") === "linked_no_membership") setNotice("Whop is connected, but no active Fortify membership was found. Check you used the purchasing account, then re-sync your tier.");
+    if (query.has("error")) setNotice("Whop could not connect. Please try again or contact support.");
+  }, []);
+  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"sync" | "disconnect" | null>(null);
 
-  async function resync() {
-    setBusy("sync");
-    await fetch("/api/whop/resync", { method: "POST" });
-    window.location.reload();
+  async function request(action: "sync" | "disconnect") {
+    setError(null);
+    setBusy(action);
+    try {
+      const res = await fetch(`/api/whop/${action === "sync" ? "resync" : "disconnect"}`, { method: "POST" });
+      if (!res.ok) throw new Error("Whop request failed. Please try again.");
+      const result = await res.json();
+      if (action === "sync" && result.membershipId && result.effectiveTier !== result.tier) {
+        setError("Your Whop membership is linked, but PayPal manages access on this account. Contact support before buying another subscription.");
+        return;
+      }
+      window.location.reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Please try again.");
+    } finally {
+      setBusy(null);
+    }
   }
 
+  async function resync() { await request("sync"); }
+
   async function disconnect() {
-    if (!confirm("Disconnect Whop? Your tier will stay as-is until it next syncs.")) return;
-    setBusy("disconnect");
-    await fetch("/api/whop/disconnect", { method: "POST" });
-    window.location.reload();
+    if (!confirm("Disconnect Whop? Whop-provided Fortify access will be removed immediately. This does not cancel Whop billing; cancel your subscription on Whop separately.")) return;
+    await request("disconnect");
   }
 
   return (
@@ -75,6 +96,12 @@ export function WhopConnectSection({
             </a>
           )}
         </div>
+        <p className="px-5 pb-4 text-xs text-text-muted">
+          Use the same Whop account you purchased with. Manage or cancel Whop billing on{" "}
+          <a href="https://whop.com/orders/" className="underline">Whop</a>.
+        </p>
+        {notice && <p role="status" className="px-5 pb-4 text-sm text-text-muted">{notice}</p>}
+        {error && <p role="alert" className="px-5 pb-4 text-sm text-red-400">{error}</p>}
       </div>
     </section>
   );

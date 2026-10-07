@@ -3,13 +3,13 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 
 // GET /api/workflows/[id]
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id as string;
 
   const workflow = await db.workflow.findFirst({
-    where: { id: params.id, userId },
+    where: { id: (await params).id, userId },
     include: { runs: { orderBy: { startedAt: "desc" }, take: 20 } },
   });
   if (!workflow) return new NextResponse("Not found", { status: 404 });
@@ -18,12 +18,12 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 }
 
 // PATCH /api/workflows/[id] — update name/description/active/nodes
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id as string;
 
-  const existing = await db.workflow.findFirst({ where: { id: params.id, userId } });
+  const existing = await db.workflow.findFirst({ where: { id: (await params).id, userId } });
   if (!existing) return new NextResponse("Not found", { status: 404 });
 
   const body = await req.json();
@@ -38,19 +38,19 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     data.nodes = body.nodes;
   }
 
-  const updated = await db.workflow.update({ where: { id: params.id }, data });
+  const updated = await db.workflow.update({ where: { id: (await params).id }, data });
   return NextResponse.json({ workflow: updated });
 }
 
 // DELETE /api/workflows/[id]
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session?.user) return new NextResponse("Unauthorized", { status: 401 });
   const userId = (session.user as any).id as string;
 
-  const existing = await db.workflow.findFirst({ where: { id: params.id, userId } });
+  const existing = await db.workflow.findFirst({ where: { id: (await params).id, userId } });
   if (!existing) return new NextResponse("Not found", { status: 404 });
 
-  await db.workflow.delete({ where: { id: params.id } });
+  await db.workflow.delete({ where: { id: (await params).id } });
   return NextResponse.json({ ok: true });
 }

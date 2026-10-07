@@ -141,6 +141,7 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
         location: location.trim(),
         category: category.trim(),
         totalLeads: (data.leads ?? []).length,
+        leads: data.leads ?? [],
         createdAt: new Date().toISOString(),
       };
       setLocalPastSearches((prev) => [newSearch, ...prev].slice(0, 10));

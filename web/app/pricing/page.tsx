@@ -1,6 +1,7 @@
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { PayPalButton } from "@/components/paypal-button";
+import { whopCheckoutUrls } from "@/lib/whop-checkout";
 import { Check, Gem } from "lucide-react";
 
 const tiers = [
@@ -95,6 +96,7 @@ const tiers = [
 const DELAYS = ["", "anim-d1", "anim-d2", "anim-d3"];
 
 export default function PricingPage() {
+  const whop = whopCheckoutUrls();
   return (
     <>
       <Nav />
@@ -151,6 +153,16 @@ export default function PricingPage() {
                   ))}
                 </ul>
 
+                {t.key !== "free" && whop[t.key as keyof typeof whop] && (
+                  <div className="mb-3">
+                    <a href={whop[t.key as keyof typeof whop]!} className="btn-primary w-full">
+                      Subscribe with Whop
+                    </a>
+                    <a href="/whop" className="mt-2 block text-center text-xs text-text-muted underline">
+                      How to activate your membership
+                    </a>
+                  </div>
+                )}
                 {t.planId ? (
                   <PayPalButton planId={t.planId} tier={t.key as "pro" | "elite" | "apex"} />
                 ) : (
@@ -162,8 +174,12 @@ export default function PricingPage() {
             ))}
           </div>
 
+          <p className="mt-8 text-center text-sm text-text-muted">
+            Referred by an affiliate? Complete your purchase through their original Whop link
+            so they receive credit. After purchase, <a href="/whop" className="underline">activate your membership</a>.
+          </p>
           <p className="anim-fade-up anim-d4 mt-10 text-center text-xs text-text-dim">
-            Prices in GBP · Secure checkout via PayPal · Cancel anytime from your dashboard
+            Prices in GBP · Manage billing with your payment provider
           </p>
         </div>
       </section>
