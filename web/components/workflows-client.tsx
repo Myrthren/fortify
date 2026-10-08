@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { WORKFLOW_STARTERS } from "@/lib/workflow-starters";
 import {
   Plus, Play, Pause, Trash2, ChevronRight,
   Zap, X, Loader2, ShoppingCart, CheckCircle2, Clock,
@@ -30,6 +31,7 @@ type WorkflowRow = {
   runCount: number;
   lastRunAt: string | null;
   lastRunStatus: string | null;
+  lastError: string | null;
 };
 
 export function WorkflowsClient({
@@ -53,6 +55,7 @@ export function WorkflowsClient({
   const [creating,   setCreating]   = useState(false);
   const [toggling,   setToggling]   = useState<string | null>(null);
   const [deleting,   setDeleting]   = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const barColor = (p: number) =>
     p > 90 ? "bg-red-500" : p > 70 ? "bg-amber-400" : "bg-emerald-500";
@@ -76,22 +79,27 @@ export function WorkflowsClient({
     }
   }
 
-  async function createWorkflow() {
-    if (!newName.trim()) return;
+  async function createWorkflow(starterId?: string) {
+    if (!starterId && !newName.trim()) return;
     setCreating(true);
+    setError(null);
     try {
       const r = await fetch("/api/workflows", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName.trim(), description: newDesc.trim() || null }),
+        body: JSON.stringify(starterId ? { starterId } : { name: newName.trim(), description: newDesc.trim() || null }),
       });
       if (r.ok) {
         const d = await r.json();
-        setWorkflows((prev) => [d.workflow, ...prev]);
+        window.location.href = `/dashboard/workflows/${d.workflow.id}`;
         setShowNew(false);
         setNewName("");
         setNewDesc("");
+      } else {
+        const d = await r.json();
+        setError(d.error ?? "Could not create the workflow.");
       }
+    } catch { setError("Could not create the workflow.");
     } finally {
       setCreating(false);
     }
@@ -99,6 +107,7 @@ export function WorkflowsClient({
 
   async function toggleWorkflow(id: string, active: boolean) {
     setToggling(id);
+    setError(null);
     try {
       const r = await fetch(`/api/workflows/${id}`, {
         method: "PATCH",
@@ -109,7 +118,11 @@ export function WorkflowsClient({
         setWorkflows((prev) =>
           prev.map((w) => (w.id === id ? { ...w, active: !active } : w))
         );
+      } else {
+        const d = await r.json();
+        setError(d.error ?? "Could not update the workflow.");
       }
+    } catch { setError("Could not update the workflow.");
     } finally {
       setToggling(null);
     }
@@ -118,9 +131,12 @@ export function WorkflowsClient({
   async function deleteWorkflow(id: string) {
     if (!confirm("Delete this workflow? This cannot be undone.")) return;
     setDeleting(id);
+    setError(null);
     try {
-      await fetch(`/api/workflows/${id}`, { method: "DELETE" });
+      const response = await fetch(`/api/workflows/${id}`, { method: "DELETE" });
+      if (!response.ok) throw new Error("Could not delete the workflow.");
       setWorkflows((prev) => prev.filter((w) => w.id !== id));
+    } catch { setError("Could not delete the workflow.");
     } finally {
       setDeleting(null);
     }
@@ -190,6 +206,20 @@ export function WorkflowsClient({
           </button>
         </div>
 
+        {error && <p role="alert" className="mb-4 text-sm text-red-400">{error}</p>}
+
+        <div className="mb-5 grid gap-3 sm:grid-cols-2">
+          {WORKFLOW_STARTERS.map((starter) => (
+            <div key={starter.id} className="card p-4">
+              <p className="text-sm font-semibold">{starter.name}</p>
+              <p className="mt-1 text-xs text-text-muted">{starter.description}</p>
+              <button onClick={() => createWorkflow(starter.id)} disabled={creating} className="btn-secondary mt-3 text-xs disabled:opacity-40">
+                <Plus className="h-3.5 w-3.5" /> Use starter
+              </button>
+            </div>
+          ))}
+        </div>
+
         {workflows.length === 0 ? (
           <div className="card p-10 text-center">
             <Zap className="mx-auto mb-3 h-8 w-8 text-text-dim" />
@@ -232,6 +262,9 @@ export function WorkflowsClient({
                       </>
                     )}
                   </div>
+                  {w.lastRunStatus === "failed" && w.lastError && (
+                    <p className="mt-1 truncate text-xs text-red-300" title={w.lastError}>Last run: {w.lastError}</p>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1 shrink-0">
@@ -356,7 +389,7 @@ export function WorkflowsClient({
                 Cancel
               </button>
               <button
-                onClick={createWorkflow}
+                onClick={() => createWorkflow()}
                 disabled={!newName.trim() || creating}
                 className="btn-primary flex-1"
               >

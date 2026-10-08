@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { HookGenerator } from "@/components/hook-generator";
 import { TIERS } from "@/lib/tiers";
 import { DashboardNav } from "@/components/dashboard-nav";
+import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import {
   ArrowRight, Sparkles, Send, ClipboardCheck, Radar, TrendingUp, Search,
   Lightbulb, BarChart3, ShoppingBag, LineChart, Clapperboard, Dna, MapPin,
@@ -44,10 +45,12 @@ export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
-  const user = await db.user.findUnique({
-    where: { id: (session.user as any).id },
+  const userId = (session.user as any).id as string;
+  const [user, companyDna, firstGeneration] = await Promise.all([db.user.findUnique({
+    where: { id: userId },
     include: { subscription: true, profile: true },
-  });
+  }), db.companyDna.findUnique({ where: { userId }, select: { totalChars: true } }),
+    db.generation.findFirst({ where: { userId }, select: { id: true } })]);
   if (!user) redirect("/login");
 
   const tierMeta = TIERS[user.tier];
@@ -59,14 +62,6 @@ export default async function DashboardPage() {
       <DashboardNav user={user} active="dashboard" />
 
       <main className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-        {profileIncomplete && (
-          <div className="anim-fade-up mb-6 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
-            Your profile is incomplete —{" "}
-            <Link href="/dashboard/profile" className="underline underline-offset-2">fill it in</Link>{" "}
-            to get the most out of AI Matchmaking and Member Directory.
-          </div>
-        )}
-
         {/* Header */}
         <div className="anim-fade-up mb-8">
           <span className="eyebrow"><Sparkles className="h-3.5 w-3.5" /> Dashboard</span>
@@ -83,6 +78,12 @@ export default async function DashboardPage() {
           </p>
         </div>
 
+        <OnboardingChecklist steps={[
+          { title: "Complete your profile", description: "Get better matches in the member directory.", href: "/dashboard/profile", done: !profileIncomplete },
+          { title: "Add Company DNA", description: "Give AI the context it needs to personalise results.", href: "/dashboard/company-dna", done: (companyDna?.totalChars ?? 0) > 0 },
+          { title: "Try your first tool", description: "Create a hook below and see Fortify in action.", href: "/dashboard#hook-generator", done: !!firstGeneration },
+        ]} />
+
         {/* Stat tiles */}
         <div className="anim-fade-up anim-d1 mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
           <StatTile icon={<Gem className="h-4 w-4" />} label="Tier" value={tierMeta.name} accent="#ffffff" />
@@ -92,7 +93,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Hook generator — featured */}
-        <div className="anim-fade-up anim-d2 mb-10">
+        <div id="hook-generator" className="anim-fade-up anim-d2 mb-10">
           <div className="bento p-5 sm:p-6">
             <div className="mb-5 flex items-center gap-3">
               <span className="icon-tile h-10 w-10 text-[var(--accent)]"><Sparkles className="h-5 w-5" /></span>

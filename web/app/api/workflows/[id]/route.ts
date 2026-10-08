@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { activationIssue } from "@/lib/workflow-starters";
 
 // GET /api/workflows/[id]
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -36,6 +37,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     data.nodes = { nodes: body.nodes, connections: body.connections };
   } else if (Array.isArray(body.nodes)) {
     data.nodes = body.nodes;
+  }
+
+  if (body.active === true) {
+    const issue = activationIssue(data.nodes ?? existing.nodes);
+    if (issue) return NextResponse.json({ error: issue }, { status: 400 });
   }
 
   const updated = await db.workflow.update({ where: { id: (await params).id }, data });

@@ -80,6 +80,9 @@ export default async function WorkflowsPage() {
             runCount: w._count.runs,
             lastRunAt: w.runs[0]?.startedAt?.toISOString() ?? null,
             lastRunStatus: (w.runs[0] as any)?.status ?? null,
+            lastError: Array.isArray(w.runs[0]?.log)
+              ? ((w.runs[0]?.log as any[]).find((entry) => entry?.status === "error" && entry?.error)?.error ?? null)
+              : null,
           }))}
           tier={user.tier}
         />

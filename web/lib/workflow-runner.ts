@@ -12,6 +12,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { Resend } from "resend";
 import { db } from "@/lib/db";
 import { getCapacityInfo } from "@/lib/workflow-capacity";
+import { validCron, cronTimeAt } from "@/lib/workflow-starters";
 import { braveSearch } from "@/lib/brave";
 import type { Tier } from "@prisma/client";
 
@@ -978,7 +979,10 @@ export async function runWorkflow(
 // ── Cron expression matcher ───────────────────────────────────────────────────
 // Checks if a cron expression (minute hour dom month dow) matches the current time.
 // Supports: * / lists and ranges (covers 99% of user-entered crons).
-export function cronMatches(expr: string, now: Date = new Date()): boolean {
+export function cronMatches(expr: string, now: Date = new Date(), timezone = "UTC"): boolean {
+  if (!validCron(expr)) return false;
+  const local = cronTimeAt(now, timezone);
+  if (!local) return false;
   const parts = expr.trim().split(/\s+/);
   if (parts.length !== 5) return false;
 
@@ -1004,11 +1008,11 @@ export function cronMatches(expr: string, now: Date = new Date()): boolean {
     return false;
   }
 
-  const m  = now.getUTCMinutes();
-  const h  = now.getUTCHours();
-  const d  = now.getUTCDate();
-  const mo = now.getUTCMonth() + 1;
-  const dw = now.getUTCDay();
+  const m  = local.minute;
+  const h  = local.hour;
+  const d  = local.day;
+  const mo = local.month;
+  const dw = local.weekday;
 
   return (
     matchField(minPart,  m,  0, 59) &&

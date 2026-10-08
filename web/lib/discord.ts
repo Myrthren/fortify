@@ -65,3 +65,20 @@ export async function syncTierRole(discordUserId: string, newTier: Tier) {
     await grantRole(discordUserId, newRoleId);
   }
 }
+
+/** Read back role state so a failed Discord write is never reported as repaired. */
+export async function verifyTierRole(discordUserId: string, tier: Tier): Promise<"verified" | "mismatch" | "unavailable"> {
+  const guildId = process.env.DISCORD_GUILD_ID;
+  if (!guildId || !process.env.DISCORD_BOT_TOKEN) return "unavailable";
+  const res = await fetch(`${DISCORD_API}/guilds/${guildId}/members/${discordUserId}`, {
+    headers: headers(),
+    cache: "no-store",
+    signal: AbortSignal.timeout(10000),
+  });
+  if (!res.ok) return "unavailable";
+  const member = await res.json() as { roles?: string[] };
+  if (!Array.isArray(member.roles)) return "unavailable";
+  const expected = TIER_TO_ROLE_ID[tier];
+  const paidRoles = [TIER_TO_ROLE_ID.PRO, TIER_TO_ROLE_ID.ELITE, TIER_TO_ROLE_ID.APEX].filter((id): id is string => !!id);
+  return paidRoles.every((role) => member.roles!.includes(role) === (role === expected)) ? "verified" : "mismatch";
+}

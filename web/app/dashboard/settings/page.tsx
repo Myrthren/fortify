@@ -9,7 +9,7 @@ export default async function SettingsPage() {
   const userId = (session.user as any).id;
 
   const [user, metaConn, googleConn, shopifyConn, stripeConn, notionConn] = await Promise.all([
-    db.user.findUnique({ where: { id: userId } }),
+    db.user.findUnique({ where: { id: userId }, include: { subscription: true } }),
     db.metaConnection.findUnique({ where: { userId }, select: { accountName: true } }),
     db.googleConnection.findUnique({ where: { userId }, select: { gaPropertyName: true, scSiteUrl: true } }),
     db.shopifyConnection.findUnique({ where: { userId }, select: { shop: true } }),
@@ -35,6 +35,11 @@ export default async function SettingsPage() {
         rootPageId: notionConn?.rootPageId ?? null,
       }}
       whop={{ connected: !!user.whopUserId, whopUserId: user.whopUserId ?? null }}
+      subscription={user.subscription ? {
+        provider: user.subscription.provider,
+        status: user.subscription.status,
+        nextBillingAt: user.subscription.nextBillingAt?.toISOString() ?? null,
+      } : null}
       username={user.username ?? null}
       usernameChangesUsed={user.usernameChangesUsed}
       credits={user.credits}

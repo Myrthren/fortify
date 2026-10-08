@@ -63,7 +63,7 @@ export async function POST(req: Request) {
       }
 
       // Check if this cron expression matches right now
-      if (!cronMatches(cronExpr, now)) {
+      if (!cronMatches(cronExpr, now, triggerNode.config?.timezone || "UTC")) {
         skipped.push(wf.id);
         continue;
       }

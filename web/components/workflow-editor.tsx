@@ -407,6 +407,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
   const [toggling, setToggling] = useState(false);
   const [running,  setRunning]  = useState(false);
   const [lastRunStatus, setLastRunStatus] = useState<"ok" | "error" | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [dirty,    setDirty]    = useState(false);
   const [showRuns, setShowRuns] = useState(false);
   const [runs,     setRuns]     = useState<any[]>(init.runs);
@@ -552,24 +553,30 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
 
   async function save() {
     setSaving(true);
+    setActionError(null);
     try {
-      await fetch(`/api/workflows/${init.id}`, {
+      const response = await fetch(`/api/workflows/${init.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: wfName, nodes, connections: conns }),
       });
+      if (!response.ok) throw new Error((await response.json()).error ?? "Could not save workflow.");
       setDirty(false);
+    } catch (error) { setActionError(error instanceof Error ? error.message : "Could not save workflow.");
     } finally { setSaving(false); }
   }
 
   async function toggleActive() {
     setToggling(true);
+    setActionError(null);
     try {
       const r = await fetch(`/api/workflows/${init.id}`, {
         method: "PATCH", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !active }),
       });
       if (r.ok) setActive(a => !a);
+      else setActionError((await r.json()).error ?? "Could not change workflow status.");
+    } catch { setActionError("Could not change workflow status.");
     } finally { setToggling(false); }
   }
 
@@ -589,6 +596,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
       const data = await r.json();
       if (!r.ok) {
         setLastRunStatus("error");
+        setActionError(data.error ?? "Could not run workflow.");
         // Show error inline in runs panel instead of alert
         setShowRuns(true);
         await fetchRuns();
@@ -600,6 +608,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
       }
     } catch {
       setLastRunStatus("error");
+      setActionError("Could not run workflow.");
     } finally {
       setRunning(false);
     }
@@ -689,6 +698,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
                         value={scheduleNode.config.timezone ?? ""}
                         onChange={e => updateConfig(scheduleNode.id, "timezone", e.target.value)}
                       />
+                      <p className="mb-2 text-[10px] text-text-dim">Uses UTC when timezone is blank.</p>
                       <div className="grid grid-cols-2 gap-1 text-[10px] text-text-dim">
                         {[
                           ["Every day 8am",    "0 8 * * *"],
@@ -732,7 +742,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
                 : <Play className="h-3.5 w-3.5" />}
               {running ? "Running…" : "Run Now"}
             </button>
-            <button onClick={toggleActive} disabled={toggling} className="btn-secondary text-xs">
+            <button onClick={toggleActive} disabled={toggling || dirty} title={dirty ? "Save changes before activating" : undefined} className="btn-secondary text-xs disabled:opacity-40">
               {toggling ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : active ? <><Pause className="h-3 w-3" />Pause</> : <><Play className="h-3 w-3" />Activate</>}
             </button>
             <button onClick={save} disabled={!dirty || saving} className="btn-primary text-xs disabled:opacity-40">
@@ -740,6 +750,8 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
             </button>
           </div>
         </div>
+
+        {actionError && <p role="alert" className="border-b border-red-500/20 bg-red-500/10 px-4 py-2 text-xs text-red-300">{actionError}</p>}
 
         {/* ── Body ── */}
         <div className="flex flex-1 overflow-hidden">
