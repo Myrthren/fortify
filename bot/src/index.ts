@@ -36,6 +36,7 @@ import { handleMention } from "./lib/chat";
 import { bump, handleJoin, optOut } from "./lib/drip";
 import { QUIZ_PREFIX, handleQuizClick, quizOpener } from "./lib/drip-quiz";
 import { startDripScheduler } from "./lib/drip-scheduler";
+import { startUpdateLog } from "./lib/update-log";
 
 type Command = { data: { name: string }; execute: (i: any) => Promise<void> };
 
@@ -60,6 +61,7 @@ const client = new Client({
 client.once(Events.ClientReady, (c) => {
   console.log(`✅ Fortify bot online as ${c.user.tag} — build includes role-toggle handler`);
   startDripScheduler(c);
+  startUpdateLog(c);
 });
 
 // ── Drip: someone joins the server ───────────────────────────────────────────
