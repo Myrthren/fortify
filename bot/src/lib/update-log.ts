@@ -85,7 +85,6 @@ async function rawBody(request: IncomingMessage) {
 }
 
 export function startUpdateLog(client: Client) {
-  console.log("[update-log] Initializing.");
   const secret = process.env.GITHUB_WEBHOOK_SECRET;
   if (!secret) {
     console.warn("[update-log] Disabled: GITHUB_WEBHOOK_SECRET is not set.");
