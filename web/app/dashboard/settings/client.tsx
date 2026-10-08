@@ -7,7 +7,7 @@ import { GoogleConnectSection } from "@/components/google-connect";
 import { ShopifyConnectSection } from "@/components/shopify-connect";
 import { StripeConnectSection } from "@/components/stripe-connect";
 import { NotionConnectSection } from "@/components/notion-connect";
-import { WhopConnectSection } from "@/components/whop-connect";
+import { BillingAccessSection } from "@/components/billing-access-section";
 import type { Tier } from "@prisma/client";
 import { Download, Trash2 } from "lucide-react";
 import { OwnerLeadExtractorSettings } from "./owner-lead-extractor";
@@ -61,7 +61,7 @@ const TOGGLES: { key: keyof Prefs; label: string; desc: string; comingSoon?: boo
   { key: "dmRenewalReminder", label: "Renewal reminder",      desc: "3 days before your next billing date.", comingSoon: true },
   { key: "dmLimitWarning",    label: "Usage limit warning",   desc: "When you hit 80% of your monthly quota.", comingSoon: true },
   { key: "dmTrendAlerts",     label: "Trend alerts",          desc: "When a term you're tracking spikes across the web." },
-  { key: "dmOnboarding",      label: "Onboarding tips",       desc: "Day 1 / 3 / 7 messages to help you get set up.", comingSoon: true },
+  { key: "dmOnboarding",      label: "Onboarding tips",       desc: "Day 1 / 3 / 7 messages based on your progress." },
   { key: "dmMilestones",      label: "Milestone achievements",desc: "First audit, profile completed, etc." },
   { key: "dmMatchmaking",     label: "New match found",       desc: "When a member matches your niche and skills." },
 ];
@@ -113,6 +113,7 @@ export function SettingsClient({
   stripe,
   notion,
   whop,
+  subscription,
   username: initialUsername,
   usernameChangesUsed,
   credits,
@@ -125,6 +126,7 @@ export function SettingsClient({
   stripe: { connected: boolean };
   notion: { connected: boolean; workspaceName: string | null; rootPageId: string | null };
   whop: { connected: boolean; whopUserId: string | null };
+  subscription: { provider: string; status: string; nextBillingAt: string | null } | null;
   username: string | null;
   usernameChangesUsed: number;
   credits: number;
@@ -252,6 +254,8 @@ export function SettingsClient({
           </p>
         </div>
 
+        <BillingAccessSection access={{ tier: user.tier, discordLinked: !!user.discordId, subscription, whop }} />
+
         {/* Google connection */}
         <GoogleConnectSection
           connected={google.connected}
@@ -271,9 +275,6 @@ export function SettingsClient({
           workspaceName={notion.workspaceName}
           rootPageId={notion.rootPageId}
         />
-
-        {/* Whop connection */}
-        <WhopConnectSection connected={whop.connected} whopUserId={whop.whopUserId} />
 
         {/* Meta Ads connection */}
         <MetaConnectSection connected={meta.connected} accountName={meta.accountName} />

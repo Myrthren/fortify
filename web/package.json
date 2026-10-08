@@ -10,7 +10,8 @@
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
-    "test:whop": "node --test scripts/test-whop.cjs"
+    "test:whop": "node --test scripts/test-whop.cjs",
+    "test:workflows": "node --experimental-strip-types --test scripts/test-workflow-starters.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
