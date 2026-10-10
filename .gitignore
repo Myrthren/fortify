@@ -39,3 +39,6 @@ prisma/migrations/dev.db*
 next-env.d.ts
 .netlify/
 .claude/
+
+# OneDrive sync conflict copies
+*-DESKTOP-*
