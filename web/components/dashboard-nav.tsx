@@ -1,9 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Lock, MessageSquare, Users } from "lucide-react";
+import { Lock, Menu, MessageSquare, Users } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { TIERS } from "@/lib/tiers";
 import { isOwner } from "@/lib/owner";
+import {
+  HUBS, NAV_GROUPS, entryKeys, hubHref, hubMinTier, isLocked, tool,
+  type ActiveKey, type NavEntry,
+} from "@/lib/tools";
 import { handleSignOut } from "@/app/actions/auth";
 import { NotificationBell } from "@/components/notification-bell";
 import type { Tier } from "@prisma/client";
@@ -16,102 +20,9 @@ const TIER_STYLE: Record<Tier, { a: string; b: string; glow: string; border: str
   APEX:  { a: "#e74c3c", b: "#ff9a6b", glow: "rgba(231,76,60,0.65)",   border: "rgba(231,76,60,0.5)",    bg: "rgba(231,76,60,0.12)" },
 };
 
-
-type ActiveKey =
-  | "dashboard"
-  | "voice"
-  | "outreach"
-  | "audit"
-  | "trends"
-  | "competitors"
-  | "matchmaking"
-  | "inspiration"
-  | "leads"
-  | "ads"
-  | "analytics"
-  | "shopify"
-  | "revenue"
-  | "virality"
-  | "dna"
-  | "logo"
-  | "members"
-  | "deals"
-  | "pods"
-  | "forums"
-  | "messages"
-  | "connections"
-  | "notifications"
-  | "profile"
-  | "settings"
-  | "support"
-  | "credits"
-  | "recon"
-  | "competitor-watch"
-  | "workflows"
-  | "advisor"
-  | "outbound"
-  | "lead-extractor";
-
-type ToolItem = { key: string; href: string; label: string; badge?: string | null; minTier?: "PRO" | "ELITE" | "APEX" };
-
-const TOOL_GROUPS: { heading: string; items: ToolItem[] }[] = [
-  {
-    heading: "Content",
-    items: [
-      { key: "voice",       href: "/dashboard/voice",       label: "Brand Voice",       minTier: "PRO" },
-      { key: "inspiration", href: "/dashboard/inspiration", label: "Inspiration",        minTier: "PRO" },
-      { key: "virality",    href: "/dashboard/virality",    label: "Virality Engine",    minTier: "ELITE" },
-      { key: "logo",        href: "/dashboard/logo",        label: "Logo Intelligence",  minTier: "PRO" },
-    ],
-  },
-  {
-    heading: "Growth",
-    items: [
-      { key: "outreach",    href: "/dashboard/outreach",    label: "Outreach",           minTier: "PRO" },
-      { key: "leads",       href: "/dashboard/leads",       label: "Lead Sourcing",      minTier: "PRO" },
-      { key: "matchmaking", href: "/dashboard/matchmaking", label: "Matchmaking",        minTier: "PRO" },
-      { key: "recon",           href: "/dashboard/recon",           label: "Fortify Recon",    minTier: "ELITE" as const },
-      { key: "lead-extractor", href: "/dashboard/lead-extractor", label: "Lead Extractor",   minTier: "PRO" as const },
-      { key: "outbound",        href: "/dashboard/outbound",        label: "Outbound Engine",  minTier: "ELITE" as const },
-    ],
-  },
-  {
-    heading: "Research",
-    items: [
-      { key: "audit",       href: "/dashboard/audit",       label: "Funnel Audit",       minTier: "PRO" },
-      { key: "trends",      href: "/dashboard/trends",      label: "Trend Radar",        minTier: "PRO" },
-      { key: "competitors", href: "/dashboard/competitors", label: "Competitors",        minTier: "PRO" },
-      { key: "competitor-watch", href: "/dashboard/competitor-tracking", label: "Competitor Watch", minTier: "ELITE" as const },
-    ],
-  },
-  {
-    heading: "Business",
-    items: [
-      { key: "ads",         href: "/dashboard/ads",         label: "Meta Ads",           minTier: "PRO" },
-      { key: "shopify",     href: "/dashboard/shopify",     label: "Shopify",            minTier: "PRO" },
-      { key: "revenue",     href: "/dashboard/revenue",     label: "Revenue",            minTier: "PRO" },
-      { key: "dna",         href: "/dashboard/company-dna", label: "Company DNA",        minTier: "PRO" },
-      { key: "analytics",   href: "/dashboard/analytics",   label: "Analytics" },
-    ],
-  },
-  {
-    heading: "Automation",
-    items: [
-      { key: "workflows", href: "/dashboard/workflows", label: "Workflows",   minTier: "ELITE" as const },
-    ],
-  },
-  {
-    heading: "Apex",
-    items: [
-      { key: "advisor",   href: "/dashboard/advisor",   label: "AI Advisor",  minTier: "APEX" as const },
-    ],
-  },
-];
-
-const TOOLS_KEYS = TOOL_GROUPS.flatMap((g) => g.items.map((i) => i.key));
-
 const COMMUNITY = [
   { key: "members",     href: "/dashboard/members",     label: "Members" },
+  { key: "matchmaking", href: "/dashboard/matchmaking", label: "AI Matchmaking" },
   { key: "deals",       href: "/dashboard/deals",       label: "Deal Board" },
   { key: "pods",        href: "/dashboard/pods",        label: "Mastermind Pods" },
   { key: "forums",      href: "/dashboard/forums",      label: "Forums" },
@@ -124,18 +35,19 @@ const ACCOUNT = [
   { key: "support",  href: "/dashboard/support",  label: "Support" },
 ] as const;
 
-const ALL_MOBILE = [
-  { key: "dashboard",     href: "/dashboard",                label: "Dashboard" },
-  ...TOOL_GROUPS.flatMap((g) => g.items),
-  ...COMMUNITY,
-  { key: "messages",      href: "/dashboard/messages",       label: "Messages" },
-  { key: "connections",   href: "/dashboard/connections",    label: "Connections" },
-  { key: "notifications", href: "/dashboard/notifications",  label: "Notifications" },
-  ...ACCOUNT,
-];
+const TOOLS_KEYS     = NAV_GROUPS.flatMap((g) => g.entries.flatMap(entryKeys)) as string[];
+const COMMUNITY_KEYS = [...COMMUNITY.map((t) => t.key), "messages", "connections"] as string[];
+const ACCOUNT_KEYS   = ACCOUNT.map((t) => t.key) as string[];
 
-const COMMUNITY_KEYS  = [...COMMUNITY.map((t) => t.key), "messages", "connections"] as string[];
-const ACCOUNT_KEYS    = ACCOUNT.map((t) => t.key) as string[];
+// Label, href and lock state for one nav entry, resolved for this user.
+function resolveEntry(e: NavEntry, tier: Tier) {
+  if (e.kind === "hub") {
+    const hub = HUBS[e.hub];
+    return { id: e.hub as string, label: hub.label, href: hubHref(e.hub, tier), keys: hub.tabs as string[], locked: isLocked(hubMinTier(e.hub), tier), soon: false };
+  }
+  const t = tool(e.key)!;
+  return { id: t.key as string, label: t.label, href: t.href, keys: [t.key] as string[], locked: isLocked(t.minTier, tier), soon: !!t.soon };
+}
 
 function ChevronDown() {
   return (
@@ -178,6 +90,19 @@ function DropdownLink({
   );
 }
 
+// Opens on hover and on keyboard focus, so the menus work without a mouse.
+const MENU_PANEL =
+  "pointer-events-none absolute top-full translate-y-1 pt-1 opacity-0 transition-all duration-150 ease-out " +
+  "group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100 " +
+  "group-focus-within:pointer-events-auto group-focus-within:translate-y-0 group-focus-within:opacity-100";
+
+function EntryMarker({ locked, soon }: { locked: boolean; soon: boolean }) {
+  if (soon) {
+    return <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-text-muted">Soon</span>;
+  }
+  return locked ? <Lock className="h-3 w-3 text-text-dim opacity-60" aria-label="Locked" /> : null;
+}
+
 export function DashboardNav({
   user,
   active,
@@ -194,9 +119,11 @@ export function DashboardNav({
   const tierMeta        = TIERS[user.tier];
   const tierStyle       = TIER_STYLE[user.tier];
   const userIsOwner     = isOwner(user.discordId);
-  const toolsActive     = TOOLS_KEYS.includes(active as string);
-  const communityActive = COMMUNITY_KEYS.includes(active as string);
-  const accountActive   = ACCOUNT_KEYS.includes(active as string);
+  const toolsActive     = TOOLS_KEYS.includes(active);
+  const communityActive = COMMUNITY_KEYS.includes(active);
+  const accountActive   = ACCOUNT_KEYS.includes(active);
+  const groups          = NAV_GROUPS.map((g) => ({ heading: g.heading, entries: g.entries.map((e) => resolveEntry(e, user.tier)) }));
+  const activeHub       = tool(active)?.hub;
 
   const displayName = user.username ? `@${user.username}` : user.email;
 
@@ -224,6 +151,7 @@ export function DashboardNav({
             {/* AI Tools dropdown */}
             <div className="group relative">
               <button
+                aria-haspopup="true"
                 className={`flex items-center rounded-md px-3 py-1.5 transition ${
                   toolsActive
                     ? "font-medium text-text"
@@ -233,36 +161,22 @@ export function DashboardNav({
                 AI Tools
                 <ChevronDown />
               </button>
-              <div className="pointer-events-none absolute left-0 top-full w-52 translate-y-1 pt-1 opacity-0 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
-                <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl w-52">
-                  {TOOL_GROUPS.map((group, gi) => (
+              <div className={`${MENU_PANEL} left-0 w-56`}>
+                <div className="w-56 rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl">
+                  {groups.map((group, gi) => (
                     <div key={group.heading}>
                       {gi > 0 && <div className="my-1 border-t border-bg-border" />}
                       <p className="px-3 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim">
                         {group.heading}
                       </p>
-                      {group.items.map((item) => {
-                        const locked =
-                          item.minTier === "APEX"  ? user.tier !== "APEX" :
-                          item.minTier === "ELITE" ? (user.tier === "FREE" || user.tier === "PRO") :
-                          item.minTier === "PRO"   ? user.tier === "FREE" :
-                          false;
-                        return (
-                          <DropdownLink key={item.key} href={item.href} active={active === item.key}>
-                            <span className="flex w-full items-center justify-between gap-2">
-                              {item.label}
-                              <span className="flex items-center gap-1">
-                                {item.badge && (
-                                  <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] text-text-muted">
-                                    {item.badge}
-                                  </span>
-                                )}
-                                {locked && <Lock className="h-3 w-3 text-text-dim opacity-60" />}
-                              </span>
-                            </span>
-                          </DropdownLink>
-                        );
-                      })}
+                      {group.entries.map((item) => (
+                        <DropdownLink key={item.id} href={item.href} active={item.keys.includes(active)}>
+                          <span className="flex w-full items-center justify-between gap-2">
+                            {item.label}
+                            <EntryMarker locked={item.locked} soon={item.soon} />
+                          </span>
+                        </DropdownLink>
+                      ))}
                     </div>
                   ))}
                 </div>
@@ -272,6 +186,7 @@ export function DashboardNav({
             {/* Community dropdown */}
             <div className="group relative">
               <button
+                aria-haspopup="true"
                 className={`flex items-center rounded-md px-3 py-1.5 transition ${
                   communityActive
                     ? "font-medium text-text"
@@ -281,11 +196,16 @@ export function DashboardNav({
                 Community
                 <ChevronDown />
               </button>
-              <div className="pointer-events-none absolute left-0 top-full w-48 translate-y-1 pt-1 opacity-0 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
+              <div className={`${MENU_PANEL} left-0 w-48`}>
                 <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl">
                   {COMMUNITY.map((item) => (
                     <DropdownLink key={item.key} href={item.href} active={active === item.key}>
-                      {item.label}
+                      <span className="flex w-full items-center justify-between gap-2">
+                        {item.label}
+                        {item.key === "matchmaking" && (
+                          <EntryMarker locked={isLocked(tool("matchmaking")!.minTier, user.tier)} soon={false} />
+                        )}
+                      </span>
                     </DropdownLink>
                   ))}
                 </div>
@@ -364,6 +284,7 @@ export function DashboardNav({
           {/* Account dropdown */}
           <div className="group relative hidden sm:block">
             <button
+              aria-haspopup="true"
               className={`flex items-center rounded-md px-3 py-1.5 text-sm transition ${
                 accountActive
                   ? "font-medium text-text"
@@ -373,7 +294,7 @@ export function DashboardNav({
               Account
               <ChevronDown />
             </button>
-            <div className="pointer-events-none absolute right-0 top-full w-44 translate-y-1 pt-1 opacity-0 transition-all duration-150 ease-out group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
+            <div className={`${MENU_PANEL} right-0 w-44`}>
               <div className="rounded-lg border border-bg-border bg-bg-panel p-1 shadow-xl">
                 {ACCOUNT.map((item) => (
                   <DropdownLink key={item.key} href={item.href} active={active === item.key}>
@@ -397,29 +318,102 @@ export function DashboardNav({
             </div>
           </div>
 
-          {/* Mobile sign out */}
-          <form action={handleSignOut} className="sm:hidden">
-            <button className="btn-ghost text-xs">Sign out</button>
-          </form>
+          {/* Mobile menu: a native <details> sheet, so it needs no client JS */}
+          <details className="mobile-menu sm:hidden">
+            <summary
+              aria-label="Open menu"
+              className="flex cursor-pointer list-none items-center rounded-md p-1.5 text-text-muted transition hover:bg-white/[0.04] hover:text-text"
+            >
+              <Menu className="h-5 w-5" />
+            </summary>
+            <div className="absolute inset-x-0 top-14 max-h-[calc(100dvh-3.5rem)] overflow-y-auto border-b border-bg-border bg-bg-panel px-4 pb-6 pt-2 shadow-2xl">
+              <MobileSection title="General">
+                <MobileLink href="/dashboard" active={active === "dashboard"}>Dashboard</MobileLink>
+                <MobileLink href="/dashboard/notifications" active={active === "notifications"}>Notifications</MobileLink>
+                <MobileLink href="/dashboard/messages" active={active === "messages"}>Messages</MobileLink>
+                <MobileLink href="/dashboard/connections" active={active === "connections"}>Connections</MobileLink>
+              </MobileSection>
+              {groups.map((group) => (
+                <MobileSection key={group.heading} title={group.heading}>
+                  {group.entries.map((item) => (
+                    <MobileLink key={item.id} href={item.href} active={item.keys.includes(active)}>
+                      <span className="flex w-full items-center justify-between gap-2">
+                        {item.label}
+                        <EntryMarker locked={item.locked} soon={item.soon} />
+                      </span>
+                    </MobileLink>
+                  ))}
+                </MobileSection>
+              ))}
+              <MobileSection title="Community">
+                {COMMUNITY.map((item) => (
+                  <MobileLink key={item.key} href={item.href} active={active === item.key}>{item.label}</MobileLink>
+                ))}
+              </MobileSection>
+              <MobileSection title="Account">
+                {ACCOUNT.map((item) => (
+                  <MobileLink key={item.key} href={item.href} active={active === item.key}>{item.label}</MobileLink>
+                ))}
+                <form action={handleSignOut}>
+                  <button className="flex w-full items-center rounded-md px-3 py-2 text-sm text-text-muted transition hover:bg-white/[0.04] hover:text-text">
+                    Sign out
+                  </button>
+                </form>
+              </MobileSection>
+            </div>
+          </details>
         </div>
       </div>
 
-      {/* ── Mobile scroll row ── */}
-      <div className="scrollbar-hide flex gap-1 overflow-x-auto border-t border-bg-border px-4 py-1.5 text-sm sm:hidden">
-        {ALL_MOBILE.map((it) => (
-          <Link
-            key={it.key}
-            href={it.href}
-            className={
-              active === it.key
-                ? "shrink-0 rounded-md px-3 py-1.5 font-medium text-text"
-                : "shrink-0 rounded-md px-3 py-1.5 text-text-muted hover:text-text"
-            }
-          >
-            {it.label}
-          </Link>
-        ))}
-      </div>
+      {/* ── Hub tabs: the tools a merged section stands in for ── */}
+      {activeHub && (
+        <div className="border-t border-bg-border">
+          <div className="scrollbar-hide mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 py-1.5 text-sm sm:px-6">
+            <span className="mr-2 hidden shrink-0 self-center text-[10px] font-semibold uppercase tracking-wider text-text-dim sm:inline">
+              {HUBS[activeHub].label}
+            </span>
+            {HUBS[activeHub].tabs.map((key) => {
+              const t = tool(key)!;
+              const on = key === active;
+              return (
+                <Link
+                  key={key}
+                  href={t.href}
+                  aria-current={on ? "page" : undefined}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-md px-3 py-1.5 transition ${
+                    on ? "bg-white/[0.06] font-medium text-text" : "text-text-muted hover:bg-white/[0.04] hover:text-text"
+                  }`}
+                >
+                  {t.tabLabel ?? t.label}
+                  <EntryMarker locked={isLocked(t.minTier, user.tier)} soon={!!t.soon} />
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </header>
+  );
+}
+
+function MobileSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="border-b border-bg-border py-2 last:border-b-0">
+      <p className="px-3 pb-1 pt-1.5 text-[10px] font-semibold uppercase tracking-wider text-text-dim">{title}</p>
+      {children}
+    </div>
+  );
+}
+
+function MobileLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center rounded-md px-3 py-2 text-sm transition ${
+        active ? "bg-white/[0.06] font-medium text-text" : "text-text-muted hover:bg-white/[0.04] hover:text-text"
+      }`}
+    >
+      {children}
+    </Link>
   );
 }

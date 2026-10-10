@@ -50,19 +50,15 @@ export default async function OutreachPage({
           </span>
         </div>
 
-        {user.tier === "FREE" ? (
-          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
-            <h3 className="font-semibold">Cold Outreach is a Pro feature</h3>
-            <p className="mt-1 text-sm text-text-muted">
-              Get 50 personalised messages a month on Pro, unlimited on Elite+.
-            </p>
-            <Link href="/pricing" className="btn-primary mt-4 w-fit">Upgrade to Pro</Link>
-          </div>
-        ) : (
-          <div className="card p-5 sm:p-6">
-            <OutreachGenerator voices={voices} initialProspect={initialProspect} />
+        {user.tier === "FREE" && (
+          <div className="mb-6 rounded-lg border border-white/[0.07] bg-bg-panel px-4 py-3 text-sm text-text-muted">
+            You&apos;re on the free plan — {limitDisplay} messages a month.{" "}
+            <Link href="/pricing" className="underline hover:text-text">Pro gets 50, Elite and Apex unlimited.</Link>
           </div>
         )}
+        <div className="card p-5 sm:p-6">
+          <OutreachGenerator voices={voices} initialProspect={initialProspect} />
+        </div>
       </main>
     </div>
   );

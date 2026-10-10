@@ -582,3 +582,8 @@ h1 { letter-spacing: -0.03em; }
     transform: none;
   }
 }
+
+/* Dashboard mobile menu (native <details>) */
+.mobile-menu > summary::-webkit-details-marker { display: none; }
+.mobile-menu[open] > summary { background: rgba(255,255,255,0.06); color: var(--text); }
+.faq > summary::-webkit-details-marker { display: none; }

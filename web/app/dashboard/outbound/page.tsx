@@ -3,6 +3,9 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { LockedPage } from "@/components/locked-page";
+import { ComingSoonPage } from "@/components/coming-soon";
+import { isOwner } from "@/lib/owner";
+import { TOOLS } from "@/lib/tools";
 import { OutboundClient } from "@/components/outbound-client";
 import {
   describeSendProvider,
@@ -18,6 +21,18 @@ export default async function OutboundPage() {
 
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) redirect("/login");
+
+  // Sending needs a connected mailbox; until then only owners can open it.
+  if (TOOLS.outbound.soon && !isOwner(user.discordId)) {
+    return (
+      <ComingSoonPage
+        user={user}
+        active="outbound"
+        title="Outbound Engine"
+        description="An autonomous AI that finds businesses, studies their websites and writes a different email to every one of them — then runs the follow-ups. Sending is being connected and opens to Elite and Apex soon."
+      />
+    );
+  }
 
   const canAccess = user.tier === "ELITE" || user.tier === "APEX";
   if (!canAccess) {

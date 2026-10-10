@@ -6,40 +6,39 @@ import { TIERS } from "@/lib/tiers";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import {
-  ArrowRight, Sparkles, Send, ClipboardCheck, Radar, TrendingUp, Search,
-  Lightbulb, BarChart3, ShoppingBag, LineChart, Clapperboard, Dna, MapPin,
-  Eye, Workflow, Zap, Activity, MessagesSquare, Users, Handshake, UserCircle,
-  Briefcase, UsersRound, MessageSquare, Network, Gem, Flame, Trophy, CreditCard,
+  ArrowRight, Sparkles, Workflow, MessagesSquare, Users, UserCircle,
+  Briefcase, UsersRound, MessageSquare, Network, Gem, Flame, Trophy, CreditCard, Lock,
+  type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { HUBS, NAV_GROUPS, TOOLS, isLocked, tool, type MinTier } from "@/lib/tools";
+import type { Tier } from "@prisma/client";
 
-const TOOLS = [
-  { href: "/dashboard/voice", name: "Brand Voice Studio", desc: "Train Claude on your tone", icon: Sparkles },
-  { href: "/dashboard/outreach", name: "Cold Outreach", desc: "Messages that get replies", icon: Send },
-  { href: "/dashboard/audit", name: "Funnel Auditor", desc: "Score + fix any landing page", icon: ClipboardCheck },
-  { href: "/dashboard/competitors", name: "Competitor Scanner", desc: "Intel reports on rivals", icon: Radar },
-  { href: "/dashboard/trends", name: "Trend Radar", desc: "Track topics across the web", icon: TrendingUp },
-  { href: "/dashboard/leads", name: "Lead Sourcing", desc: "Score prospects against your ICP", icon: Search },
-  { href: "/dashboard/inspiration", name: "Content Inspiration", desc: "Mine Reddit + YouTube angles", icon: Lightbulb },
-  { href: "/dashboard/ads", name: "Meta Ads", desc: "Campaign performance + ad intel", icon: BarChart3 },
-  { href: "/dashboard/shopify", name: "Shopify", desc: "Revenue, orders, products", icon: ShoppingBag },
-  { href: "/dashboard/revenue", name: "Revenue", desc: "MRR, subs, and charges", icon: LineChart },
-  { href: "/dashboard/virality", name: "Virality Engine", desc: "AI video scoring + publishing", icon: Clapperboard },
-  { href: "/dashboard/company-dna", name: "Company DNA", desc: "Give AI context about you", icon: Dna },
-  { href: "/dashboard/recon", name: "Fortify Recon", desc: "Find local businesses", icon: MapPin },
-  { href: "/dashboard/competitor-tracking", name: "Competitor Watch", desc: "Monitor pages for changes", icon: Eye },
-  { href: "/dashboard/workflows", name: "Workflows", desc: "Multi-step AI automations", icon: Workflow },
-  { href: "/dashboard/advisor", name: "AI Advisor", desc: "Claude Opus strategy briefings", icon: Zap },
-  { href: "/dashboard/analytics", name: "Analytics", desc: "GA4 + Search Console", icon: Activity },
-  { href: "/dashboard/forums", name: "Forums", desc: "Community discussion boards", icon: MessagesSquare },
+type Tile = { href: string; name: string; desc: string; icon: LucideIcon; minTier?: MinTier; soon?: boolean };
+
+// Every tool, in the nav's order and grouping, so the home grid and the nav never drift.
+const TOOL_SECTIONS: { heading: string; tiles: Tile[] }[] = NAV_GROUPS.map((g) => ({
+  heading: g.heading,
+  tiles: g.entries
+    .flatMap((e) => (e.kind === "hub" ? HUBS[e.hub].tabs : [e.key]))
+    .map((k) => tool(k)!)
+    .map((t) => ({ href: t.href, name: t.label, desc: t.desc, icon: t.icon, minTier: t.minTier, soon: t.soon })),
+}));
+
+const COMMUNITY_TILES: Tile[] = [
   { href: "/dashboard/members", name: "Member Directory", desc: "Founders, operators, creators", icon: Users },
-  { href: "/dashboard/matchmaking", name: "AI Matchmaking", desc: "Members worth talking to", icon: Handshake },
-  { href: "/dashboard/profile", name: "Your Profile", desc: "Niche, skills, what you offer", icon: UserCircle },
+  { href: TOOLS.matchmaking.href, name: TOOLS.matchmaking.label, desc: TOOLS.matchmaking.desc, icon: TOOLS.matchmaking.icon, minTier: TOOLS.matchmaking.minTier },
   { href: "/dashboard/deals", name: "Deal Board", desc: "Post and browse deals", icon: Briefcase },
-  { href: "/dashboard/pods", name: "Mastermind Pods", desc: "Apex accountability circles", icon: UsersRound },
+  { href: "/dashboard/pods", name: "Mastermind Pods", desc: "Apex accountability circles", icon: UsersRound, minTier: "APEX" },
+  { href: "/dashboard/forums", name: "Forums", desc: "Community discussion boards", icon: MessagesSquare },
   { href: "/dashboard/messages", name: "Messages", desc: "Chat with members", icon: MessageSquare },
   { href: "/dashboard/connections", name: "Connections", desc: "Your Fortify network", icon: Network },
+  { href: "/dashboard/profile", name: "Your Profile", desc: "Niche, skills, what you offer", icon: UserCircle },
 ];
+
+const SUBSCRIPTION_LABEL: Record<string, string> = {
+  ACTIVE: "Active", CANCELLED: "Cancelled", SUSPENDED: "Paused", EXPIRED: "Expired",
+};
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -56,6 +55,8 @@ export default async function DashboardPage() {
   const tierMeta = TIERS[user.tier];
   const profileIncomplete = !user.profile || (!user.profile.niche && user.profile.skills.length === 0 && user.profile.canOffer.length === 0);
   const firstName = user.name?.split(" ")[0] ?? "operator";
+  const subStatus = user.subscription?.status;
+  const subscriptionLabel = subStatus ? (SUBSCRIPTION_LABEL[subStatus] ?? subStatus) : "None";
 
   return (
     <div className="relative min-h-screen">
@@ -89,7 +90,7 @@ export default async function DashboardPage() {
           <StatTile icon={<Gem className="h-4 w-4" />} label="Tier" value={tierMeta.name} accent="#ffffff" />
           <StatTile icon={<Trophy className="h-4 w-4" />} label="XP" value={user.xp.toLocaleString()} accent="#ffffff" />
           <StatTile icon={<Flame className="h-4 w-4" />} label="Streak" value={`${user.streak} days`} accent="#ffffff" />
-          <StatTile icon={<CreditCard className="h-4 w-4" />} label="Subscription" value={user.subscription?.status ?? "Free"} accent="#ffffff" />
+          <StatTile icon={<CreditCard className="h-4 w-4" />} label="Subscription" value={subscriptionLabel} accent="#ffffff" />
         </div>
 
         {/* Hook generator — featured */}
@@ -107,34 +108,51 @@ export default async function DashboardPage() {
         </div>
 
         {/* Tools grid */}
-        <div className="anim-fade-up anim-d3 mb-4 flex items-end justify-between">
-          <div>
-            <span className="eyebrow"><Workflow className="h-3.5 w-3.5" /> Your arsenal</span>
-            <h2 className="mt-1 text-xl font-bold tracking-tight">Every tool, one click away</h2>
-          </div>
+        <div className="anim-fade-up anim-d3 mb-6">
+          <span className="eyebrow"><Workflow className="h-3.5 w-3.5" /> Your arsenal</span>
+          <h2 className="mt-1 text-xl font-bold tracking-tight">Every tool, one click away</h2>
         </div>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {TOOLS.map((t) => (
-            <Link
-              key={t.href}
-              href={t.href}
-              className="bento group flex items-start gap-3 p-4"
-            >
-              <span className="icon-tile h-10 w-10 shrink-0 text-text-muted">
-                <t.icon className="h-[18px] w-[18px]" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-medium leading-tight">{t.name}</p>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-text-dim transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--accent)]" />
-                </div>
-                <p className="mt-0.5 text-xs leading-snug text-text-muted">{t.desc}</p>
+        <div className="space-y-8">
+          {[...TOOL_SECTIONS, { heading: "Community", tiles: COMMUNITY_TILES }].map((section) => (
+            <section key={section.heading}>
+              <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-text-dim">{section.heading}</h3>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {section.tiles.map((t) => (
+                  <ToolTile key={t.href} tile={t} tier={user.tier} />
+                ))}
               </div>
-            </Link>
+            </section>
           ))}
         </div>
       </main>
     </div>
+  );
+}
+
+function ToolTile({ tile, tier }: { tile: Tile; tier: Tier }) {
+  const locked = isLocked(tile.minTier, tier);
+  const dimmed = locked || tile.soon;
+  return (
+    <Link href={tile.href} className="bento group flex items-start gap-3 p-4">
+      <span className={`icon-tile h-10 w-10 shrink-0 ${dimmed ? "text-text-dim" : "text-text-muted"}`}>
+        <tile.icon className="h-[18px] w-[18px]" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <p className={`font-medium leading-tight ${dimmed ? "text-text-muted" : ""}`}>{tile.name}</p>
+          {tile.soon ? (
+            <span className="shrink-0 rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-text-muted">Soon</span>
+          ) : locked ? (
+            <span className="flex shrink-0 items-center gap-1 rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium text-text-muted">
+              <Lock className="h-2.5 w-2.5" /> {TIERS[tile.minTier!].name}
+            </span>
+          ) : (
+            <ArrowRight className="h-3.5 w-3.5 shrink-0 text-text-dim transition-transform duration-200 group-hover:translate-x-0.5 group-hover:text-[var(--accent)]" />
+          )}
+        </div>
+        <p className="mt-0.5 text-xs leading-snug text-text-muted">{tile.desc}</p>
+      </div>
+    </Link>
   );
 }
 
