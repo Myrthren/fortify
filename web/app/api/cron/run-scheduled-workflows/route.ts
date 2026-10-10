@@ -1,14 +1,10 @@
 /**
  * /api/cron/run-scheduled-workflows
  * -----------------------------------
- * Called every hour by cron-job.org.
+ * Called every hour at :00 by the Netlify scheduled function
+ * netlify/functions/cron-workflows.mts, which sends x-cron-secret.
  * Finds all active workflows with a trigger_schedule node whose cron
  * expression matches the current UTC time, and fires them.
- *
- * cron-job.org setup:
- *   URL:    POST https://fortify-io.com/api/cron/run-scheduled-workflows
- *   Header: x-cron-secret: <CRON_SECRET>
- *   Interval: Every hour at :00
  */
 
 import { NextResponse } from "next/server";
