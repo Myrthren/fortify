@@ -1,94 +1,143 @@
+import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
-import { PayPalButton } from "@/components/paypal-button";
+import { CheckoutOptions } from "@/components/checkout-options";
 import { whopCheckoutUrls } from "@/lib/whop-checkout";
-import { Check, Gem } from "lucide-react";
+import { Check, Gem, Minus } from "lucide-react";
 
-const tiers = [
+type PaidKey = "pro" | "elite" | "apex";
+
+const tiers: {
+  key: "free" | PaidKey;
+  name: string;
+  price: string;
+  blurb: string;
+  planId?: string;
+  highlight?: boolean;
+  highlights: string[];
+}[] = [
   {
     key: "free",
     name: "Free",
     price: "£0",
     blurb: "Get inside the gate.",
-    cta: "Start free",
-    features: [
+    highlights: [
       "100 starter credits",
-      "£0.20 one-time AI trial",
-      "10 cold outreach messages",
-      "5 Trend Radar watch terms",
-      "Hook Generator",
-      "Member directory (read-only)",
-      "Deal board (read-only)",
-      "Community forums",
+      "10 outreach messages a month",
+      "5 Trend Radar topics",
+      "Forums, member directory and deal board",
     ],
   },
   {
     key: "pro",
     name: "Pro",
     price: "£29",
-    blurb: "Armed and active.",
-    cta: "Subscribe",
+    blurb: "For operators getting started.",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_PRO,
-    features: [
-      "500 credits / month",
-      "Unlimited AI chat",
-      "Brand Voice Studio (1 voice)",
-      "Cold Outreach — 50 / month",
-      "Funnel Auditor — 5 / month",
-      "Competitor Scanner (3 tracked)",
-      "Lead Sourcing",
-      "Content Inspiration Engine",
-      "Meta Ads dashboard",
-      "Shopify + Revenue dashboards",
-      "Company DNA (AI memory)",
-      "Logo Intelligence",
-      "Analytics (GA4, Search Console)",
-      "AI Matchmaking",
-      "Trend Radar — 10 watch terms",
+    highlights: [
+      "500 credits a month",
+      "Brand Voice Studio and unlimited AI chat",
+      "Social lead extraction and lead scoring",
+      "Competitor Scanner for 3 rivals",
     ],
   },
   {
     key: "elite",
     name: "Elite",
     price: "£79",
-    blurb: "Trusted operator.",
-    cta: "Subscribe",
+    blurb: "The full outbound and research stack.",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ELITE,
     highlight: true,
-    features: [
-      "Everything in Pro",
-      "1,500 credits / month",
-      "3 brand voice profiles",
-      "Unlimited audits + outreach",
-      "Unlimited Trend Radar terms",
-      "10 competitors tracked",
-      "Competitor Watch (live page monitoring)",
-      "Fortify Recon (local business intel)",
-      "Virality Engine + Reddit trends",
-      "Workflows (AI automation builder)",
-      "Company DNA — 100k characters",
-      "Weekly AI strategy report (Discord)",
+    highlights: [
+      "1,500 credits a month",
+      "Unlimited outreach, audits and trend topics",
+      "Local business leads with Fortify Recon",
+      "Workflows and live Competitor Watch",
     ],
   },
   {
     key: "apex",
     name: "Apex",
     price: "£199",
-    blurb: "Top of the fortress.",
-    cta: "Subscribe",
+    blurb: "No ceilings, plus strategy on tap.",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_APEX,
-    features: [
-      "Everything in Elite",
-      "5,000 credits / month",
-      "Unlimited brand voices + competitors",
-      "Unlimited workflows + Company DNA",
-      "AI Advisor — Claude Opus strategic briefs",
-      "4,000-token AI responses (2× deeper)",
-      "15-session AI memory (3× deeper context)",
-      "Auto-publish to TikTok, YouTube, Facebook",
-      "Mastermind Pod access",
-      "Apex-only Discord channels",
-      "Early access to new features",
+    highlights: [
+      "5,000 credits a month",
+      "AI Advisor strategy briefs on Claude Opus",
+      "Unlimited voices, competitors and workflows",
+      "Mastermind Pods and Apex-only channels",
+    ],
+  },
+];
+
+// A cell is either included (true), not included (false), a value, or coming soon.
+type Cell = boolean | string | { soon: true; note?: string };
+const SOON = (note?: string): Cell => ({ soon: true, note });
+
+const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, Cell, Cell] }[] }[] = [
+  {
+    section: "Credits and AI",
+    rows: [
+      { label: "Credits", cells: ["100 to start", "500 / month", "1,500 / month", "5,000 / month"] },
+      { label: "AI chat", cells: ["Trial", "Unlimited", "Unlimited", "Unlimited, 2× deeper answers"] },
+      { label: "Hook Generator", cells: [true, true, true, true] },
+    ],
+  },
+  {
+    section: "Leads and outreach",
+    rows: [
+      { label: "Cold outreach messages", cells: ["10 / month", "50 / month", "Unlimited", "Unlimited"] },
+      { label: "Lead Extractor (TikTok, Instagram)", cells: [false, "10 per batch", "25 per batch", "50 per batch"] },
+      { label: "Lead scoring", cells: [false, true, true, true] },
+      { label: "Fortify Recon (Google Maps leads)", cells: [false, false, true, true] },
+      { label: "Outbound Engine (autopilot)", cells: [false, false, SOON(), SOON()] },
+    ],
+  },
+  {
+    section: "Content",
+    rows: [
+      { label: "Brand voices", cells: [false, "1", "3", "Unlimited"] },
+      { label: "Content Inspiration", cells: [false, true, true, true] },
+      { label: "Logo Intelligence", cells: [false, true, true, true] },
+      { label: "Virality Engine", cells: [false, false, true, true] },
+      { label: "Auto-publish to YouTube and Facebook", cells: [false, false, false, true] },
+      { label: "Auto-publish to TikTok", cells: [false, false, false, SOON()] },
+    ],
+  },
+  {
+    section: "Research",
+    rows: [
+      { label: "Trend Radar topics", cells: ["5", "10", "Unlimited", "Unlimited"] },
+      { label: "Reddit and YouTube comment trends", cells: [false, false, true, true] },
+      { label: "Funnel audits", cells: [false, "5 / month", "Unlimited", "Unlimited"] },
+      { label: "Competitors tracked", cells: [false, "3", "10", "Unlimited"] },
+      { label: "Competitor Watch (page change alerts)", cells: [false, false, true, true] },
+    ],
+  },
+  {
+    section: "Business",
+    rows: [
+      { label: "Company DNA (AI memory)", cells: [false, "30k characters", "100k characters", "Unlimited"] },
+      { label: "Meta Ads, Shopify and Revenue dashboards", cells: [false, true, true, true] },
+      { label: "Analytics (GA4, Search Console)", cells: [false, SOON(), SOON(), SOON()] },
+    ],
+  },
+  {
+    section: "Automation and strategy",
+    rows: [
+      { label: "Workflows", cells: [false, false, "Standard capacity", "Unlimited"] },
+      { label: "Weekly AI strategy report (Discord)", cells: [false, false, true, true] },
+      { label: "AI Advisor (Claude Opus)", cells: [false, false, false, true] },
+    ],
+  },
+  {
+    section: "Community",
+    rows: [
+      { label: "Community forums", cells: [true, true, true, true] },
+      { label: "Member directory and deal board", cells: ["Read-only", true, true, true] },
+      { label: "AI Matchmaking", cells: [false, true, true, true] },
+      { label: "Mastermind Pods and Apex channels", cells: [false, false, false, true] },
+      { label: "Early access to new features", cells: [false, false, false, true] },
     ],
   },
 ];
@@ -114,8 +163,7 @@ export default function PricingPage() {
               Pricing that scales with you.
             </h1>
             <p className="mx-auto mt-4 max-w-xl text-text-muted">
-              Pay monthly, cancel anytime. All sales are final — no refunds. Every tier unlocks both
-              site + Discord features.
+              Pay monthly, cancel anytime. Every tier unlocks both the site and the Discord bot.
             </p>
           </div>
 
@@ -128,13 +176,15 @@ export default function PricingPage() {
                 }`}
                 style={t.highlight ? { boxShadow: "0 0 50px -18px rgba(255,255,255,0.35)" } : undefined}
               >
-                {t.highlight && (
-                  <span className="absolute -top-2.5 left-1/2 -translate-x-1/2 rounded-full bg-white px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-black">
-                    Popular
-                  </span>
-                )}
                 <div className="mb-6">
-                  <div className="text-sm font-medium text-text-muted">{t.name}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-medium text-text-muted">{t.name}</span>
+                    {t.highlight && (
+                      <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-black">
+                        Recommended
+                      </span>
+                    )}
+                  </div>
                   <div className="mt-2 flex items-baseline gap-1">
                     <span className="text-4xl font-bold tracking-tight">{t.price}</span>
                     {t.price !== "£0" && <span className="text-sm text-text-muted">/mo</span>}
@@ -143,7 +193,10 @@ export default function PricingPage() {
                 </div>
 
                 <ul className="mb-6 flex-1 space-y-2.5 text-sm">
-                  {t.features.map((f) => (
+                  {i > 0 && (
+                    <li className="text-xs text-text-dim">Everything in {tiers[i - 1].name}, plus:</li>
+                  )}
+                  {t.highlights.map((f) => (
                     <li key={f} className="flex items-start gap-2.5">
                       <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.06]">
                         <Check className="h-2.5 w-2.5 text-text" />
@@ -153,37 +206,83 @@ export default function PricingPage() {
                   ))}
                 </ul>
 
-                {t.key !== "free" && whop[t.key as keyof typeof whop] && (
-                  <div className="mb-3">
-                    <a href={whop[t.key as keyof typeof whop]!} className="btn-primary w-full">
-                      Subscribe with Whop
-                    </a>
-                    <a href="/whop" className="mt-2 block text-center text-xs text-text-muted underline">
-                      How to activate your membership
-                    </a>
-                  </div>
-                )}
-                {t.planId ? (
-                  <PayPalButton planId={t.planId} tier={t.key as "pro" | "elite" | "apex"} />
+                {t.key === "free" ? (
+                  <a href="/login" className="btn-secondary w-full">Start free</a>
                 ) : (
-                  <a href="/login" className={t.highlight ? "btn-primary w-full" : "btn-secondary w-full"}>
-                    {t.cta}
-                  </a>
+                  <CheckoutOptions tier={t.key} whopUrl={whop[t.key]} planId={t.planId} highlight={t.highlight} />
                 )}
               </div>
             ))}
           </div>
 
-          <p className="mt-8 text-center text-sm text-text-muted">
-            Referred by an affiliate? Complete your purchase through their original Whop link
-            so they receive credit. After purchase, <a href="/whop" className="underline">activate your membership</a>.
+          <p className="mt-6 text-center text-sm text-text-muted">
+            <a href="#compare" className="underline-offset-4 hover:text-text hover:underline">Compare every feature ↓</a>
           </p>
-          <p className="anim-fade-up anim-d4 mt-10 text-center text-xs text-text-dim">
-            Prices in GBP · Manage billing with your payment provider
-          </p>
+
+          {/* ── Full comparison ── */}
+          <div id="compare" className="mt-20 scroll-mt-24">
+            <h2 className="mb-6 text-center text-2xl font-bold tracking-tight sm:text-3xl">Compare plans</h2>
+            <div className="card overflow-x-auto">
+              <table className="w-full min-w-[640px] text-sm">
+                <thead>
+                  <tr className="border-b border-bg-border">
+                    <th className="w-[34%] px-4 py-3 text-left font-medium text-text-muted">Feature</th>
+                    {tiers.map((t) => (
+                      <th key={t.key} className={`px-3 py-3 text-center font-semibold ${t.highlight ? "text-text" : "text-text-muted"}`}>
+                        {t.name}
+                        <span className="block text-xs font-normal text-text-dim">{t.price}{t.price !== "£0" && "/mo"}</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                {COMPARISON.map((group) => (
+                  <tbody key={group.section}>
+                    <tr>
+                      <td colSpan={5} className="px-4 pb-2 pt-6 text-[11px] font-semibold uppercase tracking-wider text-text-dim">
+                        {group.section}
+                      </td>
+                    </tr>
+                    {group.rows.map((row) => (
+                      <tr key={row.label} className="border-t border-bg-border/60">
+                        <td className="px-4 py-2.5 text-text">{row.label}</td>
+                        {row.cells.map((cell, ci) => (
+                          <td key={ci} className={`px-3 py-2.5 text-center ${tiers[ci].highlight ? "bg-white/[0.02]" : ""}`}>
+                            <CellValue cell={cell} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                ))}
+              </table>
+            </div>
+          </div>
+
+          <div className="anim-fade-up anim-d4 mx-auto mt-10 max-w-2xl space-y-2 text-center text-xs leading-relaxed text-text-dim">
+            <p>
+              Prices in GBP. Pay with Whop or PayPal — both unlock the same tier and Discord roles. Manage or
+              cancel billing with the provider you paid through. Payments are non-refundable; see the{" "}
+              <Link href="/terms" className="underline hover:text-text-muted">terms</Link>.
+            </p>
+            <p>
+              Paid through Whop? <Link href="/whop" className="underline hover:text-text-muted">Activate your membership</Link>.
+              Referred by an affiliate? Complete your purchase through their Whop link so they receive credit.
+            </p>
+          </div>
         </div>
       </section>
       <Footer />
     </>
+  );
+}
+
+function CellValue({ cell }: { cell: Cell }) {
+  if (cell === true) return <Check className="mx-auto h-4 w-4 text-text" aria-label="Included" />;
+  if (cell === false) return <Minus className="mx-auto h-4 w-4 text-text-dim" aria-label="Not included" />;
+  if (typeof cell === "string") return <span className="text-text-muted">{cell}</span>;
+  return (
+    <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
+      Soon
+    </span>
   );
 }
