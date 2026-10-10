@@ -84,7 +84,7 @@ deploy.
 | Cadence | Jobs |
 |---|---|
 | Every 15 min | `outbound-tick` |
-| Hourly | `run-scheduled-workflows` :00, `expire-bans` :20, `auto-publish` :45 |
+| Hourly | `run-scheduled-workflows` :00, `whop-reconcile` :00, `expire-bans` :20, `auto-publish` :45 |
 | Daily | `shopify-stock-check` 06:00, `shopify-out-of-stock` 06:15, `shopify-milestone` 06:30, `competitor-watch-scan` 07:00, `trend-alert` 07:30, `renewal-reminder` 08:00, `onboarding` 08:30, `payment-rescue` 09:00 |
 | Mondays | `weekly-report` 09:00, `content-brief` 09:30, `match-alert` 10:00, `shopify-weekly-revenue` 10:30, `competitor-monitor` 11:00, `stripe-mrr-check` 11:30 |
 | Monthly | `monthly-credits` — 1st at 00:00 |
@@ -137,10 +137,13 @@ Tiers are separate **plans under one product**, so `WHOP_PLAN_PRO` / `_ELITE` /
 `_APEX` hold plan ids, not product ids. Full setup in `SETUP.md`.
 
 ### Affiliate programme
-Whop-native: tracked links, attribution and payouts are all handled by Whop, so
-there is no Fortify code for it. Enabled and priced per-product in the Whop
-dashboard. Caveat: it only attributes **Whop** checkouts — PayPal signups are
-invisible to it, so affiliate traffic has to land on Whop checkout.
+Whop-native: tracked links, attribution and payouts are all handled by Whop.
+Fortify only provides checkout guidance at `/whop`, optional Whop buttons on
+`/pricing` and a programme page at `/affiliates` (enrolment opens once
+`WHOP_AFFILIATE_URL` is set). Commission is configured in the Whop dashboard.
+Caveat: it only attributes **Whop** checkouts — PayPal signups are invisible to
+it, so affiliate traffic has to land on Whop checkout. Launch steps are in
+`SETUP.md`.
 
 ## Notes for contributors
 
