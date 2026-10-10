@@ -1,20 +1,14 @@
 # Fortify email campaign
 
-Send the Fortify promo email (`fortify-email.html`) to a list via Resend.
+Send the Fortify promo email (`fortify-showcase.html`) to a list via Resend.
 No `npm install` — the script uses Node 18+ native fetch.
 
-## One-time setup (required before sending to real people)
+`fortify-io.com` is verified in Resend (DKIM, SPF and DMARC), so send from an
+address on that domain, e.g. `Fortify <hello@fortify-io.com>`.
 
-The Resend key is currently **restricted to test mode** — it can only email your
-own account address until you verify a domain.
-
-1. Go to https://resend.com/domains → **Add Domain** → `fortify-io.com`.
-2. Add the DKIM + SPF DNS records Resend shows you (in your domain's DNS).
-3. Wait for it to show **Verified**.
-4. Once verified, send from an address on that domain, e.g.
-   `Fortify <hello@fortify-io.com>`.
-
-This also gets you into the inbox instead of spam.
+`fortify-showcase.html` matches the site's monochrome design. The older
+`fortify-marketing.html` and `fortify-email.html` use an off-brand cyan/purple
+palette — only send them deliberately, with `--html`.
 
 ## Sending
 
@@ -29,8 +23,8 @@ copy recipients.example.csv recipients.csv
 # 3. Dry run first — prints who it WOULD email, sends nothing
 node send-campaign.js --to recipients.csv --dry-run
 
-# 4. Real send
-node send-campaign.js --to recipients.csv --from "Fortify <hello@fortify-io.com>"
+# 4. Real send — needs an inbox you actually read for opt-outs
+node send-campaign.js --to recipients.csv --from "Fortify <hello@fortify-io.com>" --unsubscribe you@example.com
 ```
 
 ### Options
@@ -38,20 +32,26 @@ node send-campaign.js --to recipients.csv --from "Fortify <hello@fortify-io.com>
 | Flag | Default | Purpose |
 |------|---------|---------|
 | `--to <file>` | `recipients.csv` | CSV of recipients |
-| `--html <file>` | `fortify-email.html` | HTML to send |
+| `--html <file>` | `fortify-showcase.html` | HTML to send |
 | `--from "<addr>"` | env `RESEND_FROM` or `onboarding@resend.dev` | From address |
+| `--unsubscribe <email>` | env `UNSUBSCRIBE_EMAIL` | Opt-out inbox. **Required for a live send** |
 | `--subject "<txt>"` | built-in | Subject line |
 | `--dry-run` | off | Validate + preview, send nothing |
 | `--limit <n>` | none | Only send to first n (testing) |
 
 ## Personalisation
 
-Put `{{name}}` anywhere in `fortify-email.html` and it's replaced per-recipient
-from the CSV `name` column (falls back to "there" if blank).
+The script fills these placeholders per recipient:
+
+- `{{name}}` — from the CSV `name` column (falls back to "there" if blank).
+- `{{unsubscribe_url}}` — a `mailto:` link to the `--unsubscribe` inbox. The same
+  address goes in the `List-Unsubscribe` header, so mail clients show their own
+  unsubscribe button.
+- `{{tracking_pixel}}` — removed; this sender does no open tracking.
 
 ## Notes
 
 - Throttled to ~2/sec for Resend's rate limit. Big lists take a few minutes.
 - `recipients.csv` is gitignored — never commit real contact lists.
-- Test-mode key only delivers to your own Resend account email. Verify a domain
-  to reach anyone else.
+- Inbound mail for `@fortify-io.com` is received by Resend, not a normal mailbox,
+  so point `--unsubscribe` at an inbox you check (and honour opt-outs by hand).

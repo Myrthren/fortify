@@ -2,7 +2,7 @@
 /**
  * Fortify email campaign sender (Resend).
  *
- * Reads marketing/fortify-email.html and sends it to every recipient in a CSV.
+ * Reads marketing/fortify-showcase.html and sends it to every recipient in a CSV.
  * No npm install needed — uses Node 18+ native fetch.
  *
  * USAGE (from the repo root or the marketing folder):
@@ -21,15 +21,17 @@
  *
  *   Options:
  *     --to <file>        CSV of recipients (default: recipients.csv)
- *     --html <file>      HTML file to send (default: fortify-email.html)
+ *     --html <file>      HTML file to send (default: fortify-showcase.html)
+ *     --unsubscribe <a>  Inbox that handles opt-outs (or env UNSUBSCRIBE_EMAIL).
+ *                        Required for a live send: it fills {{unsubscribe_url}}
+ *                        and the List-Unsubscribe header.
  *     --from "<addr>"    From address (default: env RESEND_FROM or onboarding@resend.dev)
  *     --subject "<txt>"  Subject line (default: built-in)
  *     --dry-run          Validate + preview, send nothing
  *     --limit <n>        Only send to the first n recipients (testing)
  *
- * NOTE: Until you verify a domain in Resend, the test API key can ONLY send to
- * your own account email. Verify fortify-io.com in the Resend dashboard to send
- * to real recipients and to land in inboxes (DKIM/SPF).
+ * fortify-io.com is verified in Resend, so send from an address on it, e.g.
+ * "Fortify <hello@fortify-io.com>".
  */
 
 const fs = require("fs");
@@ -47,7 +49,8 @@ function arg(flag, fallback = undefined) {
 
 const HERE = __dirname;
 const TO_FILE = arg("--to", "recipients.csv");
-const HTML_FILE = arg("--html", "fortify-email.html");
+const HTML_FILE = arg("--html", "fortify-showcase.html");
+const UNSUBSCRIBE = arg("--unsubscribe", process.env.UNSUBSCRIBE_EMAIL);
 const FROM = arg("--from", process.env.RESEND_FROM || "Fortify <onboarding@resend.dev>");
 const SUBJECT = arg("--subject", "One co-pilot. Five tools you can cancel.");
 const DRY_RUN = arg("--dry-run", false) === true;
@@ -83,10 +86,18 @@ function parseCsv(raw) {
   return rows;
 }
 
-// Personalise: replace {{name}} and a basic greeting fallback
-function personalise(html, name) {
+function unsubscribeUrl(email) {
+  return `mailto:${UNSUBSCRIBE}?subject=Unsubscribe%20${encodeURIComponent(email)}`;
+}
+
+// Personalise: fill {{name}} (with a greeting fallback) and the opt-out link,
+// and drop {{tracking_pixel}} — this sender does no open tracking.
+function personalise(html, name, email) {
   const safeName = name ? name.replace(/[<>]/g, "") : "there";
-  return html.replace(/\{\{\s*name\s*\}\}/g, safeName);
+  return html
+    .replace(/\{\{\s*name\s*\}\}/g, safeName)
+    .replace(/\{\{\s*unsubscribe_url\s*\}\}/g, unsubscribeUrl(email))
+    .replace(/\{\{\s*tracking_pixel\s*\}\}/g, "");
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -98,7 +109,13 @@ async function sendOne(to, html) {
       Authorization: `Bearer ${API_KEY}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ from: FROM, to: [to], subject: SUBJECT, html }),
+    body: JSON.stringify({
+      from: FROM,
+      to: [to],
+      subject: SUBJECT,
+      html,
+      headers: { "List-Unsubscribe": `<${unsubscribeUrl(to)}>` },
+    }),
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json.error) {
@@ -128,6 +145,10 @@ async function sendOne(to, html) {
   console.log(`  Recipients:  ${recipients.length}`);
   console.log(`  Mode:        ${DRY_RUN ? "DRY RUN (nothing sent)" : "LIVE SEND"}\n`);
 
+  if (!DRY_RUN && (typeof UNSUBSCRIBE !== "string" || !/^[^@\s]+@[^@\s]+$/.test(UNSUBSCRIBE))) {
+    die("Set --unsubscribe <email> (or UNSUBSCRIBE_EMAIL) to an inbox you read. Every marketing email needs a working opt-out.");
+  }
+
   if (DRY_RUN) {
     recipients.forEach((r, i) => console.log(`  ${i + 1}. ${r.email}${r.name ? `  (${r.name})` : ""}`));
     console.log(`\n✅ Dry run complete. Remove --dry-run to actually send.\n`);
@@ -138,7 +159,7 @@ async function sendOne(to, html) {
   let failed = 0;
   for (let i = 0; i < recipients.length; i++) {
     const r = recipients[i];
-    const body = personalise(html, r.name);
+    const body = personalise(html, r.name, r.email);
     try {
       const id = await sendOne(r.email, body);
       ok++;
