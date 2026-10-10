@@ -30,7 +30,7 @@ export default async function LeadsPage() {
         </div>
 
         {!canAccess ? (
-          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+          <div className="rounded-xl border border-white/15 bg-white/[0.05] p-6">
             <h3 className="font-semibold">Lead Sourcing is a Pro+ feature</h3>
             <p className="mt-1 text-sm text-text-muted">
               Describe your ideal customer profile and get a scored list of prospects ready for outreach.

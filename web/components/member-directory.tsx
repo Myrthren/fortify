@@ -241,9 +241,9 @@ function Avatar({ name, image, size = 40 }: { name: string; image: string | null
 function TierBadge({ tier }: { tier: string }) {
   if (tier === "FREE") return null;
   const cls = {
-    PRO: "border-blue-500/40 bg-blue-500/10 text-blue-200",
-    ELITE: "border-purple-500/40 bg-purple-500/10 text-purple-200",
-    APEX: "border-yellow-500/40 bg-yellow-500/10 text-yellow-200",
+    PRO: "border-white/15 bg-white/[0.05] text-text",
+    ELITE: "border-white/15 bg-white/[0.05] text-text",
+    APEX: "border-white/15 bg-white/[0.05] text-text",
   }[tier] ?? "border-bg-border";
   return (
     <span

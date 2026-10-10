@@ -58,7 +58,7 @@ export function WorkflowsClient({
   const [error, setError] = useState<string | null>(null);
 
   const barColor = (p: number) =>
-    p > 90 ? "bg-red-500" : p > 70 ? "bg-amber-400" : "bg-emerald-500";
+    p > 90 ? "bg-red-500" : p > 70 ? "bg-white/70" : "bg-green-500";
 
   async function buyPack(pack: CapPack) {
     setBuying(pack.id);
@@ -144,8 +144,8 @@ export function WorkflowsClient({
 
   function statusIcon(status: string | null) {
     if (!status) return null;
-    if (status === "completed") return <CheckCircle2 className="h-3 w-3 text-emerald-400" />;
-    if (status === "running")   return <Loader2 className="h-3 w-3 animate-spin text-blue-400" />;
+    if (status === "completed") return <CheckCircle2 className="h-3 w-3 text-green-400" />;
+    if (status === "running")   return <Loader2 className="h-3 w-3 animate-spin text-text-muted" />;
     if (status === "failed")    return <AlertCircle className="h-3 w-3 text-red-400" />;
     return <Clock className="h-3 w-3 text-text-dim" />;
   }
@@ -238,11 +238,11 @@ export function WorkflowsClient({
                 <div
                   className={`shrink-0 flex h-8 w-8 items-center justify-center rounded-lg border ${
                     w.active
-                      ? "border-emerald-500/30 bg-emerald-500/10"
+                      ? "border-green-500/30 bg-green-500/10"
                       : "border-bg-border bg-bg-elevated"
                   }`}
                 >
-                  <Zap className={`h-4 w-4 ${w.active ? "text-emerald-400" : "text-text-dim"}`} />
+                  <Zap className={`h-4 w-4 ${w.active ? "text-green-400" : "text-text-dim"}`} />
                 </div>
 
                 <div className="flex-1 min-w-0">

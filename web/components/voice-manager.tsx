@@ -121,7 +121,7 @@ export function VoiceManager({
     <div className="space-y-8">
       {/* Free tier upsell */}
       {tier === "FREE" && (
-        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+        <div className="rounded-xl border border-white/15 bg-white/[0.05] p-6">
           <h3 className="font-semibold">Brand Voice is a Pro feature</h3>
           <p className="mt-1 text-sm text-text-muted">
             Train Claude on your writing for outputs that sound like you, not generic AI.

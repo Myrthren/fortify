@@ -24,8 +24,8 @@ type LeadStatus = "new" | "contacted" | "qualified" | "dead";
 
 const STATUS_CONFIG: Record<LeadStatus, { label: string; cls: string }> = {
   new:       { label: "New",       cls: "border-white/10 bg-white/[0.04] text-text-dim" },
-  contacted: { label: "Contacted", cls: "border-blue-500/30 bg-blue-500/10 text-blue-400" },
-  qualified: { label: "Qualified", cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-400" },
+  contacted: { label: "Contacted", cls: "border-white/15 bg-white/[0.05] text-text-muted" },
+  qualified: { label: "Qualified", cls: "border-green-500/30 bg-green-500/10 text-green-400" },
   dead:      { label: "Dead",      cls: "border-red-500/30 bg-red-500/10 text-red-400" },
 };
 
@@ -332,7 +332,7 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
             {suggestLoading ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
-              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+              <Sparkles className="h-3.5 w-3.5 text-text-muted" />
             )}
             {suggestLoading ? "Generating ideas…" : "Generate search ideas from Company DNA"}
           </button>
@@ -514,8 +514,8 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
                         {lead.url ? domainFromUrl(lead.url) : lead.category ?? ""}
                       </p>
                       {lead.rating != null && (
-                        <span className="shrink-0 inline-flex items-center gap-0.5 text-[11px] text-amber-400 font-medium">
-                          <Star className="h-3 w-3 fill-amber-400" /> {lead.rating.toFixed(1)}
+                        <span className="shrink-0 inline-flex items-center gap-0.5 text-[11px] text-text-muted font-medium">
+                          <Star className="h-3 w-3 fill-white" /> {lead.rating.toFixed(1)}
                           {lead.reviewsCount != null && (
                             <span className="text-text-dim font-normal"> ({lead.reviewsCount})</span>
                           )}
@@ -559,7 +559,7 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
                         className="flex w-full items-center justify-between rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-left transition hover:bg-white/[0.06]"
                       >
                         <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
-                          <Brain className="h-3 w-3 text-amber-400/70" />
+                          <Brain className="h-3 w-3 text-text-muted" />
                           Approach strategy
                         </span>
                         {expandedContext.has(globalIndex) ? (

@@ -45,7 +45,7 @@ export function LeadSourcer() {
 
   function scoreColor(n: number) {
     if (n >= 8) return "text-green-400 border-green-500/30 bg-green-500/10";
-    if (n >= 5) return "text-amber-300 border-amber-500/30 bg-amber-500/10";
+    if (n >= 5) return "text-text border-white/15 bg-white/[0.05]";
     return "text-text-muted border-bg-border bg-bg-elevated";
   }
 

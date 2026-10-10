@@ -45,7 +45,7 @@ export default async function CompetitorsPage() {
         </div>
 
         {limit === 0 ? (
-          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+          <div className="rounded-xl border border-white/15 bg-white/[0.05] p-6">
             <h3 className="font-semibold">Competitor Scanner is a Pro+ feature</h3>
             <p className="mt-1 text-sm text-text-muted">
               Track up to 3 competitors on Pro, 10 on Elite, unlimited on Apex.

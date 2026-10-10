@@ -606,13 +606,13 @@ function CompetitorDetail({
           {/* Change detection alert */}
           {competitor.changeDetectedAt &&
             Date.now() - new Date(competitor.changeDetectedAt).getTime() < 7 * 24 * 60 * 60 * 1000 && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm">
-              <p className="font-medium text-amber-300">New activity detected this week</p>
+            <div className="rounded-lg border border-white/15 bg-white/[0.05] px-4 py-3 text-sm">
+              <p className="font-medium text-text">New activity detected this week</p>
               {(competitor.changeReport?.changes ?? []).slice(0, 3).map((c, i) => (
-                <p key={i} className="mt-1 text-xs text-amber-200/80">· {c}</p>
+                <p key={i} className="mt-1 text-xs text-text">· {c}</p>
               ))}
               {competitor.changeReport?.brief && (
-                <p className="mt-2 text-xs text-amber-200/70 italic">{competitor.changeReport.brief}</p>
+                <p className="mt-2 text-xs text-text italic">{competitor.changeReport.brief}</p>
               )}
               <p className="mt-2 text-xs text-text-muted">Re-scan for a fresh full report.</p>
             </div>
@@ -960,7 +960,7 @@ function SocialTab({
           Costs {creditCost} credits · You have {credits.toLocaleString()} credits
         </p>
         {credits < creditCost && !scanning && (
-          <p className="mt-2 text-xs text-amber-300">
+          <p className="mt-2 text-xs text-text">
             Not enough credits.{" "}
             <a href="/dashboard/credits" className="underline">Top up here</a>.
           </p>
@@ -1017,9 +1017,9 @@ function ReportView({ report }: { report: Report }) {
         <p className="text-xs uppercase tracking-wide text-text-muted">Bottom line</p>
         <p className="mt-1 text-sm leading-relaxed">{report.summary}</p>
       </div>
-      <Section title="Recent moves" items={report.recentMoves} accent="text-blue-300" />
+      <Section title="Recent moves" items={report.recentMoves} accent="text-text" />
       <Section title="Strengths" items={report.strengths} accent="text-green-400" />
-      <Section title="Weaknesses" items={report.weaknesses} accent="text-orange-300" />
+      <Section title="Weaknesses" items={report.weaknesses} accent="text-text" />
       <div className="card-elevated ring-1 ring-white/10 p-5">
         <p className="text-xs uppercase tracking-wide text-text-muted">Opportunities for you</p>
         <ol className="mt-2 space-y-2 text-sm">
@@ -1076,8 +1076,8 @@ function YoutubeReportView({ report }: { report: YoutubeReport }) {
           <p className="mt-1 text-sm leading-relaxed">{report.contentStyle}</p>
         </div>
       )}
-      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-blue-300" />
-      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-purple-300" />
+      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-text" />
+      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-text" />
       {(report.topVideos ?? []).length > 0 && (
         <div className="card p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Top Videos</p>
@@ -1159,8 +1159,8 @@ function TiktokReportView({ report }: { report: TiktokReport }) {
           <p className="mt-1 text-sm leading-relaxed">{report.contentStyle}</p>
         </div>
       )}
-      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-pink-300" />
-      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-purple-300" />
+      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-text" />
+      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-text" />
       {(report.topPosts ?? []).length > 0 && (
         <div className="card p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Top Posts</p>
@@ -1208,7 +1208,7 @@ function TiktokReportView({ report }: { report: TiktokReport }) {
 function ReviewReportView({ report }: { report: ReviewReport }) {
   const sentimentColor = {
     positive: "text-green-400",
-    mixed: "text-amber-300",
+    mixed: "text-text",
     negative: "text-red-400",
   }[report.sentiment];
 
@@ -1282,9 +1282,9 @@ function MetaAdReportView({ report }: { report: MetaAdReport }) {
         </div>
       )}
 
-      <Section title="Ad angles being used" items={report.adAngles ?? []} accent="text-blue-300" />
-      <Section title="Top CTA patterns" items={report.topCtaPatterns ?? []} accent="text-purple-300" />
-      <Section title="Offer frameworks" items={report.offerFrameworks ?? []} accent="text-amber-300" />
+      <Section title="Ad angles being used" items={report.adAngles ?? []} accent="text-text" />
+      <Section title="Top CTA patterns" items={report.topCtaPatterns ?? []} accent="text-text" />
+      <Section title="Offer frameworks" items={report.offerFrameworks ?? []} accent="text-text" />
 
       {(report.topAds ?? []).length > 0 && (
         <div className="card p-5">
@@ -1305,7 +1305,7 @@ function MetaAdReportView({ report }: { report: MetaAdReport }) {
                     </span>
                   )}
                   {ad.cta && (
-                    <span className="rounded border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] text-purple-300">
+                    <span className="rounded border border-white/15 bg-white/[0.05] px-2 py-0.5 text-[10px] text-text">
                       {ad.cta}
                     </span>
                   )}
@@ -1369,8 +1369,8 @@ function InstagramReportView({ report }: { report: InstagramReport }) {
           <p className="mt-1 text-sm leading-relaxed">{report.contentStyle}</p>
         </div>
       )}
-      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-pink-300" />
-      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-purple-300" />
+      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-text" />
+      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-text" />
       {(report.topPosts ?? []).length > 0 && (
         <div className="card p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Top Posts</p>
@@ -1452,8 +1452,8 @@ function TwitterReportView({ report }: { report: TwitterReport }) {
           <p className="mt-1 text-sm leading-relaxed">{report.contentStyle}</p>
         </div>
       )}
-      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-sky-300" />
-      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-purple-300" />
+      <Section title="Top Topics" items={report.topTopics ?? []} accent="text-text" />
+      <Section title="Viral Formats" items={report.viralFormats ?? []} accent="text-text" />
       {(report.topTweets ?? []).length > 0 && (
         <div className="card p-5">
           <p className="text-xs uppercase tracking-wide text-text-muted">Top Tweets</p>
@@ -1549,7 +1549,7 @@ function SerpReportView({ report }: { report: SerpReport }) {
       {(report.paidAds ?? []).length > 0 && (
         <div className="card overflow-hidden">
           <div className="px-5 py-3 border-b border-bg-border">
-            <p className="text-xs font-medium uppercase tracking-wide text-amber-300">Paid ads</p>
+            <p className="text-xs font-medium uppercase tracking-wide text-text">Paid ads</p>
           </div>
           <div className="divide-y divide-bg-border">
             {report.paidAds!.map((ad, i) => (
@@ -1565,7 +1565,7 @@ function SerpReportView({ report }: { report: SerpReport }) {
         </div>
       )}
 
-      <Section title="Related queries" items={report.relatedQueries ?? []} accent="text-blue-300" />
+      <Section title="Related queries" items={report.relatedQueries ?? []} accent="text-text" />
 
       {(report.opportunities ?? []).length > 0 && (
         <div className="card-elevated ring-1 ring-white/10 p-5">

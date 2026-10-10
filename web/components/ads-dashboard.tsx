@@ -93,7 +93,7 @@ export function AdsDashboard({ connected }: { connected: boolean }) {
   if (tokenExpired) {
     return (
       <div className="card p-6 space-y-3">
-        <div className="flex items-center gap-2 text-amber-300">
+        <div className="flex items-center gap-2 text-text">
           <AlertCircle className="h-4 w-4 shrink-0" />
           <p className="text-sm font-medium">Meta access token expired</p>
         </div>

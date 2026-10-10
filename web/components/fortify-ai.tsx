@@ -275,7 +275,7 @@ export function FortifyAI() {
     return `Resets in ${h}h ${m}m`;
   }
 
-  const barColor = (p: number) => p > 90 ? "bg-red-500" : p > 70 ? "bg-amber-400" : "bg-green-500";
+  const barColor = (p: number) => p > 90 ? "bg-red-500" : p > 70 ? "bg-white/70" : "bg-green-500";
 
   return (
     <>
@@ -357,7 +357,7 @@ export function FortifyAI() {
                   <span className="text-[10px] text-text-muted">Trial · £{usage.remainingGbp.toFixed(2)} left</span>
                 )}
                 {usage?.sessionExhausted && !usage.hasPackCredits && !usage.isFree && (
-                  <span className="text-[10px] text-amber-300">{getTimeUntilReset()}</span>
+                  <span className="text-[10px] text-text">{getTimeUntilReset()}</span>
                 )}
               </div>
               <div className="flex items-center gap-1">

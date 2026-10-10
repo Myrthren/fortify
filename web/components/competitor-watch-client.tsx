@@ -223,7 +223,7 @@ export function CompetitorWatchClient({
           <span
             key={s.id}
             className={`h-2.5 w-2.5 rounded-full ${
-              s.hasChange ? "bg-amber-400" : "bg-emerald-500"
+              s.hasChange ? "bg-white/70" : "bg-green-500"
             }`}
             title={`${new Date(s.scannedAt).toLocaleString()} — ${s.summary ?? (s.hasChange ? "Changed" : "No change")}`}
           />
@@ -304,7 +304,7 @@ export function CompetitorWatchClient({
                   <div className="flex items-center gap-2 flex-wrap mb-2">
                     <h3 className="font-semibold text-lg leading-tight">{watch.name}</h3>
                     {watch.active ? (
-                      <span className="rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-xs font-medium text-emerald-300">
+                      <span className="rounded-full bg-green-500/15 border border-green-500/30 px-2 py-0.5 text-xs font-medium text-green-300">
                         Active
                       </span>
                     ) : (
@@ -334,9 +334,9 @@ export function CompetitorWatchClient({
                       <span className="text-xs text-text-dim">
                         Last scan {new Date(lastScan.scannedAt).toLocaleDateString()} —{" "}
                         {lastScan.hasChange ? (
-                          <span className="text-amber-400 font-medium">Changed</span>
+                          <span className="text-text-muted font-medium">Changed</span>
                         ) : (
-                          <span className="text-emerald-400">No change</span>
+                          <span className="text-green-400">No change</span>
                         )}
                       </span>
                     ) : (
@@ -350,9 +350,9 @@ export function CompetitorWatchClient({
                       {watch.scans.slice(0, 3).map((s) => (
                         <div key={s.id} className="flex items-start gap-2 text-xs text-text-dim">
                           {s.hasChange ? (
-                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-400 mt-0.5" />
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-text-muted mt-0.5" />
                           ) : (
-                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400 mt-0.5" />
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-400 mt-0.5" />
                           )}
                           <span>
                             <span className="text-text-muted">{s.url.replace(/^https?:\/\//, "").slice(0, 50)}</span>

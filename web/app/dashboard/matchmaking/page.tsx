@@ -52,7 +52,7 @@ export default async function MatchmakingPage() {
 
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
         {me.tier === "FREE" ? (
-          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+          <div className="rounded-xl border border-white/15 bg-white/[0.05] p-6">
             <h3 className="font-semibold">AI Matchmaking is a Pro+ feature</h3>
             <p className="mt-1 text-sm text-text-muted">
               Get personalised match recommendations from the directory, with reasoning + a ready-to-send opener.

@@ -62,15 +62,15 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 
 const STATUS_COLORS = {
   DRAFT:      "text-text-muted",
-  ANALYZED:   "text-blue-300",
-  SCHEDULED:  "text-amber-300",
-  PUBLISHING: "text-purple-300",
+  ANALYZED:   "text-text",
+  SCHEDULED:  "text-text",
+  PUBLISHING: "text-text",
   PUBLISHED:  "text-green-400",
   FAILED:     "text-red-400",
 };
 
 const SCORE_COLOR = (n: number) =>
-  n >= 8 ? "text-green-400" : n >= 6 ? "text-amber-300" : "text-red-400";
+  n >= 8 ? "text-green-400" : n >= 6 ? "text-text" : "text-red-400";
 
 const CATEGORIES = [
   "Business", "Education", "Entertainment", "Comedy", "Lifestyle",
@@ -271,7 +271,7 @@ export function ViralityEngine({
           })}
         </div>
         {canAutoPublish && (
-          <p className="mt-3 text-xs text-purple-300 flex items-center gap-1.5">
+          <p className="mt-3 text-xs text-text flex items-center gap-1.5">
             <Zap className="h-3 w-3" />
             Apex — auto-publish enabled
           </p>
@@ -552,7 +552,7 @@ function MediaDetail({
 
       {/* Missing connections warning */}
       {missingConnections.length > 0 && (
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+        <div className="rounded-md border border-white/15 bg-white/[0.05] px-4 py-3 text-sm text-text">
           Connect {missingConnections.map((p) => PLATFORM_LABELS[p]).join(", ")} to publish to {missingConnections.length === 1 ? "this platform" : "these platforms"}.
         </div>
       )}
@@ -607,8 +607,8 @@ function MediaDetail({
                 <p className="text-sm text-text-muted">{p.verdict}</p>
 
                 {p.titleTweak && (
-                  <div className="rounded-md border border-blue-500/20 bg-blue-500/5 px-3 py-2">
-                    <p className="text-xs text-blue-300 mb-0.5">Suggested title</p>
+                  <div className="rounded-md border border-white/15 bg-white/[0.05] px-3 py-2">
+                    <p className="text-xs text-text mb-0.5">Suggested title</p>
                     <p className="text-sm">{p.titleTweak}</p>
                   </div>
                 )}
@@ -678,7 +678,7 @@ function MediaDetail({
 
           {item.publishStatus === "SCHEDULED" && item.scheduledAt && (
             <div className="flex items-center justify-between">
-              <p className="text-xs text-amber-300 flex items-center gap-1.5">
+              <p className="text-xs text-text flex items-center gap-1.5">
                 <Calendar className="h-3.5 w-3.5" />
                 Scheduled for {new Date(item.scheduledAt).toLocaleString()}
               </p>

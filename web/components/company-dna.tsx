@@ -235,9 +235,9 @@ export function CompanyDna({ tier }: { tier: string }) {
 
   if (!canUse) {
     return (
-      <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+      <div className="rounded-xl border border-white/15 bg-white/[0.05] p-6">
         <div className="flex items-center gap-2 mb-2">
-          <Brain className="h-5 w-5 text-yellow-400" />
+          <Brain className="h-5 w-5 text-text-muted" />
           <h3 className="font-semibold">Company DNA</h3>
         </div>
         <p className="text-sm text-text-muted mb-4">
@@ -264,7 +264,7 @@ export function CompanyDna({ tier }: { tier: string }) {
         {!isUnlimited && (
           <div className="h-1.5 overflow-hidden rounded-full bg-bg-elevated">
             <div
-              className={`h-full rounded-full transition-all ${pct > 90 ? "bg-red-500" : pct > 70 ? "bg-amber-400" : "bg-green-500"}`}
+              className={`h-full rounded-full transition-all ${pct > 90 ? "bg-red-500" : pct > 70 ? "bg-white/70" : "bg-green-500"}`}
               style={{ width: `${pct}%` }}
             />
           </div>

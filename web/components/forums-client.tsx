@@ -122,7 +122,7 @@ export function ForumsClient({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                   {f.pinned && (
-                    <Pin className="h-3.5 w-3.5 text-amber-400 shrink-0" />
+                    <Pin className="h-3.5 w-3.5 text-text-muted shrink-0" />
                   )}
                   <p className="font-medium text-sm">{f.title}</p>
                 </div>

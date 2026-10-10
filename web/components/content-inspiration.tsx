@@ -206,7 +206,7 @@ export function ContentInspiration({
 
       {/* Upgrade notice for Comment Intel */}
       {tab === "comments" && !canComments && (
-        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-5">
+        <div className="rounded-xl border border-white/15 bg-white/[0.05] p-5">
           <p className="text-sm font-medium">Comment Intel is an Elite+ feature</p>
           <p className="mt-1 text-xs text-text-muted">
             Analyse YouTube video data to surface what your audience is really struggling with.
@@ -217,7 +217,7 @@ export function ContentInspiration({
 
       {/* Upgrade notice for Ad Intel */}
       {tab === "ads" && !canAds && (
-        <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-5">
+        <div className="rounded-xl border border-white/15 bg-white/[0.05] p-5">
           <p className="text-sm font-medium">Ad Intel is an Elite+ feature</p>
           <p className="mt-1 text-xs text-text-muted">
             Extract winning ad frameworks from Meta's Ad Library — hooks, angles, CTA patterns, and spend signals.
@@ -306,12 +306,12 @@ export function ContentInspiration({
                 <span className="rounded-md border border-bg-border bg-bg-elevated px-2 py-0.5 text-text-muted">
                   {f.format}
                 </span>
-                <span className="rounded-md border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-purple-300">
+                <span className="rounded-md border border-white/15 bg-white/[0.05] px-2 py-0.5 text-text">
                   CTA: {f.ctaPattern}
                 </span>
               </div>
               {f.spendSignal && (
-                <p className="text-[11px] text-amber-300/80 flex items-center gap-1">
+                <p className="text-[11px] text-text flex items-center gap-1">
                   <TrendingUp className="h-3 w-3" />
                   {f.spendSignal}
                 </p>

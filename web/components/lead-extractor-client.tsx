@@ -263,11 +263,11 @@ export function LeadExtractorClient({
                   <>
                     <PlatformIcon
                       platform={p.platform!}
-                      className={`h-3.5 w-3.5 shrink-0 ${p.platform === "instagram" ? "text-pink-400" : "text-text-muted"}`}
+                      className={`h-3.5 w-3.5 shrink-0 ${p.platform === "instagram" ? "text-text-muted" : "text-text-muted"}`}
                     />
                     <span className="text-xs font-medium text-text">@{p.handle}</span>
                     <span className="text-[11px] text-text-dim capitalize">{p.platform}</span>
-                    <CheckCircle2 className="ml-auto h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                    <CheckCircle2 className="ml-auto h-3.5 w-3.5 shrink-0 text-green-400" />
                   </>
                 ) : (
                   <>
@@ -282,9 +282,9 @@ export function LeadExtractorClient({
         )}
 
         {overLimit && (
-          <div className="rounded-md border border-yellow-900/40 bg-yellow-950/20 px-3 py-2 text-sm text-yellow-300">
+          <div className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-text">
             Your {tier} plan allows {maxAccounts} accounts per batch. Only the first {maxAccounts} valid URLs will be processed.{" "}
-            <a href="/pricing" className="underline hover:text-yellow-200">Upgrade</a> to process more.
+            <a href="/pricing" className="underline hover:text-text">Upgrade</a> to process more.
           </div>
         )}
 
@@ -387,7 +387,7 @@ export function LeadExtractorClient({
               <span className="font-medium text-text">{results.length}</span>
               <span className="text-text-muted">accounts researched</span>
               <span className="text-text-dim">·</span>
-              <span className="font-medium text-emerald-400">{withContact}</span>
+              <span className="font-medium text-green-400">{withContact}</span>
               <span className="text-text-muted">with contact info found</span>
             </div>
             <button
@@ -401,7 +401,7 @@ export function LeadExtractorClient({
           </div>
 
           {invalid.length > 0 && (
-            <div className="rounded-md border border-yellow-900/30 bg-yellow-950/20 px-3 py-2 text-xs text-yellow-300">
+            <div className="rounded-md border border-white/10 bg-white/[0.03] px-3 py-2 text-xs text-text">
               {invalid.length} line{invalid.length !== 1 ? "s" : ""} skipped (not recognised as Instagram or TikTok URLs):{" "}
               {invalid.join(", ")}
             </div>
@@ -414,7 +414,7 @@ export function LeadExtractorClient({
                 <div className="flex items-center gap-2.5">
                   <PlatformIcon
                     platform={lead.platform}
-                    className={`h-4 w-4 shrink-0 ${lead.platform === "instagram" ? "text-pink-400" : "text-text-muted"}`}
+                    className={`h-4 w-4 shrink-0 ${lead.platform === "instagram" ? "text-text-muted" : "text-text-muted"}`}
                   />
                   <div className="min-w-0">
                     <a
@@ -464,7 +464,7 @@ export function LeadExtractorClient({
                       <a
                         key={ei}
                         href={`mailto:${email}`}
-                        className="flex items-center gap-1.5 rounded-md border border-emerald-500/20 bg-emerald-500/[0.07] px-2.5 py-1.5 text-xs text-emerald-300 hover:bg-emerald-500/10 transition"
+                        className="flex items-center gap-1.5 rounded-md border border-green-500/20 bg-green-500/[0.07] px-2.5 py-1.5 text-xs text-green-300 hover:bg-green-500/10 transition"
                       >
                         <Mail className="h-3 w-3 shrink-0" />
                         {email}
@@ -474,7 +474,7 @@ export function LeadExtractorClient({
                       <a
                         key={pi}
                         href={`tel:${phone.replace(/[\s\-]/g, "")}`}
-                        className="flex items-center gap-1.5 rounded-md border border-blue-500/20 bg-blue-500/[0.07] px-2.5 py-1.5 text-xs text-blue-300 hover:bg-blue-500/10 transition"
+                        className="flex items-center gap-1.5 rounded-md border border-white/15 bg-white/[0.05] px-2.5 py-1.5 text-xs text-text hover:bg-white/[0.05] transition"
                       >
                         <Phone className="h-3 w-3 shrink-0" />
                         {phone}
@@ -514,7 +514,7 @@ export function LeadExtractorClient({
                       className="flex w-full items-center justify-between rounded-md border border-white/[0.08] bg-white/[0.03] px-2.5 py-2 text-left transition hover:bg-white/[0.06]"
                     >
                       <span className="flex items-center gap-1.5 text-xs font-medium text-text-muted">
-                        <Brain className="h-3 w-3 text-amber-400/70" />
+                        <Brain className="h-3 w-3 text-text-muted" />
                         Approach strategy
                       </span>
                       {expandedContext.has(i) ? (

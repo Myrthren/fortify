@@ -50,9 +50,9 @@ type Forum = {
 
 const TIER_COLORS: Record<Tier, string> = {
   FREE: "text-text-muted border-bg-border",
-  PRO: "text-blue-300 border-blue-500/30",
-  ELITE: "text-purple-300 border-purple-500/30",
-  APEX: "text-amber-300 border-amber-500/30",
+  PRO: "text-text border-white/15",
+  ELITE: "text-text border-white/15",
+  APEX: "text-text border-white/15",
 };
 
 function UserAvatar({ user, size = 32 }: { user: PostUser; size?: number }) {
@@ -253,7 +253,7 @@ function PostExpanded({
         {!isBanned && (
           <div className="space-y-2 pt-2">
             {flaggedWarning && (
-              <div className="flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
+              <div className="flex items-center gap-2 rounded-md border border-white/15 bg-white/[0.05] px-3 py-2 text-sm text-text">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                 Your comment has been submitted for review.
               </div>
@@ -314,10 +314,10 @@ function PostCard({
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap mb-0.5">
                 {post.pinned && (
-                  <Pin className="h-3 w-3 text-amber-400 shrink-0" />
+                  <Pin className="h-3 w-3 text-text-muted shrink-0" />
                 )}
                 {post.flagged && (
-                  <AlertTriangle className="h-3 w-3 text-amber-400 shrink-0" />
+                  <AlertTriangle className="h-3 w-3 text-text-muted shrink-0" />
                 )}
                 <p className="font-semibold text-sm">
                   {post.flagged ? (
@@ -469,7 +469,7 @@ export function ForumDetailClient({
             onChange={(e) => setNewBody(e.target.value)}
           />
           {flaggedWarning && (
-            <div className="flex items-center gap-2 rounded-md border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
+            <div className="flex items-center gap-2 rounded-md border border-white/15 bg-white/[0.05] px-3 py-2 text-sm text-text">
               <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
               Your post has been submitted for review before it becomes visible.
             </div>

@@ -42,7 +42,7 @@ export default async function TrendsPage() {
         </div>
 
         {limit === 0 ? (
-          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+          <div className="rounded-xl border border-white/15 bg-white/[0.05] p-6">
             <h3 className="font-semibold">Trend Radar is a Free+ feature</h3>
             <p className="mt-1 text-sm text-text-muted">
               Track 5 topics on Free (web), 10 on Pro, unlimited on Elite (web + Reddit) and Apex.

@@ -340,7 +340,7 @@ function LogoEnhancer({ credits }: { credits: number }) {
     a.click();
   }
 
-  const scoreColor = (s: number) => s >= 7 ? "text-green-400" : s >= 5 ? "text-amber-400" : "text-red-400";
+  const scoreColor = (s: number) => s >= 7 ? "text-green-400" : s >= 5 ? "text-text-muted" : "text-red-400";
 
   return (
     <div className="space-y-5">

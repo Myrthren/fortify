@@ -197,15 +197,15 @@ export function FunnelAuditor() {
 
 function scoreColor(v: number): string {
   if (v >= 8) return "bg-green-500";
-  if (v >= 6) return "bg-yellow-500";
-  if (v >= 4) return "bg-orange-500";
+  if (v >= 6) return "bg-white/70";
+  if (v >= 4) return "bg-white/70";
   return "bg-red-500";
 }
 
 function SeverityPill({ severity }: { severity: "low" | "med" | "high" }) {
   const cfg = {
     high: { label: "HIGH", cls: "border-red-500/40 bg-red-500/10 text-red-300" },
-    med: { label: "MED", cls: "border-yellow-500/40 bg-yellow-500/10 text-yellow-200" },
+    med: { label: "MED", cls: "border-white/15 bg-white/[0.05] text-text" },
     low: { label: "LOW", cls: "border-bg-border bg-bg-elevated text-text-muted" },
   }[severity];
   return (

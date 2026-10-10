@@ -24,7 +24,7 @@ export default async function DealsPage() {
   const TYPE_CONFIG = {
     HIRING: {
       label: "Hiring",
-      badgeClass: "bg-blue-500/10 text-blue-300 border-blue-500/25",
+      badgeClass: "bg-white/[0.05] text-text border-white/15",
       icon: <Briefcase className="h-3 w-3" />,
     },
     COLLAB: {
@@ -34,7 +34,7 @@ export default async function DealsPage() {
     },
     OPPORTUNITY: {
       label: "Opportunity",
-      badgeClass: "bg-amber-500/10 text-amber-300 border-amber-500/25",
+      badgeClass: "bg-white/[0.05] text-text border-white/15",
       icon: <TrendingUp className="h-3 w-3" />,
     },
   } as const;
@@ -133,7 +133,7 @@ export default async function DealsPage() {
                   {/* Subtle left accent line */}
                   <div
                     className={`absolute left-0 top-4 h-8 w-0.5 rounded-r-full opacity-60 ${
-                      post.type === "HIRING" ? "bg-blue-400" : post.type === "COLLAB" ? "bg-green-400" : "bg-amber-400"
+                      post.type === "HIRING" ? "bg-white/70" : post.type === "COLLAB" ? "bg-green-400" : "bg-white/70"
                     }`}
                   />
                   <div className="flex items-start justify-between gap-4 pl-3">

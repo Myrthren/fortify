@@ -33,7 +33,7 @@ export default async function NotificationsPage() {
 
   const typeIcon = (type: string) => {
     if (type === "connection_request") return <UserPlus className="h-4 w-4 text-green-400" />;
-    if (type === "connection_accepted") return <Check className="h-4 w-4 text-blue-400" />;
+    if (type === "connection_accepted") return <Check className="h-4 w-4 text-text-muted" />;
     if (type === "new_message") return <MessageSquare className="h-4 w-4 text-text-muted" />;
     return <Bell className="h-4 w-4 text-text-muted" />;
   };

@@ -51,7 +51,7 @@ export default async function CreditsPage({
           </div>
         )}
         {params.cancelled && (
-          <div className="mb-6 rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-300">
+          <div className="mb-6 rounded-lg border border-white/15 bg-white/[0.05] px-4 py-3 text-sm text-text">
             Payment cancelled. No charge was made.
           </div>
         )}

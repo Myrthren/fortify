@@ -70,7 +70,7 @@ export function BillingAccessSection({ access }: { access: Access }) {
             <RefreshCw className={`h-3.5 w-3.5 ${busy ? "animate-spin" : ""}`} /> Refresh access
           </button>
         </div>
-        {message && <p role="status" className="mt-4 text-sm text-emerald-300">{message}</p>}
+        {message && <p role="status" className="mt-4 text-sm text-green-300">{message}</p>}
         {error && <p role="alert" className="mt-4 text-sm text-red-400">{error}</p>}
         <p className="mt-4 text-xs text-text-muted">
           {provider === "whop" ? <>Manage or cancel billing in your <a className="underline" href="https://whop.com/orders/">Whop orders</a>. Disconnecting Whop here does not cancel billing.</>
@@ -78,7 +78,7 @@ export function BillingAccessSection({ access }: { access: Access }) {
               : <>Bought a plan? <a className="underline" href="/pricing">See your checkout options</a>, then link the account you paid with.</>}
         </p>
         {provider === "paypal" && access.whop.connected && (
-          <p className="mt-2 text-xs text-amber-300">PayPal currently owns your Fortify access. Contact support before buying another plan on Whop.</p>
+          <p className="mt-2 text-xs text-text">PayPal currently owns your Fortify access. Contact support before buying another plan on Whop.</p>
         )}
       </div>
       <div className="mt-4"><WhopConnectSection connected={access.whop.connected} whopUserId={access.whop.whopUserId} /></div>

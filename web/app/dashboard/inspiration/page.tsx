@@ -34,7 +34,7 @@ export default async function InspirationPage() {
         </div>
 
         {!canAccess ? (
-          <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/5 p-6">
+          <div className="rounded-xl border border-white/15 bg-white/[0.05] p-6">
             <h3 className="font-semibold">Content Inspiration is a Pro+ feature</h3>
             <p className="mt-1 text-sm text-text-muted">
               Pro gets Reddit Top Posts. Elite unlocks YouTube Comment Intel too.
