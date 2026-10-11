@@ -1,8 +1,7 @@
 [build]
-  # This project intentionally uses Prisma db push rather than migrations.
-  # Without syncing first, generated clients can reference columns that the
-  # production database does not have yet.
-  command = "npx prisma db push && npm run build"
+  # Apply only reviewed, additive production changes. A broad `prisma db push`
+  # would try to remove legacy tables that are intentionally kept live.
+  command = "npx prisma db execute --file prisma/deploy-safe.sql --url $DIRECT_URL && npm run build"
   publish = ".next"
 
 [functions]
