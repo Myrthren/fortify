@@ -109,6 +109,7 @@ function buildPrompt(input: ComposeInput): string {
   if (input.analysis?.summary) {
     parts.push("", "ANALYST SUMMARY (context for you, do not quote it):", input.analysis.summary);
   }
+  if (input.competitorContext) parts.push("", "MARKET CONTEXT (do not mention competitors; use only to sharpen the benefit):", input.competitorContext);
 
   if (input.step > 0 && input.previousEmails.length) {
     parts.push("", "WHAT YOU ALREADY SENT (they did not reply)");

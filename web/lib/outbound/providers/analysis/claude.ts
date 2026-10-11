@@ -97,6 +97,7 @@ function buildPrompt(input: AnalysisInput): string {
   ];
   if (input.industry) parts.push(`INDUSTRY (claimed): ${input.industry}`);
   if (input.location) parts.push(`LOCATION: ${input.location}`);
+  if (input.competitorContext) parts.push("", "RELEVANT COMPETITOR CONTEXT (market context only; never claim the lead is this competitor):", input.competitorContext);
 
   parts.push(
     "",
