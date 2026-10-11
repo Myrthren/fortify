@@ -1,5 +1,8 @@
 [build]
-  command = "npm run build"
+  # This project intentionally uses Prisma db push rather than migrations.
+  # Without syncing first, generated clients can reference columns that the
+  # production database does not have yet.
+  command = "npx prisma db push && npm run build"
   publish = ".next"
 
 [functions]
