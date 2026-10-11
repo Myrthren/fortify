@@ -8,9 +8,13 @@ async function graphList<T>(url: string): Promise<T[]> {
   const values: T[] = [];
   let next: string | null = url;
   while (next) {
-    const res = await fetch(next);
+    const res: Response = await fetch(next);
     if (!res.ok) throw new Error(`Meta API: ${await res.text()}`);
-    const json = await res.json();
+    const json: {
+      data?: T[];
+      error?: { message?: string };
+      paging?: { next?: string };
+    } = await res.json();
     if (json.error) throw new Error(`Meta: ${json.error.message}`);
     values.push(...(json.data ?? []));
     next = json.paging?.next ?? null;
