@@ -37,16 +37,16 @@ function determineBump(commits: Commit[]): Release["bump"] {
 function classify(message = "") {
   const match = /^(feat|fix|perf|refactor|security|docs|chore)(?:\([^)]*\))?!?:\s*(.+)$/i.exec(firstLine(message));
   const labels: Record<string, string> = {
-    feat: "✨ What's new",
-    fix: "🐛 Fixes",
-    perf: "🛠 Improvements",
-    refactor: "🛠 Improvements",
-    security: "🔒 Security",
-    docs: "📖 Helpful updates",
-    chore: "📌 Behind the scenes",
+    feat: "What's new",
+    fix: "Fixes",
+    perf: "Improvements",
+    refactor: "Improvements",
+    security: "Security",
+    docs: "Helpful updates",
+    chore: "Behind the scenes",
   };
   const summary = match?.[2] ?? firstLine(message);
-  return { label: labels[match?.[1]?.toLowerCase() ?? ""] ?? "📌 Other changes", summary: summary ? `${summary[0].toUpperCase()}${summary.slice(1)}` : summary };
+  return { label: labels[match?.[1]?.toLowerCase() ?? ""] ?? "Other changes", summary: summary ? `${summary[0].toUpperCase()}${summary.slice(1)}` : summary };
 }
 
 function buildEmbed(release: Release) {
