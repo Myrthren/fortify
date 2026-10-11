@@ -36,8 +36,17 @@ function determineBump(commits: Commit[]): Release["bump"] {
 
 function classify(message = "") {
   const match = /^(feat|fix|perf|refactor|security|docs|chore)(?:\([^)]*\))?!?:\s*(.+)$/i.exec(firstLine(message));
-  const labels: Record<string, string> = { feat: "New", fix: "Fixed", perf: "Improved", refactor: "Improved", security: "Security", docs: "Documentation", chore: "Maintenance" };
-  return { label: labels[match?.[1]?.toLowerCase() ?? ""] ?? "Changed", summary: match?.[2] ?? firstLine(message) };
+  const labels: Record<string, string> = {
+    feat: "✨ What's new",
+    fix: "🐛 Fixes",
+    perf: "🛠 Improvements",
+    refactor: "🛠 Improvements",
+    security: "🔒 Security",
+    docs: "📖 Helpful updates",
+    chore: "📌 Behind the scenes",
+  };
+  const summary = match?.[2] ?? firstLine(message);
+  return { label: labels[match?.[1]?.toLowerCase() ?? ""] ?? "📌 Other changes", summary: summary ? `${summary[0].toUpperCase()}${summary.slice(1)}` : summary };
 }
 
 function buildEmbed(release: Release) {
@@ -45,14 +54,12 @@ function buildEmbed(release: Release) {
   for (const commit of release.commits) {
     const { label, summary } = classify(commit.message);
     if (!summary) continue;
-    const link = release.repositoryUrl ? ` ([${commit.id.slice(0, 7)}](${release.repositoryUrl}/commit/${commit.id}))` : "";
-    groups.set(label, [...(groups.get(label) ?? []), `• ${summary}${link}`]);
+    groups.set(label, [...(groups.get(label) ?? []), `• ${summary}`]);
   }
   const fields = [...groups.entries()].slice(0, 5).map(([name, lines]) => ({ name, value: lines.slice(0, 10).join("\n").slice(0, 1024), inline: false }));
-  fields.push({ name: "Version", value: `\`${release.version}\` · ${release.bump} release`, inline: true });
-  if (release.repositoryUrl) fields.push({ name: "Changes", value: `[View comparison](${release.repositoryUrl}/compare/${release.before}...${release.after})`, inline: true });
-  fields.push({ name: "Update window", value: `${new Date(release.startedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" })}–${new Date(release.closesAt).toLocaleTimeString("en-GB", { timeStyle: "short", timeZone: "UTC" })} UTC`, inline: false });
-  return new EmbedBuilder().setColor(release.bump === "major" ? 0xe74c3c : release.bump === "minor" ? 0x3498db : 0x2ecc71).setTitle(`Fortify ${release.version}`).setDescription("A four-hour Fortify update digest is available.").addFields(fields).setFooter({ text: "Fortify Update Log · automatically generated" }).setTimestamp();
+  fields.push({ name: "Fortify version", value: `v${release.version}`, inline: true });
+  if (release.repositoryUrl) fields.push({ name: "More detail", value: `[Technical change list](${release.repositoryUrl}/compare/${release.before}...${release.after})`, inline: true });
+  return new EmbedBuilder().setColor(release.bump === "major" ? 0xe74c3c : release.bump === "minor" ? 0x3498db : 0x2ecc71).setTitle("Fortify has been updated").setDescription("Here’s what’s changed since the last update.").addFields(fields).setFooter({ text: "Fortify Update Log" }).setTimestamp();
 }
 
 async function loadState(): Promise<State> {
