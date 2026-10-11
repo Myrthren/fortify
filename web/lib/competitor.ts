@@ -2,11 +2,13 @@ import { claude, CLAUDE_MODELS } from "@/lib/claude";
 import { braveSearch } from "@/lib/brave";
 
 export type CompetitorReport = {
+  sources?: { url: string; title: string; publishedAt?: string | null; supports: string[] }[];
   positioning: string;
   recentMoves: string[];
   strengths: string[];
   weaknesses: string[];
   opportunities: string[];
+  actions?: { action: string; why: string; priority: "now" | "next" | "later" }[];
   summary: string;
 };
 
@@ -53,7 +55,7 @@ export async function scanCompetitor(opts: {
       freshness: "pm", // past month
     });
     searchSnippets = results
-      .map((r) => `- ${r.title} (${r.source ?? "?"}, ${r.age ?? "?"}): ${r.description}`)
+      .map((r) => `- ${r.title} | URL: ${r.url} | ${r.source ?? "?"} | ${r.age ?? "?"}: ${r.description}`)
       .join("\n");
   } catch {
     /* search optional */
@@ -141,4 +143,5 @@ Return ONLY a JSON object with this exact shape (no markdown fences, no commenta
 }
 
 Be SPECIFIC. Don't say "they have a strong brand" — say WHAT specifically (concrete claim, design choice, customer logo, etc.).
-Cite numbers, names, dates where present. Don't make things up; if data is thin, say so in fewer items.`;
+Cite numbers, names, dates where present. Don't make things up; if data is thin, say so in fewer items.
+For every recent move, include a matching source URL in sources. Separate homepage observations from news-derived claims. Add 2-5 actions with a clear priority, each tied to a specific strength, weakness, or opportunity.`;

@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getDiscoveryProvider } from "@/lib/outbound/registry";
 import type { DiscoveredBusiness, DiscoveryInput } from "@/lib/outbound/types";
 import { domainOfEmail, isSuppressed, logEvent, toDomain } from "./shared";
+import { normaliseLead, qualifyLead } from "../qualification";
 
 /** A two-phase discovery run older than this is assumed dead and abandoned. */
 const JOB_TIMEOUT_MS = 30 * 60_000;
@@ -178,13 +179,14 @@ async function ingest(
   let skipped = 0;
 
   for (const b of businesses) {
-    const domain = toDomain(b.website) ?? domainOfEmail(b.email);
-    if (!domain) {
+    const clean = normaliseLead(b);
+    const domain = toDomain(clean.website) ?? domainOfEmail(clean.email);
+    if (!qualifyLead(clean, domain).eligible) {
       skipped++;
       continue;
     }
 
-    if (await isSuppressed(campaign.userId, b.email, domain)) {
+    if (await isSuppressed(campaign.userId, clean.email, domain)) {
       skipped++;
       continue;
     }
@@ -194,14 +196,14 @@ async function ingest(
         data: {
           userId: campaign.userId,
           campaignId: campaign.id,
-          company: b.company.slice(0, 200),
-          website: b.website ?? `https://${domain}`,
+          company: clean.company,
+          website: clean.website ?? `https://${domain}`,
           domain,
-          email: b.email ?? null,
-          phone: b.phone ?? null,
-          contactName: b.contactName ?? null,
-          industry: b.industry ?? campaign.industry,
-          location: b.location ?? campaign.location,
+          email: clean.email,
+          phone: clean.phone ?? null,
+          contactName: clean.contactName ?? null,
+          industry: clean.industry ?? campaign.industry,
+          location: clean.location ?? campaign.location,
           source: campaign.discoveryProvider,
           stage: "DISCOVERED",
           nextActionAt: new Date(),
