@@ -6,6 +6,7 @@ import {
   exchangeYouTubeCode,
   exchangeFacebookCode,
 } from "@/lib/social-platforms";
+import { verifyOAuthState } from "@/lib/oauth-state";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -15,9 +16,10 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const platform = searchParams.get("platform");
   const code = searchParams.get("code");
+  const state = searchParams.get("state");
   const error = searchParams.get("error");
 
-  if (error || !code || !platform) {
+  if (error || !code || !platform || !verifyOAuthState(state, userId, `social:${platform}`)) {
     return NextResponse.redirect(new URL("/dashboard/virality?social=error", req.url));
   }
 

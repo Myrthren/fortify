@@ -28,26 +28,38 @@ export async function getPayPalTransactions(
   const startDate = from.toISOString().slice(0, 19) + "Z";
   const endDate = to.toISOString().slice(0, 19) + "Z";
 
-  const res = await fetch(
-    `https://api-m.paypal.com/v1/reporting/transactions?start_date=${startDate}&end_date=${endDate}&fields=all&page_size=500`,
-    {
+  const txns: any[] = [];
+  let page = 1;
+  let totalPages = 1;
+  do {
+    const res = await fetch(
+      `https://api-m.paypal.com/v1/reporting/transactions?start_date=${startDate}&end_date=${endDate}&fields=all&page_size=500&page=${page}`,
+      {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         "Content-Type": "application/json",
       },
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      throw new Error(`PayPal API error: ${err.slice(0, 200)}`);
     }
-  );
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`PayPal API error: ${err.slice(0, 200)}`);
-  }
-
-  const data = await res.json();
-  const txns = (data.transaction_details ?? []) as any[];
+    const data = await res.json();
+    txns.push(...(data.transaction_details ?? []));
+    totalPages = Math.max(1, Number(data.total_pages ?? 1));
+    page++;
+  } while (page <= totalPages);
 
   let totalIn = 0;
   let totalOut = 0;
+
+  const currencies = new Set(txns.map((t: any) => t.transaction_info?.transaction_amount?.currency_code).filter(Boolean));
+  if (currencies.size > 1) {
+    throw new Error(`PayPal transactions contain multiple currencies (${[...currencies].join(", ")}); Fortify cannot combine them safely.`);
+  }
 
   const transactions: PayPalTransaction[] = txns.map((t: any) => {
     const info = t.transaction_info;

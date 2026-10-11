@@ -15,15 +15,19 @@ export async function GET(req: Request) {
 
   // Refresh if expired
   if (paypalConn.expiresAt < new Date()) {
+    if (!paypalConn.clientSecret) {
+      return NextResponse.json({ error: "PayPal connection must be refreshed once to enable automatic synchronization." }, { status: 401 });
+    }
     try {
-      const newToken = await refreshPayPalToken(paypalConn.clientId, ""); // secret not stored — re-auth needed
+      const newToken = await refreshPayPalToken(paypalConn.clientId, paypalConn.clientSecret);
       await db.paypalConnection.update({
         where: { userId },
         data: { accessToken: newToken.accessToken, expiresAt: newToken.expiresAt },
       });
       token = newToken.accessToken;
-    } catch {
-      return NextResponse.json({ error: "PayPal token expired. Please reconnect." }, { status: 401 });
+    } catch (error) {
+      console.error("[paypal/transactions] token refresh failed", error);
+      return NextResponse.json({ error: "PayPal authentication expired. Please reconnect." }, { status: 401 });
     }
   }
 

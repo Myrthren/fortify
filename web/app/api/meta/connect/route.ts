@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { buildAuthUrl } from "@/lib/meta";
+import { createOAuthState } from "@/lib/oauth-state";
 
 /**
  * GET /api/meta/connect
@@ -13,7 +14,7 @@ export async function GET() {
   const userId = (session.user as any).id as string;
 
   try {
-    const url = buildAuthUrl(userId);
+    const url = buildAuthUrl(createOAuthState(userId, "meta"));
     return NextResponse.redirect(url);
   } catch (e: any) {
     return new NextResponse(`Meta config error: ${e.message}`, { status: 500 });

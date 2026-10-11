@@ -66,6 +66,10 @@ export async function POST(req: Request) {
       status: 400,
     });
   }
+  const sampleCount = samples.split(/\n\s*---\s*\n/).map((sample) => sample.trim()).filter((sample) => sample.length >= 40).length;
+  if (sampleCount < 3) {
+    return new NextResponse("Provide at least 3 distinct writing samples separated by ---", { status: 400 });
+  }
 
   let systemPrompt: string;
   try {
@@ -79,16 +83,18 @@ export async function POST(req: Request) {
   // First voice → make it active automatically
   const isFirst = existing === 0;
 
-  const voice = await db.brandVoice.create({
-    data: {
-      userId,
-      name: name.trim(),
-      trainingData: samples,
-      systemPrompt,
-      isActive: isFirst,
-    },
-    select: { id: true, name: true, isActive: true, systemPrompt: true, createdAt: true },
+  const voice = await db.$transaction(async (tx) => {
+    const current = await tx.brandVoice.count({ where: { userId } });
+    if (current >= limit) throw new Error("VOICE_LIMIT_REACHED");
+    return tx.brandVoice.create({
+      data: { userId, name: name.trim().slice(0, 80), trainingData: samples, systemPrompt, isActive: current === 0 && isFirst },
+      select: { id: true, name: true, isActive: true, systemPrompt: true, createdAt: true },
+    });
+  }).catch((error) => {
+    if (error instanceof Error && error.message === "VOICE_LIMIT_REACHED") return null;
+    throw error;
   });
+  if (!voice) return NextResponse.json({ error: "Voice limit reached while training. No profile was saved." }, { status: 409 });
 
   return NextResponse.json({ voice });
 }

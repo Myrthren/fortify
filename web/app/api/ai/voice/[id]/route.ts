@@ -20,7 +20,7 @@ export async function PATCH(
   const body = (await req.json()) as { name?: string; isActive?: boolean };
   const data: { name?: string; isActive?: boolean } = {};
   if (typeof body.name === "string" && body.name.trim().length >= 2) {
-    data.name = body.name.trim();
+    data.name = body.name.trim().slice(0, 80);
   }
   if (typeof body.isActive === "boolean") {
     data.isActive = body.isActive;
@@ -28,10 +28,11 @@ export async function PATCH(
 
   // If activating, deactivate other voices of same user
   if (data.isActive === true) {
-    await db.brandVoice.updateMany({
-      where: { userId, NOT: { id } },
-      data: { isActive: false },
-    });
+    const [, updated] = await db.$transaction([
+      db.brandVoice.updateMany({ where: { userId, NOT: { id } }, data: { isActive: false } }),
+      db.brandVoice.update({ where: { id }, data, select: { id: true, name: true, isActive: true, createdAt: true } }),
+    ]);
+    return NextResponse.json({ voice: updated });
   }
 
   const updated = await db.brandVoice.update({
@@ -57,6 +58,12 @@ export async function DELETE(
     return new NextResponse("Not found", { status: 404 });
   }
 
-  await db.brandVoice.delete({ where: { id } });
+  await db.$transaction(async (tx) => {
+    await tx.brandVoice.delete({ where: { id } });
+    if (voice.isActive) {
+      const replacement = await tx.brandVoice.findFirst({ where: { userId }, orderBy: { createdAt: "desc" }, select: { id: true } });
+      if (replacement) await tx.brandVoice.update({ where: { id: replacement.id }, data: { isActive: true } });
+    }
+  });
   return NextResponse.json({ ok: true });
 }

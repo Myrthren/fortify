@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { exchangeCode, getLongLivedToken, getAdAccounts } from "@/lib/meta";
+import { verifyOAuthState } from "@/lib/oauth-state";
 
 /**
  * GET /api/meta/callback?code=xxx&state=xxx
@@ -28,7 +29,7 @@ export async function GET(req: Request) {
   }
 
   // CSRF check: state must equal userId
-  if (!state || state !== userId) {
+  if (!verifyOAuthState(state, userId, "meta")) {
     return NextResponse.redirect(
       new URL("/dashboard/settings?meta=error", req.url)
     );

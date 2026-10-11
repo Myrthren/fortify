@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { buildTikTokAuthUrl, buildYouTubeAuthUrl, buildFacebookAuthUrl } from "@/lib/social-platforms";
+import { createOAuthState } from "@/lib/oauth-state";
 
 // GET /api/social/connect?platform=tiktok|youtube|facebook
 export async function GET(req: Request) {
@@ -9,17 +10,18 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const platform = searchParams.get("platform");
-  const state = Math.random().toString(36).slice(2);
+  if (!platform || !["tiktok", "youtube", "facebook"].includes(platform)) {
+    return NextResponse.json({ error: "platform must be tiktok, youtube, or facebook" }, { status: 400 });
+  }
+  const state = createOAuthState((session.user as any).id as string, `social:${platform}`);
 
   let authUrl: string;
   if (platform === "tiktok") {
     authUrl = buildTikTokAuthUrl(state);
   } else if (platform === "youtube") {
     authUrl = buildYouTubeAuthUrl(state);
-  } else if (platform === "facebook") {
-    authUrl = buildFacebookAuthUrl(state);
   } else {
-    return NextResponse.json({ error: "platform must be tiktok, youtube, or facebook" }, { status: 400 });
+    authUrl = buildFacebookAuthUrl(state);
   }
 
   return NextResponse.redirect(authUrl);

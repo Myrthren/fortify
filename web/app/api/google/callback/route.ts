@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { exchangeCode } from "@/lib/google";
+import { verifyOAuthState } from "@/lib/oauth-state";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
     return NextResponse.redirect(`${base}/dashboard/analytics?error=${encodeURIComponent(error)}`);
   }
 
-  if (!code || state !== userId) {
+  if (!code || !verifyOAuthState(state, userId, "google")) {
     return NextResponse.redirect(`${base}/dashboard/analytics?error=invalid_state`);
   }
 
