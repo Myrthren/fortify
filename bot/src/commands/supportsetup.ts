@@ -55,7 +55,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         "• Run `/profile` to confirm your current tier\n" +
         "• Check announcements for known issues",
     })
-    .setFooter({ text: "Fortify — Fortune Fortress AI co-pilot" });
+    .setFooter({ text: "Fortify — AI co-pilot for online business" });
 
   const button = new ButtonBuilder()
     .setCustomId("support_open_modal")
