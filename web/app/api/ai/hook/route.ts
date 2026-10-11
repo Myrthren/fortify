@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const { topic } = (await req.json()) as { topic: string };
+  const { topic, platform = "TikTok / Reels" } = (await req.json()) as { topic: string; platform?: string };
   if (!topic || topic.length < 2) {
     return new NextResponse("Topic required", { status: 400 });
   }
@@ -41,8 +41,8 @@ export async function POST(req: Request) {
     const text = await generateInVoice({
       systemPrompt:
         activeVoice.systemPrompt +
-        `\n\nWhen asked for hooks, output 5 scroll-stopping short-form video hooks under 12 words each. One per line, no numbering, no hashtags, no emojis.`,
-      userPrompt: `Topic: ${topic}\n\nWrite 5 hooks.`,
+        `\n\nWhen asked for hooks, output 5 original, scroll-stopping hooks. Vary the framing and opening. One per line, no numbering or hashtags.`,
+      userPrompt: `Topic: ${topic}\nPlatform: ${platform.slice(0, 40)}\n\nWrite 5 hooks tailored to the platform.`,
       maxTokens: 400,
     });
     hooks = text
@@ -51,11 +51,11 @@ export async function POST(req: Request) {
       .filter(Boolean)
       .slice(0, 5);
   } else {
-    hooks = await generateHooks(topic, 5);
+    hooks = await generateHooks(`${topic}\nPlatform: ${platform.slice(0, 40)}`, 5);
   }
 
   const output = hooks.join("\n");
-  await logGeneration({ userId, type: "hook", input: topic, output });
+  await logGeneration({ userId, type: "hook", input: `${topic}\nPlatform: ${platform}`, output });
 
   return NextResponse.json({ hooks, voice: voiceUsed });
 }

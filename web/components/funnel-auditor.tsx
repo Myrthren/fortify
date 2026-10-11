@@ -16,8 +16,8 @@ type Audit = {
   };
   summary: string;
   wins: string[];
-  issues: { area: string; severity: "low" | "med" | "high"; note: string }[];
-  fixes: string[];
+  issues: { area: string; severity: "low" | "med" | "high"; note: string; evidence: string }[];
+  fixes: { action: string; evidence: string; impact: "high" | "med" | "low" }[];
 };
 
 const SCORE_LABELS: Record<keyof Audit["scores"], string> = {
@@ -183,7 +183,7 @@ export function FunnelAuditor() {
                     <span className="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium">
                       {i + 1}
                     </span>
-                    <span>{f}</span>
+                    <span><span>{f.action}</span><span className="mt-1 block text-xs text-text-muted">Evidence: {f.evidence} · {f.impact} impact</span></span>
                   </li>
                 ))}
               </ol>

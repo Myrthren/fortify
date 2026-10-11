@@ -614,6 +614,23 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
     }
   }
 
+  async function retryRun(runId: string) {
+    setRunning(true);
+    setActionError(null);
+    try {
+      const r = await fetch(`/api/workflows/${init.id}/retry`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ runId }),
+      });
+      const data = await r.json();
+      if (!r.ok) throw new Error(data.error ?? "Could not retry workflow.");
+      setShowRuns(true);
+      setExpandedRunId(data.runId ?? null);
+      await fetchRuns();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : "Could not retry workflow.");
+    } finally { setRunning(false); }
+  }
+
   const selNode = nodes.find(n => n.id === selId);
   const selDef  = selNode ? DEFS[selNode.type] : null;
 
@@ -1131,6 +1148,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
                         <span className="text-text-muted">{new Date(r.startedAt).toLocaleString()}</span>
                         <span className="text-text-dim ml-auto">{dur}</span>
                         <span className="text-text-dim">{r.usedCapacity}u</span>
+                        {r.status === "failed" && <span role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); retryRun(r.id); }} onKeyDown={(e) => { if (e.key === "Enter") { e.stopPropagation(); retryRun(r.id); } }} className="rounded px-1.5 py-0.5 text-[10px] text-red-300 hover:bg-red-500/10">Retry</span>}
                         <span className="text-text-dim text-[10px] ml-1">{isExpanded ? "▲" : "▼"}</span>
                       </button>
 

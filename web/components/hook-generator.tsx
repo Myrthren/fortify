@@ -5,6 +5,7 @@ import { Loader2, Sparkles } from "lucide-react";
 
 export function HookGenerator() {
   const [topic, setTopic] = useState("");
+  const [platform, setPlatform] = useState("TikTok / Reels");
   const [hooks, setHooks] = useState<string[]>([]);
   const [voice, setVoice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,7 @@ export function HookGenerator() {
       const res = await fetch("/api/ai/hook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ topic, platform }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -37,7 +38,7 @@ export function HookGenerator() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           className="input"
           placeholder="e.g. how to grow on TikTok in 2026"
@@ -46,6 +47,9 @@ export function HookGenerator() {
           onKeyDown={(e) => e.key === "Enter" && generate()}
           disabled={loading}
         />
+        <select className="input sm:max-w-40" value={platform} onChange={(e) => setPlatform(e.target.value)} disabled={loading}>
+          <option>TikTok / Reels</option><option>YouTube Shorts</option><option>LinkedIn</option><option>X / Twitter</option><option>Email subject line</option>
+        </select>
         <button onClick={generate} disabled={loading || !topic.trim()} className="btn-primary">
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           Generate

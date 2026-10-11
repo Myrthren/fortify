@@ -16,8 +16,8 @@ export type AuditResult = {
   };
   summary: string;
   wins: string[];
-  issues: { area: string; severity: "low" | "med" | "high"; note: string }[];
-  fixes: string[];
+  issues: { area: string; severity: "low" | "med" | "high"; note: string; evidence: string }[];
+  fixes: { action: string; evidence: string; impact: "high" | "med" | "low" }[];
 };
 
 /**
@@ -129,9 +129,9 @@ Given the text content of a page, produce a structured audit with the following 
   "summary": "2-3 sentences overall verdict.",
   "wins": ["Specific thing done well", "..."],   // 2-4 items
   "issues": [
-    { "area": "Headline", "severity": "high|med|low", "note": "Specific problem." }
+    { "area": "Headline", "severity": "high|med|low", "note": "Specific problem.", "evidence": "Exact visible page copy or a clear absence." }
   ],   // 3-6 items, ranked by severity
-  "fixes": ["Specific actionable fix", "..."]    // 4-7 items, ordered by impact
+  "fixes": [{ "action": "Specific actionable fix", "evidence": "What on this page makes this necessary", "impact": "high|med|low" }] // 4-7 items, ordered by impact
 }
 
 Be specific. "Improve your CTA" is useless. "Change 'Get Started' to 'Get my free audit' to match the value prop in the headline" is useful.

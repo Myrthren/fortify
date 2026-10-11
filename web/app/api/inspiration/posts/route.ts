@@ -34,6 +34,7 @@ export async function POST(req: Request) {
 
   const body = await req.json().catch(() => ({}));
   const niche = (body.niche ?? "").trim();
+  const platform = typeof body.platform === "string" ? body.platform.slice(0, 40) : "TikTok / Reels";
   if (!niche || niche.length < 2) {
     return NextResponse.json({ error: "Niche is required (min 2 chars)." }, { status: 400 });
   }
@@ -57,13 +58,14 @@ export async function POST(req: Request) {
       .map((p) => `- "${p.title}"\n  ${p.description ?? ""}`)
       .join("\n");
 
+    const voice = await db.brandVoice.findFirst({ where: { userId, isActive: true }, select: { systemPrompt: true, name: true } });
     const msg = await claude().messages.create({
       model: CLAUDE_MODELS.fast,
       max_tokens: 1200,
       messages: [
         {
           role: "user",
-          content: `You are a content strategist. Analyse these top Reddit posts about "${niche}" and extract 6 distinct content angles that clearly resonate with this audience. For each, give a hook, the underlying angle, and the best content format (e.g. listicle, story, hot take, tutorial, case study).
+          content: `You are a content strategist. Analyse these top Reddit posts about "${niche}" and extract 6 distinct content angles that clearly resonate with this audience. For each, give an original hook, the underlying angle, and the best content format for ${platform}. Every result must be grounded in the supplied sources; never invent a trend, quote, result, or audience claim.${voice ? `\n\nBrand voice (${voice.name}):\n${voice.systemPrompt}` : ""}
 
 Posts:
 ${postsText}
@@ -90,7 +92,7 @@ Return ONLY a JSON array of 6 objects: [{ "hook": string, "angle": string, "form
       data: { userId, type: "inspiration-posts", input: niche, output: JSON.stringify(results) },
     });
 
-    return NextResponse.json({ niche, results });
+    return NextResponse.json({ niche, platform, voice: voice?.name ?? null, results });
   } catch (e: any) {
     console.error("[inspiration/posts] failed", e);
     return new NextResponse(`Failed: ${e.message}`, { status: 500 });

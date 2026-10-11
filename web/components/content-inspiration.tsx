@@ -39,6 +39,7 @@ export function ContentInspiration({
 }) {
   const [tab, setTab] = useState<Tab>("posts");
   const [niche, setNiche] = useState(defaultNiche);
+  const [platform, setPlatform] = useState("TikTok / Reels");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [posts, setPosts] = useState<InspirationPost[] | null>(null);
@@ -70,7 +71,7 @@ export function ContentInspiration({
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ niche: niche.trim() }),
+        body: JSON.stringify({ niche: niche.trim(), platform }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Something went wrong."); return; }
@@ -147,6 +148,9 @@ export function ContentInspiration({
             onKeyDown={(e) => e.key === "Enter" && !loading && run()}
             disabled={loading}
           />
+          <select className="input sm:max-w-44" value={platform} onChange={(e) => setPlatform(e.target.value)} disabled={loading}>
+            <option>TikTok / Reels</option><option>YouTube Shorts</option><option>LinkedIn</option><option>X / Twitter</option>
+          </select>
           <button onClick={run} disabled={loading || !niche.trim()} className="btn-primary">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             {loading ? "Scanning…" : "Find inspiration"}

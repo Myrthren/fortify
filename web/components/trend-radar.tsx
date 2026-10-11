@@ -14,6 +14,7 @@ type WebResult = {
   description: string;
   age?: string;
   source?: string;
+  scores?: { relevance: number; freshness: number; opportunity: number };
 };
 
 type RedditPost = {
@@ -339,6 +340,7 @@ export function TrendRadar({
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-text">{r.title}</p>
                   <p className="mt-1 line-clamp-2 text-xs text-text-muted">{r.description}</p>
+                  {r.scores && <p className="mt-1 text-[11px] text-text-muted">Opportunity {r.scores.opportunity}/100 · relevance {r.scores.relevance} · freshness {r.scores.freshness}</p>}
                   <p className="mt-2 flex items-center gap-2 text-[11px] text-text-dim">
                     {r.source && <span>{r.source}</span>}
                     {r.source && r.age && <span>·</span>}
