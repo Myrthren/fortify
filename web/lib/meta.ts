@@ -1,7 +1,22 @@
 // Meta Marketing API + OAuth helpers
-// Graph API v19.0
+// Keep the Graph version deploy-configurable so Meta upgrades do not require code changes.
 
-const GRAPH_BASE = "https://graph.facebook.com/v19.0";
+const GRAPH_VERSION = process.env.META_GRAPH_VERSION ?? "v24.0";
+const GRAPH_BASE = `https://graph.facebook.com/${GRAPH_VERSION}`;
+
+async function graphList<T>(url: string): Promise<T[]> {
+  const values: T[] = [];
+  let next: string | null = url;
+  while (next) {
+    const res = await fetch(next);
+    if (!res.ok) throw new Error(`Meta API: ${await res.text()}`);
+    const json = await res.json();
+    if (json.error) throw new Error(`Meta: ${json.error.message}`);
+    values.push(...(json.data ?? []));
+    next = json.paging?.next ?? null;
+  }
+  return values;
+}
 
 function cfg() {
   const appId = process.env.META_APP_ID;
@@ -23,7 +38,7 @@ export function buildAuthUrl(state: string): string {
     state,
     response_type: "code",
   });
-  return `https://www.facebook.com/v19.0/dialog/oauth?${params}`;
+  return `https://www.facebook.com/${GRAPH_VERSION}/dialog/oauth?${params}`;
 }
 
 /** Exchange auth code for a short-lived user access token. */
@@ -74,13 +89,7 @@ export type AdAccount = {
 };
 
 export async function getAdAccounts(token: string): Promise<AdAccount[]> {
-  const res = await fetch(
-    `${GRAPH_BASE}/me/adaccounts?fields=id,name,account_status,currency&access_token=${token}`
-  );
-  if (!res.ok) throw new Error(`Meta getAdAccounts: ${await res.text()}`);
-  const json = await res.json();
-  if (json.error) throw new Error(`Meta: ${json.error.message}`);
-  return (json.data ?? []) as AdAccount[];
+  return graphList<AdAccount>(`${GRAPH_BASE}/me/adaccounts?fields=id,name,account_status,currency&limit=100&access_token=${token}`);
 }
 
 // ── Campaign Insights ─────────────────────────────────────────────────────────
@@ -103,13 +112,7 @@ export async function getCampaignInsights(
   datePreset = "last_30d"
 ): Promise<CampaignInsight[]> {
   const fields = "campaign_name,impressions,clicks,ctr,spend,reach,cpc,actions";
-  const res = await fetch(
-    `${GRAPH_BASE}/${accountId}/insights?level=campaign&fields=${fields}&date_preset=${datePreset}&access_token=${token}`
-  );
-  if (!res.ok) throw new Error(`Meta getCampaignInsights: ${await res.text()}`);
-  const json = await res.json();
-  if (json.error) throw new Error(`Meta: ${json.error.message}`);
-  return (json.data ?? []) as CampaignInsight[];
+  return graphList<CampaignInsight>(`${GRAPH_BASE}/${accountId}/insights?level=campaign&fields=${fields}&date_preset=${datePreset}&limit=100&access_token=${token}`);
 }
 
 // ── Account-level summary ─────────────────────────────────────────────────────

@@ -5,7 +5,8 @@
 
 const TIKTOK_BASE  = "https://open.tiktokapis.com/v2";
 const YOUTUBE_BASE = "https://www.googleapis.com/youtube/v3";
-const FB_BASE      = "https://graph-video.facebook.com/v19.0";
+const META_GRAPH_VERSION = process.env.META_GRAPH_VERSION ?? "v24.0";
+const FB_BASE      = `https://graph-video.facebook.com/${META_GRAPH_VERSION}`;
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -122,7 +123,7 @@ export function buildFacebookAuthUrl(state: string): string {
     scope: "pages_manage_posts,pages_read_engagement,pages_show_list",
     state,
   });
-  return `https://www.facebook.com/v19.0/dialog/oauth?${params.toString()}`;
+  return `https://www.facebook.com/${META_GRAPH_VERSION}/dialog/oauth?${params.toString()}`;
 }
 
 export async function exchangeFacebookCode(code: string): Promise<{
@@ -131,7 +132,7 @@ export async function exchangeFacebookCode(code: string): Promise<{
   pageName: string;
 }> {
   const tokenRes = await fetch(
-    `https://graph.facebook.com/v19.0/oauth/access_token?` +
+    `https://graph.facebook.com/${META_GRAPH_VERSION}/oauth/access_token?` +
       new URLSearchParams({
         client_id: process.env.FACEBOOK_APP_ID!,
         client_secret: process.env.FACEBOOK_APP_SECRET!,
@@ -145,7 +146,7 @@ export async function exchangeFacebookCode(code: string): Promise<{
 
   // Get Pages the user manages
   const pagesRes = await fetch(
-    `https://graph.facebook.com/v19.0/me/accounts?access_token=${userToken}`
+    `https://graph.facebook.com/${META_GRAPH_VERSION}/me/accounts?access_token=${userToken}`
   );
   const pagesData = await pagesRes.json();
   const page = pagesData.data?.[0];
