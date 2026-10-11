@@ -5,6 +5,27 @@ import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
 import type { Tier } from "@prisma/client";
 
+function authErrorSummary(error: Error) {
+  const authError = error as Error & {
+    type?: string;
+    cause?: { err?: Error & { code?: string; meta?: unknown } };
+  };
+  const cause = authError.cause?.err;
+
+  return {
+    type: authError.type ?? authError.name,
+    message: authError.message,
+    cause: cause
+      ? {
+          name: cause.name,
+          code: cause.code,
+          message: cause.message,
+          meta: cause.meta,
+        }
+      : undefined,
+  };
+}
+
 // ── Lazy ban expiry ────────────────────────────────────────────────────────────
 // Only runs when the user is currently flagged as banned.
 // Checks if any timed bans have expired and lifts them in the background.
@@ -70,6 +91,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   // rejects the callback host as untrusted and redirects to ?error=Configuration.
   trustHost: true,
   secret: process.env.AUTH_SECRET,
+  logger: {
+    // Auth.js otherwise emits only a generic Configuration redirect on
+    // serverless callbacks. Keep this deliberately narrow: no profiles,
+    // tokens, cookies, or request metadata are logged.
+    error(error) {
+      console.error("[auth][error]", JSON.stringify(authErrorSummary(error)));
+    },
+  },
   adapter: PrismaAdapter(db),
   session: { strategy: "database" },
   providers: [
@@ -121,13 +150,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           ? `https://cdn.discordapp.com/avatars/${account.providerAccountId}/${avatarHash}.${avatarHash.startsWith("a_") ? "gif" : "png"}?size=128`
           : null;
 
-        await db.user.update({
-          where: { id: user.id },
-          data: {
-            discordId: account.providerAccountId,
-            ...(avatarUrl ? { avatarUrl, image: avatarUrl } : {}),
-          },
-        });
+        try {
+          await db.user.update({
+            where: { id: user.id },
+            data: {
+              discordId: account.providerAccountId,
+              ...(avatarUrl ? { avatarUrl, image: avatarUrl } : {}),
+            },
+          });
+        } catch (error) {
+          // Profile enrichment is best-effort and must never invalidate an
+          // otherwise successful OAuth login.
+          const err = error as Error & { code?: string };
+          console.error("[auth][discord-profile-sync]", JSON.stringify({
+            name: err.name,
+            code: err.code,
+            message: err.message,
+          }));
+        }
       }
     },
   },
