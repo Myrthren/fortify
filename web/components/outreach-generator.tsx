@@ -27,6 +27,7 @@ export function OutreachGenerator({
   );
   const [message, setMessage] = useState<string | null>(null);
   const [voice, setVoice] = useState<string | null>(null);
+  const [dnaUsed, setDnaUsed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -43,7 +44,7 @@ export function OutreachGenerator({
           channel,
           prospect,
           offer,
-          voiceId: selectedVoiceId || undefined,
+          voiceId: selectedVoiceId || null,
         }),
       });
       if (!res.ok) {
@@ -55,6 +56,7 @@ export function OutreachGenerator({
       const data = await res.json();
       setMessage(data.message);
       setVoice(data.voice ?? null);
+      setDnaUsed(data.contextUsed?.companyDna === true);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -165,9 +167,10 @@ export function OutreachGenerator({
 
       {message && (
         <div className="space-y-2">
-          {voice && (
+          {(voice || dnaUsed) && (
             <p className="text-xs text-text-muted">
-              In voice: <span className="text-text">{voice}</span>
+              Context used: {dnaUsed ? "Company DNA" : "No saved business context"}
+              {voice ? ` · Voice: ${voice}` : " · No brand voice"}
             </p>
           )}
           <div className="card-elevated relative p-4">

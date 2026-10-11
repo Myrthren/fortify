@@ -7,7 +7,7 @@ export const WORKFLOW_STARTERS: Starter[] = [
   {
     id: "weekly-ideas",
     name: "Weekly idea planner",
-    description: "Generate a fresh set of content ideas every Monday. Add a delivery action when ready.",
+    description: "Use your saved Company DNA and active brand voice for weekly ideas. Review the draft before adding delivery.",
     nodes: [
       { id: "trigger", type: "trigger_schedule", label: "Every Monday", x: 460, y: 160, config: { cron: "0 9 * * 1", timezone: "UTC" } },
       { id: "ideas", type: "ai_generate", label: "Draft ideas", x: 460, y: 340, config: { prompt: "Suggest five specific content ideas for my business this week. Include a short hook and the audience problem for each.", outputVar: "weekly_ideas", model: "haiku", maxTokens: "500" } },
@@ -17,7 +17,7 @@ export const WORKFLOW_STARTERS: Starter[] = [
   {
     id: "daily-content-brief",
     name: "Daily content brief",
-    description: "Turn a daily idea into a short brief. Review the result in run history before adding a delivery action.",
+    description: "Use saved business context and voice to draft an idea, then summarise it. Review run history before adding delivery.",
     nodes: [
       { id: "trigger", type: "trigger_schedule", label: "Every morning", x: 460, y: 160, config: { cron: "0 8 * * *", timezone: "UTC" } },
       { id: "idea", type: "ai_generate", label: "Generate an idea", x: 460, y: 340, config: { prompt: "Suggest one useful content idea for my audience today. Include the audience problem and a concrete angle.", outputVar: "daily_idea", model: "haiku", maxTokens: "350" } },

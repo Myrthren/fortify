@@ -7,6 +7,7 @@ export function HookGenerator() {
   const [topic, setTopic] = useState("");
   const [hooks, setHooks] = useState<string[]>([]);
   const [voice, setVoice] = useState<string | null>(null);
+  const [dnaUsed, setDnaUsed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,6 +29,7 @@ export function HookGenerator() {
       const data = await res.json();
       setHooks(data.hooks);
       setVoice(data.voice ?? null);
+      setDnaUsed(data.contextUsed?.companyDna === true);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -60,9 +62,10 @@ export function HookGenerator() {
 
       {hooks.length > 0 && (
         <div>
-          {voice && (
+          {(voice || dnaUsed) && (
             <p className="mb-2 text-xs text-text-muted">
-              Generated in voice: <span className="text-text">{voice}</span>
+              Context used: {dnaUsed ? "Company DNA" : "No saved business context"}
+              {voice ? ` · Voice: ${voice}` : " · No brand voice"}
             </p>
           )}
           <ul className="space-y-2">

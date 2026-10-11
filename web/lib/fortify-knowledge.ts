@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-10";
+export const KNOWLEDGE_VERSION = "2026-10-11-buyer-readiness";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -21,19 +21,22 @@ SUBSCRIPTION TIERS
 - Free (£0/mo): 100 starter credits, Hook Generator, 10 cold outreach messages/mo, Trend Radar (5 watch terms), community forums, read-only member directory and deal board
 - Pro (£29/mo): Core AI tools, 500 credits/mo, Brand Voice Studio (1 voice), Funnel Auditor (5/mo), Cold Outreach (50/mo), Competitor Scanner (3 tracked), Lead Sourcing, Inspiration Engine, Meta Ads dashboard, Shopify dashboard, Revenue/Stripe dashboard, Company DNA, Matchmaking, Logo Intelligence, Lead Extractor (10 accounts/batch)
 - Elite (£79/mo): Everything in Pro, 1500 credits/mo, 3 brand voices, unlimited audits & outreach, unlimited Trend Radar watch terms, 10 competitors tracked, Virality Engine, Fortify Recon, Competitor Watch, Workflows (automation builder), Lead Extractor (25 accounts/batch + web search fallback + AI approach strategy), live web search in Discord chat
-- Apex (£199/mo): Everything unlimited — unlimited brand voices, watch terms, competitors, workflows, 5000 credits/mo, AI Advisor (Claude Opus strategy briefs), Mastermind Pods access, auto-publish to YouTube and Facebook, Lead Extractor (50 accounts/batch + optional deep scan), live web search in Discord chat
+- Apex (£199/mo): Unlimited brand voices, watch terms, competitors and workflow capacity; no AI chat budget cap. Tool credits remain 5000/mo. AI Advisor (Claude Opus strategy briefs), Mastermind Pods access, auto-publish to YouTube and Facebook, Lead Extractor (50 accounts/batch + optional deep scan), live web search in Discord chat
+- Web AI chat has separate included model-usage allowances: Free one-time £0.20 trial; Pro £1 and Elite £5 per 24-hour session; Apex has no chat budget cap. These are not extra charges or tool credits. Do not call Pro or Elite chat unlimited.
+- Competitor Watch costs 10 tool credits per watch per daily scan. Ten watches over 30 days cost 3000 credits. Elite includes 1500 credits/month, so watch count and available scan credits are different limits.
+- Elite workflow capacity is about 100 runs per rolling 30 days (failed runs also count). Apex has unlimited workflow capacity; research nodes may still spend tool credits.
 
 PLATFORM FEATURES
 Content:
 - Hook Generator — 5 viral hooks on any topic (Free+)
-- Brand Voice Studio — train Claude on your exact tone; use it in all AI tools (Pro+)
+- Brand Voice Studio — derive a reusable style profile from your samples. Active voice applies to hooks, outreach and workflow AI Generate; not every AI tool. Company DNA personalises hooks, outreach, lead sourcing, website competitor scans, workflow AI and web chat (Pro+).
 - Inspiration Engine — mine Reddit, YouTube, and the web for content angles (Pro+)
 - Virality Engine — AI video scoring, trend analysis, competitor content intel (Elite+; auto-publish to YouTube and Facebook is Apex only; TikTok publishing is coming soon)
 - Logo Intelligence — AI analysis and improvement suggestions for brand logos (Pro+)
 
 Growth:
 - Cold Outreach Generator — personalised email, LinkedIn, Twitter, and DM copy (Free: 10/mo, Pro: 50/mo, Elite+: unlimited)
-- Lead Sourcing — find and score prospects against your ICP using web intelligence (Pro+)
+- Lead Sourcing — discover and score prospects against your ICP from web-search evidence (Pro+). Scores and hooks are AI suggestions, not verified buying intent. Contact deliverability is not verified. Empty or failed searches are refunded.
 - Lead Extractor — paste TikTok and Instagram profile URLs in bulk; Fortify researches each business (bio, linked website, contact/about pages, link-in-bio pages) and extracts their email and phone number. Pro: 10 accounts/batch. Elite: 25/batch plus web-search fallback and optional AI "approach strategy" per lead found (best angle to pitch them). Apex: 50/batch plus an optional deep scan that crawls extra pages and widens the search. (Pro+)
 - AI Matchmaking — Claude surfaces top Fortune Fortress members worth talking to (Pro+)
 - Fortify Recon — find local and niche businesses by location and category via Google Maps; returns name, address, phone, website, and rating, ready to prospect (Elite+)

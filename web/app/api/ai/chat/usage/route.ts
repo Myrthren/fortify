@@ -41,5 +41,6 @@ export async function GET() {
     packRemainingGbp: Math.round(packRemainingGbp * 100) / 100,
     hasPackCredits: packRemainingGbp > 0,
     remainingGbp: Math.round(remainingGbp * 100) / 100,
+    allowanceLabel: isApex ? "No chat budget cap" : isFree ? "One-time model-usage trial" : "Included 24-hour model-usage allowance",
   });
 }

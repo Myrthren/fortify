@@ -7,6 +7,7 @@ import { flagAbuse } from "@/lib/abuse";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { randomUUID } from "crypto";
 import { generateLogoImage } from "@/lib/openai";
+import { loadBusinessContext } from "@/lib/business-context-store";
 
 // Cost of one gpt-image-1 generation at 1024×1024 high quality (in GBP)
 const IMAGE_GEN_COST_GBP = 0.04;
@@ -355,7 +356,7 @@ If a user asks you to change something about their account or build a workflow, 
 - **Free** — Hook Generator, limited access
 - **Pro (£29/mo)** — Core tools, 500 credits/mo
 - **Elite (£79/mo)** — Everything + Virality Engine + Recon + Competitor Watch + Workflows, 1,500 credits/mo
-- **Apex (£199/mo)** — Everything unlimited + auto-publish + Mastermind Pods, 5,000 credits/mo
+- **Apex (£199/mo)** — No chat budget cap; unlimited voices and workflow capacity, plus auto-publish and Mastermind Pods. Tool credits remain 5,000/mo.
 
 ## Workflow node types and their key config fields:
 - **trigger_schedule**: cron (expression), timezone
@@ -445,14 +446,8 @@ export async function POST(req: Request) {
     messages = body.messages ?? [];
   }
 
-  // ── Inject Company DNA ──
-  const dna = await db.companyDna.findUnique({ where: { userId } });
-  let dnaContext = "";
-  if (dna && Array.isArray(dna.entries) && (dna.entries as any[]).length > 0) {
-    dnaContext =
-      "\n\n## This user's Company DNA (their business context — use it for personalised responses):\n" +
-      (dna.entries as any[]).map((e: any) => `**${e.label}**: ${e.content}`).join("\n");
-  }
+  // ── Inject the same bounded Company DNA used by the core tools ──
+  const { businessContext: dnaContext } = await loadBusinessContext(userId, null);
 
   // ── Tier-aware AI settings ──
   const isApex   = user.tier === "APEX";

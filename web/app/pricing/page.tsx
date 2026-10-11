@@ -4,6 +4,7 @@ import { Footer } from "@/components/footer";
 import { CheckoutOptions } from "@/components/checkout-options";
 import { whopCheckoutUrls } from "@/lib/whop-checkout";
 import { Check, Gem, Minus } from "lucide-react";
+import { CHAT_BUDGET_GBP, FREE_TRIAL_BUDGET_GBP } from "@/lib/chat-allowance";
 
 type PaidKey = "pro" | "elite" | "apex";
 
@@ -36,7 +37,7 @@ const tiers: {
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_PRO,
     highlights: [
       "500 credits a month",
-      "Brand Voice Studio and unlimited AI chat",
+      "Brand Voice Studio and included AI chat allowance",
       "Social lead extraction and lead scoring",
       "Competitor Scanner for 3 rivals",
     ],
@@ -59,7 +60,7 @@ const tiers: {
     key: "apex",
     name: "Apex",
     price: "£199",
-    blurb: "No ceilings, plus strategy on tap.",
+    blurb: "More capacity, plus strategy on tap.",
     planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_APEX,
     highlights: [
       "5,000 credits a month",
@@ -79,14 +80,14 @@ const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, 
     section: "Credits and AI",
     rows: [
       { label: "Credits", cells: ["100 to start", "500 / month", "1,500 / month", "5,000 / month"] },
-      { label: "AI chat", cells: ["Trial", "Unlimited", "Unlimited", "Unlimited, 2× deeper answers"] },
+      { label: "AI chat", cells: ["One-time trial", "24-hour usage allowance", "Larger 24-hour allowance", "No chat budget cap"] },
       { label: "Hook Generator", cells: [true, true, true, true] },
     ],
   },
   {
     section: "Leads and outreach",
     rows: [
-      { label: "Cold outreach messages", cells: ["10 / month", "50 / month", "Unlimited", "Unlimited"] },
+      { label: "Outreach drafts (not automatic sends)", cells: ["10 / month", "50 / month", "Unlimited", "Unlimited"] },
       { label: "Lead Extractor (TikTok, Instagram)", cells: [false, "10 per batch", "25 per batch", "50 per batch"] },
       { label: "Lead scoring", cells: [false, true, true, true] },
       { label: "Fortify Recon (Google Maps leads)", cells: [false, false, true, true] },
@@ -112,6 +113,7 @@ const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, 
       { label: "Funnel audits", cells: [false, "5 / month", "Unlimited", "Unlimited"] },
       { label: "Competitors tracked", cells: [false, "3", "10", "Unlimited"] },
       { label: "Competitor Watch (page change alerts)", cells: [false, false, true, true] },
+      { label: "Watch scan cost", cells: [false, false, "10 credits / watch / day", "10 credits / watch / day"] },
     ],
   },
   {
@@ -125,7 +127,7 @@ const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, 
   {
     section: "Automation and strategy",
     rows: [
-      { label: "Workflows", cells: [false, false, "Standard capacity", "Unlimited"] },
+      { label: "Workflow run capacity", cells: [false, false, "~100 runs / rolling 30 days", "Unlimited capacity"] },
       { label: "Weekly AI strategy report (Discord)", cells: [false, false, true, true] },
       { label: "AI Advisor (Claude Opus)", cells: [false, false, false, true] },
     ],
@@ -259,6 +261,17 @@ export default function PricingPage() {
           </div>
 
           <div className="anim-fade-up anim-d4 mx-auto mt-10 max-w-2xl space-y-2 text-center text-xs leading-relaxed text-text-dim">
+            <p>
+              AI chat and tool credits are separate allowances. Free includes a one-time £{FREE_TRIAL_BUDGET_GBP.toFixed(2)} model-usage trial.
+              Pro includes £{CHAT_BUDGET_GBP.PRO} and Elite £{CHAT_BUDGET_GBP.ELITE} of model usage per 24-hour chat session, starting when a session is created.
+              These are included usage budgets, not extra charges. Apex has no chat budget cap; rate limits still apply.
+              Message length and model usage determine consumption, not a fixed message count.
+            </p>
+            <p>
+              Tool credits fund research, extraction and scans. Ten daily watches for 30 days cost 3,000 credits, more than Elite's 1,500 monthly credits.
+              Empty or failed Lead Sourcing requests are refunded. Discovered contacts are not mailbox-deliverability verified.
+              Elite workflow capacity covers about 100 runs over a rolling 30 days; failed runs also consume capacity.
+            </p>
             <p>
               Prices in GBP. Pay with Whop or PayPal — both unlock the same tier and Discord roles. Manage or
               cancel billing with the provider you paid through. Payments are non-refundable; see the{" "}

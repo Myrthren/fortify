@@ -60,7 +60,7 @@ export function infoEmbed() {
         name: "Tiers",
         value:
           "**Free** · ten generations a day\n" +
-          "**Pro £29** · unlimited AI, Brand Voice, audits, trend radar\n" +
+          "**Pro £29** · included web chat allowance, Brand Voice, audits, trend radar\n" +
           "**Elite £79** · competitor scanner, weekly strategy reports\n" +
           "**Apex £199** · Claude Opus, custom workflows, auto-publish",
       },

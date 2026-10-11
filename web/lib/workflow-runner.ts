@@ -14,6 +14,9 @@ import { db } from "@/lib/db";
 import { getCapacityInfo } from "@/lib/workflow-capacity";
 import { validCron, cronTimeAt } from "@/lib/workflow-starters";
 import { braveSearch } from "@/lib/brave";
+import { loadBusinessContext } from "@/lib/business-context-store";
+import { reserveCredits, refundCredits } from "@/lib/credit-reservation";
+import { parseLeadRequest, validateLeadResults } from "@/lib/lead-sourcing-validation";
 import type { Tier } from "@prisma/client";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -58,6 +61,8 @@ type RunContext = {
   // adjacency: port output → next node id
   adj: Map<string, string>; // key: `${fromId}:${fromPort}` → toId
   nodes: Map<string, WFNode>;
+  businessContext: string;
+  voicePrompt: string;
 };
 
 // Trigger data passed in when a trigger fires
@@ -123,11 +128,13 @@ function evalFilter(expr: string, vars: Record<string, string>): boolean {
 // ── AI helper ─────────────────────────────────────────────────────────────────
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-async function callClaude(prompt: string, model: string, maxTokens: number): Promise<string> {
+async function callClaude(prompt: string, model: string, maxTokens: number, businessContext = "", voicePrompt = ""): Promise<string> {
   const modelId = model === "sonnet" ? "claude-sonnet-4-5" : "claude-haiku-4-5";
   const msg = await anthropic.messages.create({
     model: modelId,
     max_tokens: Math.min(maxTokens, 2000),
+    system: "Follow the explicit task. Do not invent business facts or results." + businessContext +
+      (voicePrompt ? `\n\nSaved brand voice for writing style:\n${voicePrompt}` : ""),
     messages: [{ role: "user", content: prompt }],
   });
   return msg.content.filter(b => b.type === "text").map(b => (b as any).text).join("").trim();
@@ -293,6 +300,8 @@ async function execNode(
         c.prompt || "Hello",
         c.model || "haiku",
         parseInt(c.maxTokens || "500", 10),
+        ctx.businessContext,
+        ctx.voicePrompt,
       );
       const outVar = c.outputVar || "generated_text";
       ctx.vars[outVar] = text;
@@ -305,7 +314,7 @@ async function execNode(
       const input = c.input || ctx.vars.previous_output || "";
       const maxLen = c.maxLength || "150 words";
       const prompt = `Summarise the following text in ${maxLen}:\n\n${input}`;
-      const text = await callClaude(prompt, "haiku", 600);
+      const text = await callClaude(prompt, "haiku", 600, ctx.businessContext);
       const outVar = c.outputVar || "summary";
       ctx.vars[outVar] = text;
       ctx.vars.previous_output = text;
@@ -317,7 +326,7 @@ async function execNode(
       const input = c.input || ctx.vars.previous_output || "";
       const criteria = c.criteria || "tone, clarity, key themes";
       const prompt = `Analyse the following text for ${criteria}:\n\n${input}`;
-      const text = await callClaude(prompt, "haiku", 800);
+      const text = await callClaude(prompt, "haiku", 800, ctx.businessContext);
       const outVar = c.outputVar || "analysis";
       ctx.vars[outVar] = text;
       ctx.vars.previous_output = text;
@@ -329,7 +338,7 @@ async function execNode(
       const input = c.input || ctx.vars.previous_output || "";
       const categories = c.categories || "positive, negative, neutral";
       const prompt = `Classify the following text into exactly one of these categories: ${categories}.\nRespond with only the category name.\n\nText: ${input}`;
-      const text = await callClaude(prompt, "haiku", 50);
+      const text = await callClaude(prompt, "haiku", 50, ctx.businessContext);
       const outVar = c.outputVar || "category";
       // Clean to just the category
       const cleanedCategory = text.split("\n")[0].trim();
@@ -709,39 +718,32 @@ async function execNode(
 
     // ── Lead Search ──────────────────────────────────────────────────────────
     case "action_lead_search": {
-      const icp = c.icp?.trim();
-      if (!icp || icp.length < 5) throw new Error("Lead Search: ICP not configured (minimum 5 characters)");
-
-      // Credit check and deduction
-      const freshUser = await db.user.findUnique({ where: { id: ctx.userId }, select: { credits: true } });
-      if (!freshUser) throw new Error("Lead Search: user not found");
-      if (freshUser.credits < 50) throw new Error(`Lead Search: insufficient credits (need 50, have ${freshUser.credits})`);
-
-      await db.user.update({ where: { id: ctx.userId }, data: { credits: { decrement: 50 } } });
-      await db.creditTransaction.create({
-        data: { userId: ctx.userId, amount: -50, source: "spend_leads" },
-      });
-
-      const location = c.location?.trim() ?? "";
-      const signal   = c.signal?.trim()   ?? "";
-      const maxCount = Math.min(parseInt(c.count || "8", 10), 15);
+      const input = parseLeadRequest({ icp: c.icp, location: c.location, signal: c.signal });
+      if (!input) throw new Error("Lead Search: configure an ICP of 5–200 characters and optional location/signal of up to 80 characters");
+      const { icp, location, signal } = input;
+      const requested = parseInt(c.count || "8", 10);
+      const maxCount = Number.isFinite(requested) ? Math.max(1, Math.min(requested, 8)) : 8;
       const outVar   = c.outputVar?.trim() || "leads";
+      const reservation = await reserveCredits(ctx.userId, 50, "spend_leads");
+      if (!reservation) throw new Error("Lead Search: insufficient credits (need 50)");
 
-      const query = [icp, location, signal, "company"].filter(Boolean).join(" ");
-      const results = await braveSearch({ query, count: 15 });
+      try {
+        const query = [icp, location, signal, "company"].filter(Boolean).join(" ");
+        const results = await braveSearch({ query, count: 15 });
 
-      if (!results.length) {
-        ctx.vars[outVar]         = "[]";
-        ctx.vars.previous_output = "[]";
-        ctx.vars.lead_count      = "0";
-        return { firedPort: "out", output: `Lead Search: no results for "${icp.slice(0, 40)}"` };
-      }
+        if (!results.length) {
+          await refundCredits(reservation);
+          ctx.vars[outVar]         = "[]";
+          ctx.vars.previous_output = "[]";
+          ctx.vars.lead_count      = "0";
+          return { firedPort: "out", output: `Lead Search: no results for "${icp.slice(0, 40)}"` };
+        }
 
-      const resultList = results
-        .map((r, i) => `${i + 1}. Title: "${r.title}" | URL: ${r.url} | Snippet: ${r.description}`)
-        .join("\n");
+        const resultList = results
+          .map((r, i) => `${i + 1}. Title: "${r.title}" | URL: ${r.url} | Snippet: ${r.description}`)
+          .join("\n");
 
-      const prompt = `You are a B2B sales prospecting expert. The user is looking for leads matching this ideal customer profile (ICP): "${icp}"${location ? `, located in: ${location}` : ""}${signal ? `, with buying signal: ${signal}` : ""}.
+        const prompt = `You are a B2B sales prospecting expert. The user is looking for leads matching this ideal customer profile (ICP): "${icp}"${location ? `, located in: ${location}` : ""}${signal ? `, with buying signal: ${signal}` : ""}.
 
 Below are web search results. For each result that looks like a real company or person matching the ICP, output a scored lead entry. Skip irrelevant results (news articles, job boards, directories, etc.).
 
@@ -751,24 +753,27 @@ ${resultList}
 Return ONLY a JSON array of up to ${maxCount} lead objects with this exact shape:
 [{"company":"name","website":"url","fitScore":7,"fitReason":"one sentence","hook":"personalised opening line for cold outreach"}]`;
 
-      const raw = await callClaude(prompt, "sonnet", 2000);
-      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+        const raw = await callClaude(prompt, "sonnet", 2000, ctx.businessContext);
+        const jsonMatch = raw.match(/\[[\s\S]*\]/);
 
-      let leads: unknown[] = [];
-      if (jsonMatch) {
-        try { leads = JSON.parse(jsonMatch[0]); } catch { /* malformed — return empty */ }
+        if (!jsonMatch) throw new Error("Lead Search returned invalid results");
+        const leads = validateLeadResults(JSON.parse(jsonMatch[0]), results, new Date().toISOString()).slice(0, maxCount);
+        if (!leads.length) await refundCredits(reservation);
+
+        const leadsJson = JSON.stringify(leads);
+        ctx.vars[outVar]         = leadsJson;
+        ctx.vars.previous_output = leadsJson;
+        ctx.vars.lead_count      = String(leads.length);
+
+        await db.generation.create({
+          data: { userId: ctx.userId, type: "lead-sourcing", input: query, output: leadsJson },
+        });
+
+        return { firedPort: "out", output: `Found ${leads.length} lead(s) for "${icp.slice(0, 40)}"` };
+      } catch (error) {
+        await refundCredits(reservation);
+        throw error;
       }
-
-      const leadsJson = JSON.stringify(leads);
-      ctx.vars[outVar]         = leadsJson;
-      ctx.vars.previous_output = leadsJson;
-      ctx.vars.lead_count      = String(leads.length);
-
-      await db.generation.create({
-        data: { userId: ctx.userId, type: "lead-sourcing", input: query, output: leadsJson },
-      });
-
-      return { firedPort: "out", output: `Found ${leads.length} lead(s) for "${icp.slice(0, 40)}"` };
     }
 
     default:
@@ -812,6 +817,8 @@ export async function runWorkflow(
     return { runId: "", status: "error", message: "Workflow has no nodes" };
   }
 
+  const business = await loadBusinessContext(userId);
+
   // 4. Create WorkflowRun record
   const run = await db.workflowRun.create({
     data: { workflowId, status: "running", usedCapacity: CAPACITY_PER_RUN },
@@ -844,6 +851,8 @@ export async function runWorkflow(
     "lead.score":     triggerPayload.leadScore     ?? "",
     date:             new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
     previous_output:  "",
+    "business.context": business.businessContext,
+    "voice.name": business.voice?.name ?? "",
   };
 
   // Inject webhook body fields as vars
@@ -856,7 +865,8 @@ export async function runWorkflow(
   }
 
   const logs: LogEntry[] = [];
-  const ctx: RunContext = { vars, userId, workflowId, runId: run.id, logs, adj, nodes: nodeMap };
+  const ctx: RunContext = { vars, userId, workflowId, runId: run.id, logs, adj, nodes: nodeMap,
+    businessContext: business.businessContext, voicePrompt: business.voice?.systemPrompt ?? "" };
 
   // 8. Find start node(s) — nodes with no incoming connections
   const hasIncoming = new Set(connections.map(c => c.toId));
