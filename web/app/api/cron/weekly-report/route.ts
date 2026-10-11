@@ -62,7 +62,7 @@ export async function POST(req: Request) {
         model: CLAUDE_MODELS.fast,
         max_tokens: 600,
         system:
-          "You are Fortify, the AI co-pilot for the Fortune Fortress community. Write weekly strategy reports. Be direct, sharp, and useful. No emojis. No buzzwords. Max 500 words.",
+          "You are Fortify, the AI co-pilot for the Fortify community. Fortify is the sole product and community name; never use legacy brand names. Write weekly strategy reports. Be direct, sharp, and useful. No emojis. No buzzwords. Max 500 words.",
         messages: [
           {
             role: "user",

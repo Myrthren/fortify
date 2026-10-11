@@ -1,6 +1,12 @@
 # 🏰 Fortify
 
-The AI co-pilot for online business and networking — built for the Fortune Fortress community.
+The AI co-pilot for online business and networking — built for the Fortify community.
+
+## Brand naming
+
+Fortify is the sole official name for both the product and its community. Use
+“Fortify” consistently in user-facing copy, AI prompts, metadata, support
+content, documentation, and release notes. Do not reintroduce legacy names.
 
 ## Structure
 

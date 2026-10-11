@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Fortify",
     short_name: "Fortify",
     description:
-      "AI co-pilot for online business — content, networking, and growth for the Fortune Fortress community.",
+      "AI co-pilot for online business — content, networking, and growth for the Fortify community.",
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#060606",

@@ -9,13 +9,14 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-10";
+export const KNOWLEDGE_VERSION = "2026-10-11-brand";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
-- Community: Fortune Fortress — a Discord community for online business owners, resellers, and creators
+- Community: Fortify — a Discord community for online business owners, resellers, and creators
 - Tagline: "AI co-pilot for online business and networking"
-- Owner: Kene (Discord owner of Fortune Fortress)
+- Owner: Kene (owner of the Fortify community)
+- Naming: Fortify is the sole product and community name. Never use legacy brand names.
 
 SUBSCRIPTION TIERS
 - Free (£0/mo): 100 starter credits, Hook Generator, 10 cold outreach messages/mo, Trend Radar (5 watch terms), community forums, read-only member directory and deal board
@@ -35,7 +36,7 @@ Growth:
 - Cold Outreach Generator — personalised email, LinkedIn, Twitter, and DM copy (Free: 10/mo, Pro: 50/mo, Elite+: unlimited)
 - Lead Sourcing — find and score prospects against your ICP using web intelligence (Pro+)
 - Lead Extractor — paste TikTok and Instagram profile URLs in bulk; Fortify researches each business (bio, linked website, contact/about pages, link-in-bio pages) and extracts their email and phone number. Pro: 10 accounts/batch. Elite: 25/batch plus web-search fallback and optional AI "approach strategy" per lead found (best angle to pitch them). Apex: 50/batch plus an optional deep scan that crawls extra pages and widens the search. (Pro+)
-- AI Matchmaking — Claude surfaces top Fortune Fortress members worth talking to (Pro+)
+- AI Matchmaking — Claude surfaces top Fortify members worth talking to (Pro+)
 - Fortify Recon — find local and niche businesses by location and category via Google Maps; returns name, address, phone, website, and rating, ready to prospect (Elite+)
 - Outbound Engine — COMING SOON, not available to members yet (sending is still being connected); do not tell anyone they can use it today. When live it will be a fully autonomous AI cold email system. You describe your target and your offer; it finds matching businesses, reads their websites, analyses them across 11 dimensions (website quality, lead capture, booking, CRM, chatbot, automation, SEO and more), works out where automation would genuinely help, and writes a completely unique email to each one. Every email varies its greeting, opening, structure, tone, sign-off and call to action, is checked against a banned-phrase and fabrication filter before it can send, and is capped at 70-140 words. It sends inside your chosen hours at your daily cap, runs the follow-up sequence, reads replies straight out of your sending mailbox, and stops instantly the moment someone replies. Positive replies are DMed to you, and bounced addresses are never contacted again. Drafts wait for your approval unless you switch on auto-send. (Elite+)
 
@@ -56,7 +57,7 @@ Automation:
 - Workflows — multi-step AI automation builder; triggers, logic, AI nodes, Discord/Slack/Email/Notion/HTTP actions (Elite+)
 
 Community:
-- Member Directory — browse all Fortune Fortress members
+- Member Directory — browse all Fortify members
 - Mastermind Pods — small accountability circles for Apex members
 - Forums — community discussion boards
 - Deal Board — post and browse community deals
@@ -77,7 +78,7 @@ BOT SLASH COMMANDS
 - /audit <url> — run a funnel audit on any URL
 - /trends — check your Trend Radar watch terms and latest results
 - /competitors — list your tracked competitors
-- /matchmake — find Fortune Fortress members worth connecting with
+- /matchmake — find Fortify members worth connecting with
 - /ticket — raise a support ticket
 
 PRICING
