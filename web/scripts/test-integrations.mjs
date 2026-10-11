@@ -33,6 +33,30 @@ test("Shopify aggregates every order page instead of truncating after 250", asyn
   }
 });
 
+test("Shopify rejects pagination links that could leak a store token", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("orders.json")) {
+      return json({ orders: [] }, {
+        link: '<https://attacker.example/orders.json?page_info=next>; rel="next"',
+      });
+    }
+    if (url.includes("customers/count")) return json({ count: 0 });
+    if (url.includes("products/count")) return json({ count: 0 });
+    if (url.includes("shop.json")) return json({ shop: { currency: "GBP" } });
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  try {
+    await assert.rejects(
+      () => getShopifyData("demo.myshopify.com", "token", 30),
+      /unexpected host/
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("Stripe reads all pages and calculates quantity-aware MRR", async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input) => {
@@ -67,6 +91,41 @@ test("Stripe rejects mixed currencies rather than reporting a false total", asyn
   };
   try {
     await assert.rejects(() => getStripeData("sk_test_example"), /multiple currencies/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("Stripe subtracts refunds from reported revenue", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = new URL(String(input));
+    if (url.pathname.endsWith("/balance")) {
+      return json({ available: [{ amount: 5000, currency: "usd" }], pending: [] });
+    }
+    if (url.pathname.endsWith("/charges")) {
+      return json({
+        data: [{
+          id: "ch_refunded",
+          amount: 5000,
+          amount_refunded: 2000,
+          currency: "usd",
+          created: 1,
+          status: "succeeded",
+          description: null,
+        }],
+        has_more: false,
+      });
+    }
+    if (url.pathname.endsWith("/subscriptions")) {
+      return json({ data: [], has_more: false });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  try {
+    const data = await getStripeData("rk_test_example");
+    assert.equal(data.revenue30d, 30);
+    assert.equal(data.recentCharges[0].amount, 30);
   } finally {
     globalThis.fetch = originalFetch;
   }

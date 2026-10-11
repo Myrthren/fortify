@@ -11,8 +11,11 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const apiKey = (body.apiKey ?? "").trim();
 
-  if (!apiKey || !apiKey.startsWith("sk_")) {
-    return NextResponse.json({ error: "Invalid API key — must start with sk_" }, { status: 400 });
+  if (!/^(sk|rk)_(test|live)_/.test(apiKey)) {
+    return NextResponse.json(
+      { error: "Invalid API key — use a Stripe secret or restricted key" },
+      { status: 400 }
+    );
   }
 
   try {

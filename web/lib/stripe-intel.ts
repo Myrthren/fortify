@@ -29,6 +29,7 @@ type StripeBalance = {
 type StripeCharge = {
   id: string;
   amount: number;
+  amount_refunded?: number;
   currency: string;
   created: number;
   status: string;
@@ -95,10 +96,14 @@ export async function getStripeData(apiKey: string): Promise<StripeData> {
 
   // Charges (last 30d)
   const successfulCharges = charges.filter((c) => c.status === "succeeded");
-  const revenue30d = successfulCharges.reduce((s, c) => s + c.amount, 0) / 100;
+  const netChargeAmount = (charge: StripeCharge) =>
+    Math.max(0, charge.amount - (charge.amount_refunded ?? 0));
+  const revenue30d =
+    successfulCharges.reduce((sum, charge) => sum + netChargeAmount(charge), 0) /
+    100;
   const chargeCount30d = successfulCharges.length;
   const recentCharges = successfulCharges.slice(0, 10).map((c) => ({
-    amount: c.amount / 100,
+    amount: netChargeAmount(c) / 100,
     currency: c.currency,
     created: c.created,
     description: c.description,

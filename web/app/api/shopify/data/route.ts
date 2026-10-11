@@ -9,7 +9,10 @@ export async function GET(req: Request) {
   const userId = (session.user as any).id as string;
 
   const { searchParams } = new URL(req.url);
-  const days = Math.min(Number(searchParams.get("days") ?? 30), 365);
+  const requestedDays = Number(searchParams.get("days") ?? 30);
+  const days = Number.isFinite(requestedDays)
+    ? Math.max(1, Math.min(Math.floor(requestedDays), 365))
+    : 30;
 
   const conn = await db.shopifyConnection.findUnique({ where: { userId } });
   if (!conn) return NextResponse.json({ error: "Not connected", notConnected: true }, { status: 404 });

@@ -4,9 +4,32 @@
 // Keep this configurable so the API version can be advanced without a code deploy.
 const API_VERSION = process.env.SHOPIFY_API_VERSION ?? "2026-10";
 
+function shopifyHost(shop: string): string {
+  const candidate = shop
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "");
+  const host = candidate.includes(".")
+    ? candidate
+    : `${candidate}.myshopify.com`;
+
+  if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(host)) {
+    throw new Error("Use the store's .myshopify.com domain");
+  }
+
+  return host;
+}
+
 function shopifyUrl(shop: string, path: string) {
-  if (path.startsWith("https://")) return path;
-  const host = shop.includes(".") ? shop : `${shop}.myshopify.com`;
+  const host = shopifyHost(shop);
+  if (path.startsWith("https://")) {
+    const url = new URL(path);
+    if (url.hostname !== host) {
+      throw new Error("Shopify pagination returned an unexpected host");
+    }
+    return url.toString();
+  }
   return `https://${host}/admin/api/${API_VERSION}${path}`;
 }
 
@@ -25,14 +48,14 @@ async function shopifyFetchAll<T>(shop: string, token: string, path: string, key
   const values: T[] = [];
   let nextPath: string | null = path;
   while (nextPath) {
-    const res = await fetch(shopifyUrl(shop, nextPath), {
+    const res: Response = await fetch(shopifyUrl(shop, nextPath), {
       headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
     });
     if (!res.ok) throw new Error(`Shopify ${nextPath}: ${await res.text()}`);
     const body = await res.json() as Record<string, T[]>;
     values.push(...(body[key] ?? []));
-    const link = res.headers.get("link");
-    const next = link?.match(/<([^>]+)>;\s*rel="next"/i)?.[1];
+    const link: string | null = res.headers.get("link");
+    const next: string | undefined = link?.match(/<([^>]+)>;\s*rel="next"/i)?.[1];
     nextPath = next ?? null;
   }
   return values;
@@ -119,9 +142,21 @@ export async function getRevenueForPeriod(
   });
   if (until) params.set("created_at_max", until.toISOString());
 
-  const orders = await shopifyFetchAll<Order>(shop, token, `/orders.json?${params.toString()}`, "orders");
+  const [orders, shopInfo] = await Promise.all([
+    shopifyFetchAll<Order>(
+      shop,
+      token,
+      `/orders.json?${params.toString()}`,
+      "orders"
+    ),
+    shopifyFetch<{ shop: { currency: string } }>(shop, token, "/shop.json"),
+  ]);
   const revenue = orders.reduce((s, o) => s + Number(o.total_price), 0);
-  return { revenue, orderCount: orders.length, currency: orders[0]?.currency ?? "USD" };
+  return {
+    revenue,
+    orderCount: orders.length,
+    currency: orders[0]?.currency ?? shopInfo.shop.currency,
+  };
 }
 
 /** Verify credentials by hitting the shop endpoint */
