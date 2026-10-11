@@ -47,6 +47,10 @@ export async function POST(req: Request) {
     const report = item.viralityReport as any;
 
     for (const platform of item.targetPlatforms) {
+      if (platform === "tiktok" || platform === "youtube") {
+        results[platform] = { success: false, error: `${platform === "tiktok" ? "TikTok" : "YouTube"} publishing is not released yet.` };
+        continue;
+      }
       const conn = item.user.socialConnections.find((c) => c.platform === platform);
       if (!conn) {
         results[platform] = { success: false, error: `${platform} not connected` };

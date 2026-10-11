@@ -13,6 +13,9 @@ export async function GET(req: Request) {
   if (!platform || !["tiktok", "youtube", "facebook"].includes(platform)) {
     return NextResponse.json({ error: "platform must be tiktok, youtube, or facebook" }, { status: 400 });
   }
+  if (platform === "tiktok" || platform === "youtube") {
+    return NextResponse.json({ error: `${platform === "tiktok" ? "TikTok" : "YouTube"} publishing is not released yet.` }, { status: 503 });
+  }
   const state = createOAuthState((session.user as any).id as string, `social:${platform}`);
 
   let authUrl: string;

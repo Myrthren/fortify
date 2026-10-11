@@ -66,6 +66,10 @@ async function topUpCreditsIfDue(userId: string, tier: Tier, now: Date) {
 }
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Netlify terminates TLS and forwards the public host. Auth.js otherwise
+  // rejects the callback host as untrusted and redirects to ?error=Configuration.
+  trustHost: true,
+  secret: process.env.AUTH_SECRET,
   adapter: PrismaAdapter(db),
   session: { strategy: "database" },
   providers: [

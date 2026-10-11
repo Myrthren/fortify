@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, Unplug, BarChart2 } from "lucide-react";
+import { Unplug } from "lucide-react";
 
 export function GoogleConnectSection({
   connected,
@@ -32,10 +32,7 @@ export function GoogleConnectSection({
             <p className="text-sm font-medium">Google account</p>
             {connected ? (
               <div className="mt-0.5 space-y-0.5">
-                <p className="text-xs text-text-muted flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3 text-green-400" />
-                  Connected
-                </p>
+                <p className="text-xs text-text-muted">Unreleased — existing connection retained but data access is disabled.</p>
                 {gaPropertyName && (
                   <p className="text-xs text-text-muted">· GA4: {gaPropertyName}</p>
                 )}
@@ -51,10 +48,6 @@ export function GoogleConnectSection({
           </div>
           {connected ? (
             <div className="flex gap-2">
-              <a href="/dashboard/analytics" className="btn-ghost text-xs flex items-center gap-1.5">
-                <BarChart2 className="h-3.5 w-3.5" />
-                View
-              </a>
               <button
                 onClick={disconnect}
                 disabled={disconnecting}
@@ -66,7 +59,7 @@ export function GoogleConnectSection({
             </div>
           ) : (
             <span className="rounded-md bg-white/[0.06] px-2 py-1 text-xs text-text-muted">
-              Coming soon
+              Unreleased
             </span>
           )}
         </div>

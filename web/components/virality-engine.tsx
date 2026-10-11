@@ -231,7 +231,7 @@ export function ViralityEngine({
         </p>
         <div className="flex flex-wrap gap-3">
           {(["tiktok", "youtube", "facebook"] as Platform[]).map((platform) => {
-            const comingSoon = platform === "tiktok";
+            const comingSoon = platform === "tiktok" || platform === "youtube";
             const conn = connections.find((c) => c.platform === platform);
             return conn ? (
               <div
@@ -320,7 +320,7 @@ export function ViralityEngine({
                 <label className="block text-xs text-text-muted mb-1">Target platforms</label>
                 <div className="flex gap-2">
                   {(["tiktok", "youtube", "facebook"] as Platform[]).map((p) => {
-                    const isSoon = p === "tiktok";
+                    const isSoon = p === "tiktok" || p === "youtube";
                     return isSoon ? (
                       <div
                         key={p}

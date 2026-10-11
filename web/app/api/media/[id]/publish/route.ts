@@ -47,8 +47,8 @@ export async function POST(
 
   for (const platform of platforms) {
     // TikTok posting is not yet available — Content Posting API approval pending
-    if (platform === "tiktok") {
-      results[platform] = { success: false, error: "TikTok publishing is coming soon." };
+    if (platform === "tiktok" || platform === "youtube") {
+      results[platform] = { success: false, error: `${platform === "tiktok" ? "TikTok" : "YouTube"} publishing is not released yet.` };
       continue;
     }
 
