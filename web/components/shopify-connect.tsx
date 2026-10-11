@@ -22,6 +22,8 @@ export function ShopifyConnectSection({ connected, shop }: { connected: boolean;
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed"); return; }
       window.location.reload();
+    } catch {
+      setError("Shopify could not be reached. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -30,8 +32,19 @@ export function ShopifyConnectSection({ connected, shop }: { connected: boolean;
   async function disconnect() {
     if (!confirm("Disconnect Shopify?")) return;
     setDisconnecting(true);
-    await fetch("/api/shopify/disconnect", { method: "POST" });
-    window.location.reload();
+    setError(null);
+    try {
+      const res = await fetch("/api/shopify/disconnect", { method: "POST" });
+      if (!res.ok) {
+        setError("Shopify could not be disconnected. Please try again.");
+        return;
+      }
+      window.location.reload();
+    } catch {
+      setError("Shopify could not be disconnected. Please try again.");
+    } finally {
+      setDisconnecting(false);
+    }
   }
 
   return (

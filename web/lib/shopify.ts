@@ -1,10 +1,35 @@
 // Shopify Admin REST API helpers
 // Requires a Custom App access token with read_orders, read_products, read_customers, read_inventory
 
-const API_VERSION = "2024-01";
+// Keep this configurable so the API version can be advanced without a code deploy.
+const API_VERSION = process.env.SHOPIFY_API_VERSION ?? "2026-10";
+
+function shopifyHost(shop: string): string {
+  const candidate = shop
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/\/.*$/, "");
+  const host = candidate.includes(".")
+    ? candidate
+    : `${candidate}.myshopify.com`;
+
+  if (!/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/.test(host)) {
+    throw new Error("Use the store's .myshopify.com domain");
+  }
+
+  return host;
+}
 
 function shopifyUrl(shop: string, path: string) {
-  const host = shop.includes(".") ? shop : `${shop}.myshopify.com`;
+  const host = shopifyHost(shop);
+  if (path.startsWith("https://")) {
+    const url = new URL(path);
+    if (url.hostname !== host) {
+      throw new Error("Shopify pagination returned an unexpected host");
+    }
+    return url.toString();
+  }
   return `https://${host}/admin/api/${API_VERSION}${path}`;
 }
 
@@ -17,6 +42,23 @@ async function shopifyFetch<T>(shop: string, token: string, path: string): Promi
   });
   if (!res.ok) throw new Error(`Shopify ${path}: ${await res.text()}`);
   return res.json() as Promise<T>;
+}
+
+async function shopifyFetchAll<T>(shop: string, token: string, path: string, key: string): Promise<T[]> {
+  const values: T[] = [];
+  let nextPath: string | null = path;
+  while (nextPath) {
+    const res: Response = await fetch(shopifyUrl(shop, nextPath), {
+      headers: { "X-Shopify-Access-Token": token, "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error(`Shopify ${nextPath}: ${await res.text()}`);
+    const body = await res.json() as Record<string, T[]>;
+    values.push(...(body[key] ?? []));
+    const link: string | null = res.headers.get("link");
+    const next: string | undefined = link?.match(/<([^>]+)>;\s*rel="next"/i)?.[1];
+    nextPath = next ?? null;
+  }
+  return values;
 }
 
 // ── Revenue ────────────────────────────────────────────────────────────────────
@@ -43,24 +85,21 @@ export type ShopifyData = {
 export async function getShopifyData(shop: string, token: string, days = 30): Promise<ShopifyData> {
   const since = new Date(Date.now() - days * 86400000).toISOString();
 
-  const [ordersRes, customerCountRes, productCountRes, shopInfoRes] = await Promise.allSettled([
-    shopifyFetch<{ orders: ShopifyOrder[] }>(
+  const [ordersRes, customerCountRes, productCountRes, shopInfoRes] = await Promise.all([
+    shopifyFetchAll<ShopifyOrder>(
       shop, token,
-      `/orders.json?status=any&financial_status=paid&created_at_min=${since}&limit=250&fields=id,total_price,created_at,line_items`
+      `/orders.json?status=any&financial_status=paid&created_at_min=${since}&limit=250&fields=id,total_price,created_at,line_items`,
+      "orders"
     ),
     shopifyFetch<{ count: number }>(shop, token, "/customers/count.json"),
     shopifyFetch<{ count: number }>(shop, token, "/products/count.json"),
     shopifyFetch<{ shop: { currency: string } }>(shop, token, "/shop.json"),
   ]);
 
-  const orders: ShopifyOrder[] =
-    ordersRes.status === "fulfilled" ? ordersRes.value.orders : [];
-  const customerCount =
-    customerCountRes.status === "fulfilled" ? customerCountRes.value.count : 0;
-  const productCount =
-    productCountRes.status === "fulfilled" ? productCountRes.value.count : 0;
-  const currency =
-    shopInfoRes.status === "fulfilled" ? shopInfoRes.value.shop.currency : "USD";
+  const orders: ShopifyOrder[] = ordersRes;
+  const customerCount = customerCountRes.count;
+  const productCount = productCountRes.count;
+  const currency = shopInfoRes.shop.currency;
 
   // Revenue
   const revenue = orders.reduce((sum, o) => sum + Number(o.total_price), 0);
@@ -103,12 +142,21 @@ export async function getRevenueForPeriod(
   });
   if (until) params.set("created_at_max", until.toISOString());
 
-  const data = await shopifyFetch<{ orders: Order[] }>(
-    shop, token, `/orders.json?${params.toString()}`
-  );
-  const orders = data.orders ?? [];
+  const [orders, shopInfo] = await Promise.all([
+    shopifyFetchAll<Order>(
+      shop,
+      token,
+      `/orders.json?${params.toString()}`,
+      "orders"
+    ),
+    shopifyFetch<{ shop: { currency: string } }>(shop, token, "/shop.json"),
+  ]);
   const revenue = orders.reduce((s, o) => s + Number(o.total_price), 0);
-  return { revenue, orderCount: orders.length, currency: orders[0]?.currency ?? "USD" };
+  return {
+    revenue,
+    orderCount: orders.length,
+    currency: orders[0]?.currency ?? shopInfo.shop.currency,
+  };
 }
 
 /** Verify credentials by hitting the shop endpoint */
@@ -141,13 +189,11 @@ export async function getOutOfStockProducts(
     variants: ShopifyVariant[];
   };
 
-  const data = await shopifyFetch<{ products: ShopifyProduct[] }>(
-    shop, token,
-    `/products.json?limit=250&fields=id,title,variants`
-  );
+  const products = await shopifyFetchAll<ShopifyProduct>(shop, token,
+    `/products.json?limit=250&fields=id,title,variants`, "products");
 
   const out: LowStockProduct[] = [];
-  for (const product of data.products ?? []) {
+  for (const product of products) {
     for (const variant of product.variants ?? []) {
       if (
         variant.inventory_management === "shopify" &&
@@ -181,13 +227,11 @@ export async function getLowStockProducts(
     variants: ShopifyVariant[];
   };
 
-  const data = await shopifyFetch<{ products: ShopifyProduct[] }>(
-    shop, token,
-    `/products.json?limit=250&fields=id,title,variants`
-  );
+  const products = await shopifyFetchAll<ShopifyProduct>(shop, token,
+    `/products.json?limit=250&fields=id,title,variants`, "products");
 
   const low: LowStockProduct[] = [];
-  for (const product of data.products ?? []) {
+  for (const product of products) {
     for (const variant of product.variants ?? []) {
       // Only alert on tracked inventory that's low but not fully out of stock (0 = separate alert)
       if (
