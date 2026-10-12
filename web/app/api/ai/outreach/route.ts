@@ -53,11 +53,13 @@ export async function POST(req: Request) {
     offer?: string;
     channel?: OutreachChannel;
     voiceId?: string | null;
+    clientWorkspaceId?: string;
   };
   const prospect = body.prospect?.trim();
   const offer = body.offer?.trim();
   const channel = body.channel ?? "dm";
   const voiceId = body.voiceId;
+  if (body.clientWorkspaceId !== undefined && (typeof body.clientWorkspaceId !== "string" || body.clientWorkspaceId.length > 100 || user.tier === "FREE")) return new NextResponse("Client contexts require paid access and a valid selection", { status: 403 });
 
   if (voiceId !== undefined && voiceId !== null && typeof voiceId !== "string") {
     return new NextResponse("Invalid voice selection", { status: 400 });
@@ -77,7 +79,9 @@ export async function POST(req: Request) {
     return new NextResponse("Invalid channel", { status: 400 });
   }
 
-  const context = await loadBusinessContext(userId, voiceId);
+  let context;
+  try { context = await loadBusinessContext(userId, voiceId, body.clientWorkspaceId); }
+  catch { return NextResponse.json({ error: "Client context unavailable" }, { status: 404 }); }
   const activeVoice = context.voice;
 
   let message: string;

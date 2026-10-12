@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-11-buyer-readiness";
+export const KNOWLEDGE_VERSION = "2026-10-12-refinement-session";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -25,6 +25,11 @@ SUBSCRIPTION TIERS
 - Web AI chat has separate included model-usage allowances: Free one-time £0.20 trial; Pro £1 and Elite £5 per 24-hour session; Apex has no chat budget cap. These are not extra charges or tool credits. Do not call Pro or Elite chat unlimited.
 - Competitor Watch costs 10 tool credits per watch per daily scan. Ten watches over 30 days cost 3000 credits. Elite includes 1500 credits/month, so watch count and available scan credits are different limits.
 - Elite workflow capacity is about 100 runs per rolling 30 days (failed runs also count). Apex has unlimited workflow capacity; research nodes may still spend tool credits.
+- Private client contexts: Pro 3, Elite 20, Apex 100. Each stores separate business facts and links one of the owner's saved voices. Available in hooks, outreach, lead sourcing, watches and workflows. Selecting a client with no voice never falls back to the personal voice. No shared accounts, team invites or shared billing are included.
+- Address checks: domain/MX results never prove mailbox validity. Mailbox checks need the configured Hunter integration; catch-all, pending, disposable, stale and unknown checks remain on hold. Verification is not buying intent, permission or a delivery guarantee. Outbound sending requires a fresh deliverable mailbox result.
+- Competitor Watch compares readable page text, records exact before/after snippets and distinguishes failed checks. It cannot read every JavaScript-rendered page or prove a business impact.
+- Workflow schedules poll each minute with bounded five-minute catch-up and per-slot run claims. Interrupted runs are not automatically replayed. Email retries use provider idempotency; other uncertain delivery mutations are not blindly repeated.
+- Website research → content drafts reads a public page and drafts sourced angles in saved context/voice. Competitor change → content drafts uses observed Watch evidence. Both starters are inactive drafts without publishing actions; humans review outputs in run history.
 
 PLATFORM FEATURES
 Content:

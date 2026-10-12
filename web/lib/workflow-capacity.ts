@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import type { Tier } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 
 // ─── The capacity formula lives here ONLY — never exposed to the client ────────
 
@@ -11,12 +12,12 @@ const BASE_UNITS: Record<Tier, number> = {
 };
 
 /** How many workflow capacity units the user has earned this month (base + purchased) */
-export async function getCapacityInfo(userId: string, tier: Tier) {
+export async function getCapacityInfo(userId: string, tier: Tier, client: Prisma.TransactionClient = db) {
   // Base allowance for this tier
   const base = BASE_UNITS[tier] ?? 0;
 
   // Extra units from all capacity packs they have ever bought
-  const packs = await db.workflowCapacityPack.findMany({
+  const packs = await client.workflowCapacityPack.findMany({
     where: { userId },
     select: { units: true },
   });
@@ -25,7 +26,7 @@ export async function getCapacityInfo(userId: string, tier: Tier) {
 
   // Usage = sum of usedCapacity on runs started in the last 30 days
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-  const runsAgg = await db.workflowRun.aggregate({
+  const runsAgg = await client.workflowRun.aggregate({
     where: {
       workflow: { userId },
       startedAt: { gte: since },

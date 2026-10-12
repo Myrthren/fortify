@@ -22,14 +22,17 @@ export async function POST(req: Request) {
     );
   }
 
-  const { topic } = (await req.json()) as { topic: string };
+  const { topic, clientWorkspaceId } = (await req.json()) as { topic: string; clientWorkspaceId?: string };
+  if (clientWorkspaceId !== undefined && (typeof clientWorkspaceId !== "string" || clientWorkspaceId.length > 100 || user.tier === "FREE")) return new NextResponse("Client contexts require paid access and a valid selection", { status: 403 });
   if (!topic || topic.length < 2) {
     return new NextResponse("Topic required", { status: 400 });
   }
 
   // If user has an active brand voice, generate via Claude with that voice.
   // Otherwise fall back to the OpenAI generic hook generator.
-  const context = await loadBusinessContext(userId);
+  let context;
+  try { context = await loadBusinessContext(userId, undefined, clientWorkspaceId); }
+  catch { return NextResponse.json({ error: "Client context unavailable" }, { status: 404 }); }
   const activeVoice = context.voice;
 
   let hooks: string[];

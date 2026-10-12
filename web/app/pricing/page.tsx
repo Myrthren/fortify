@@ -120,6 +120,7 @@ const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, 
     section: "Business",
     rows: [
       { label: "Company DNA (AI memory)", cells: [false, "30k characters", "100k characters", "Unlimited"] },
+      { label: "Private client contexts", cells: [false, "3", "20", "100"] },
       { label: "Meta Ads, Shopify and Revenue dashboards", cells: [false, true, true, true] },
       { label: "Analytics (GA4, Search Console)", cells: [false, SOON(), SOON(), SOON()] },
     ],
@@ -271,6 +272,7 @@ export default function PricingPage() {
               Tool credits fund research, extraction and scans. Ten daily watches for 30 days cost 3,000 credits, more than Elite's 1,500 monthly credits.
               Empty or failed Lead Sourcing requests are refunded. Discovered contacts are not mailbox-deliverability verified.
               Elite workflow capacity covers about 100 runs over a rolling 30 days; failed runs also consume capacity.
+              Client contexts are private to one account and use existing voice slots; team invitations and shared billing are not included.
             </p>
             <p>
               Prices in GBP. Pay with Whop or PayPal — both unlock the same tier and Discord roles. Manage or

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Search, ExternalLink, Copy, Check, ArrowRight } from "lucide-react";
 import type { ScoredLead } from "@/lib/lead-sourcing-validation";
+import { ClientContextPicker } from "@/components/client-context-picker";
 
 export function LeadSourcer() {
   const [icp, setIcp] = useState("");
@@ -13,6 +14,7 @@ export function LeadSourcer() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [dnaUsed, setDnaUsed] = useState(false);
+  const [clientId, setClientId] = useState("");
 
   async function search() {
     if (!icp.trim() || icp.trim().length < 5) {
@@ -26,7 +28,7 @@ export function LeadSourcer() {
       const res = await fetch("/api/leads/source", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ icp: icp.trim(), location: location.trim(), signal: signal.trim() }),
+        body: JSON.stringify({ icp: icp.trim(), location: location.trim(), signal: signal.trim(), clientWorkspaceId: clientId || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Something went wrong."); return; }
@@ -53,6 +55,7 @@ export function LeadSourcer() {
 
   return (
     <div className="space-y-6">
+      <ClientContextPicker value={clientId} onChange={(id) => { setClientId(id); setLeads(null); }} />
       {/* Search form */}
       <div className="card p-5 space-y-4">
         <div>
@@ -145,6 +148,7 @@ export function LeadSourcer() {
               <p className="text-xs text-text-dim">Unverified prospect · research {new Date(lead.researchedAt).toLocaleDateString()}</p>
               <a href={lead.sourceUrl} target="_blank" rel="noreferrer noopener" className="text-xs underline text-text-muted">Check source evidence</a>
               <p className="text-xs text-text-muted">{lead.sourceExcerpt}</p>
+              <p className="text-xs text-amber-300">{lead.signalEvidence ? `Signal evidence to review: “${lead.signalEvidence}”` : "No supported buying signal supplied. Review before outreach."}</p>
 
               <div className="rounded-md border border-bg-border bg-bg-elevated p-3">
                 <p className="text-xs text-text-dim mb-1 uppercase tracking-wide">Outreach hook</p>

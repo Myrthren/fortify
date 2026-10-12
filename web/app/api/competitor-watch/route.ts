@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { randomUUID } from "crypto";
+import { publicPageUrl } from "@/lib/public-page";
 
 export async function GET() {
   const session = await auth();
@@ -45,9 +46,10 @@ export async function POST(req: Request) {
     );
   }
 
-  const body = (await req.json()) as { name?: string; links?: { url: string; label: string }[] };
+  const body = (await req.json()) as { name?: string; links?: { url: string; label: string }[]; clientWorkspaceId?: string | null };
+  if (body.clientWorkspaceId && (typeof body.clientWorkspaceId !== "string" || !await db.clientWorkspace.findFirst({ where: { id: body.clientWorkspaceId, userId } }))) return new NextResponse("Client context unavailable", { status: 404 });
 
-  const name = body.name?.trim().slice(0, 100);
+  const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : "";
   if (!name || name.length < 1) {
     return new NextResponse("Name is required", { status: 400 });
   }
@@ -60,6 +62,7 @@ export async function POST(req: Request) {
     return new NextResponse("Maximum 3 links per watch", { status: 400 });
   }
 
+  if (rawLinks.some(l => !l || typeof l.url !== "string" || (l.label !== undefined && typeof l.label !== "string"))) return new NextResponse("Invalid link data", { status: 400 });
   const links = rawLinks.map((l) => ({
     id: randomUUID(),
     url: l.url?.trim().slice(0, 500) ?? "",
@@ -71,12 +74,17 @@ export async function POST(req: Request) {
     if (!link.url || link.url.length < 4) {
       return new NextResponse("Each link must have a valid URL", { status: 400 });
     }
+    try { link.url = publicPageUrl(link.url).toString(); } catch { return NextResponse.json({ error: "Each watch link must be a public HTTP(S) website" }, { status: 400 }); }
   }
 
-  const [watch] = await db.$transaction([
-    db.competitorWatch.create({
+  const watch = await db.$transaction(async tx => {
+    const debit = await tx.user.updateMany({ where: { id: userId, credits: { gte: COST } }, data: { credits: { decrement: COST } } });
+    if (debit.count !== 1) return null;
+    await tx.creditTransaction.create({ data: { userId, amount: -COST, source: "spend_competitor_watch" } });
+    return tx.competitorWatch.create({
       data: {
         userId,
+        clientWorkspaceId: body.clientWorkspaceId || null,
         name,
         links,
         creditsPaid: COST,
@@ -88,12 +96,9 @@ export async function POST(req: Request) {
           take: 5,
         },
       },
-    }),
-    db.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: COST } },
-    }),
-  ]);
+    });
+  });
+  if (!watch) return NextResponse.json({ error: `Not enough credits. You need ${COST} credits to add a watch.` }, { status: 402 });
 
   return NextResponse.json({ watch, creditsUsed: COST });
 }

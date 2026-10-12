@@ -12,7 +12,7 @@
     "db:studio": "prisma studio",
     "test:whop": "node --test scripts/test-whop.cjs",
     "test:workflows": "node --experimental-strip-types --test scripts/test-workflow-starters.mjs",
-    "test:readiness": "node --test scripts/test-buyer-readiness.cjs"
+    "test:readiness": "node --test scripts/test-buyer-readiness.cjs scripts/test-refinement-session.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
@@ -23,6 +23,7 @@
     "@radix-ui/react-slot": "^1.1.0",
     "@sentry/nextjs": "^10.53.1",
     "@types/nodemailer": "^8.0.1",
+    "cheerio": "1.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "imapflow": "^1.6.6",

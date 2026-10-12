@@ -29,9 +29,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
   const body = await req.json();
   const data: Record<string, unknown> = {};
+  if (body.clientWorkspaceId !== undefined) {
+    if (body.clientWorkspaceId !== null && (typeof body.clientWorkspaceId !== "string" || !await db.clientWorkspace.findFirst({ where: { id: body.clientWorkspaceId, userId } }))) return new NextResponse("Client context unavailable", { status: 404 });
+    data.clientWorkspaceId = body.clientWorkspaceId;
+    if (body.clientWorkspaceId !== existing.clientWorkspaceId) data.active = false;
+  }
   if (typeof body.name        === "string") data.name        = body.name.trim().slice(0, 100);
   if (typeof body.description === "string") data.description = body.description.trim().slice(0, 300);
-  if (typeof body.active      === "boolean") data.active     = body.active;
+  if (typeof body.active === "boolean" && data.active !== false) data.active = body.active;
   // Store nodes + connections together in the nodes JSON field
   if (Array.isArray(body.nodes) && Array.isArray(body.connections)) {
     data.nodes = { nodes: body.nodes, connections: body.connections };
@@ -39,7 +44,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     data.nodes = body.nodes;
   }
 
-  if (body.active === true) {
+  if (body.active === true || (existing.active && data.active !== false && data.nodes)) {
     const issue = activationIssue(data.nodes ?? existing.nodes);
     if (issue) return NextResponse.json({ error: issue }, { status: 400 });
   }

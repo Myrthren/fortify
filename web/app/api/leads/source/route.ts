@@ -33,7 +33,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Describe your ideal prospect (5–200 chars). Location and signal must be text of up to 80 chars." }, { status: 400 });
   }
   const { icp, location, signal } = input;
-  const context = await loadBusinessContext(userId, null);
+  let context;
+  try { context = await loadBusinessContext(userId, null, input.clientWorkspaceId); }
+  catch { return NextResponse.json({ error: "Client context unavailable" }, { status: 404 }); }
   const reservation = await reserveCredits(userId, 50, "spend_leads");
   if (!reservation) {
     return NextResponse.json(
@@ -77,6 +79,7 @@ Return ONLY a JSON array of up to 8 lead objects. Format:
   "fitScore": 7,
   "fitReason": "one sentence on why they fit the ICP",
   "hook": "personalised opening line for cold outreach referencing something specific about them"
+  ,"signalQuote": "exact quote from the supplied snippet showing a relevant need, hire, launch or explicit request; empty if absent. A service description or expert badge is not a buying signal"
 }]`,
         },
       ],

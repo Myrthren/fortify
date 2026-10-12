@@ -19,10 +19,11 @@ export default async function CompanyDnaPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold tracking-tight">Company DNA</h1>
           <p className="mt-2 text-sm text-text-muted">
-            Tell Fortify AI everything about your business. This context is used across all AI tools to give you personalised, relevant advice.
+            Save your business context for hooks, outreach, lead sourcing, website competitor scans, workflow AI and web chat.
           </p>
         </div>
         <CompanyDna tier={user.tier} />
+        <a href="/dashboard/clients" className="block mt-6 underline text-sm text-text-muted">Manage separate private client contexts</a>
       </main>
     </div>
   );

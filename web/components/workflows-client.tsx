@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { WORKFLOW_STARTERS } from "@/lib/workflow-starters";
+import { ClientContextPicker } from "@/components/client-context-picker";
 import {
   Plus, Play, Pause, Trash2, ChevronRight,
   Zap, X, Loader2, ShoppingCart, CheckCircle2, Clock,
@@ -53,6 +54,7 @@ export function WorkflowsClient({
   const [newName,    setNewName]    = useState("");
   const [newDesc,    setNewDesc]    = useState("");
   const [creating,   setCreating]   = useState(false);
+  const [clientId, setClientId] = useState("");
   const [toggling,   setToggling]   = useState<string | null>(null);
   const [deleting,   setDeleting]   = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +89,7 @@ export function WorkflowsClient({
       const r = await fetch("/api/workflows", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(starterId ? { starterId } : { name: newName.trim(), description: newDesc.trim() || null }),
+        body: JSON.stringify({ ...(starterId ? { starterId } : { name: newName.trim(), description: newDesc.trim() || null }), clientWorkspaceId: clientId || null }),
       });
       if (r.ok) {
         const d = await r.json();
@@ -198,6 +200,7 @@ export function WorkflowsClient({
       </div>
 
       {/* ── Workflows list ── */}
+      <ClientContextPicker value={clientId} onChange={setClientId} />
       <div>
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold">Your Workflows</h2>

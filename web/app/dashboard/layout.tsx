@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { AnnouncementBar } from "@/components/announcement-bar";
 import { FortifyAI } from "@/components/fortify-ai";
+export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
   children,

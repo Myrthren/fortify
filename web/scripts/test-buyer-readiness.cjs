@@ -1,20 +1,7 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 const fs = require('node:fs');
-const vm = require('node:vm');
-const ts = require('typescript');
-
-function load(path, mocks = {}) {
-  const exports = {};
-  const code = ts.transpileModule(fs.readFileSync(path, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText;
-  vm.runInNewContext(code, {
-    exports, require: name => name in mocks ? mocks[name] : require(name),
-    console: { error() {}, log() {} }, process: { env: {} }, URL, Date, Response,
-  }, { filename: path });
-  return exports;
-}
+const { load } = require('./test-module-loader.cjs');
 
 const pureContext = load('lib/business-context.ts');
 const validation = load('lib/lead-sourcing-validation.ts');
@@ -32,6 +19,7 @@ test('context lookups scope explicit voices to the user and null disables the ac
   const lookups = [];
   const store = load('lib/business-context-store.ts', {
     '@/lib/business-context': pureContext,
+    '@/lib/client-context': { clientContext: async () => { throw new Error('Unexpected client lookup'); } },
     '@/lib/db': { db: {
       companyDna: { findUnique: async q => { assert.equal(q.where.userId, 'u1'); return { entries: [{ label: 'Offer', content: 'Research' }] }; } },
       brandVoice: { findFirst: async q => { lookups.push(q.where); return { name: 'K', systemPrompt: 'Short sentences' }; } },
@@ -190,7 +178,7 @@ test('outreach endpoint preserves explicit no-voice selection and passes Company
   assert.equal(captured.businessContext, context.businessContext); assert.equal((await res.json()).voice, null);
 });
 
-function workflowFixture(nodeType = 'ai_generate', searchResults = sources) {
+function workflowFixture(nodeType = 'ai_generate', searchResults = sources, options = {}) {
   const requests = [], refunds = [], runs = [];
   const nodes = [
     { id: 't', type: 'trigger_schedule', label: 'Trigger', config: { cron: '0 9 * * *' } },
@@ -200,7 +188,7 @@ function workflowFixture(nodeType = 'ai_generate', searchResults = sources) {
     '@anthropic-ai/sdk': { default: class { messages = { create: async req => { requests.push(req); return { content: [{ type: 'text', text: nodeType === 'ai_generate' ? 'Useful draft' : JSON.stringify([lead]) }] }; } }; } },
     'resend': { Resend: class {} },
     '@/lib/db': { db: {
-      workflow: { findFirst: async () => ({ id: 'wf1', nodes: { nodes, connections: [{ fromId: 't', fromPort: 'out', toId: 'a' }] } }) },
+      workflow: { findFirst: async () => ({ id: 'wf1', clientWorkspaceId: options.clientId || null, nodes: options.graph || { nodes, connections: [{ fromId: 't', fromPort: 'out', toId: 'a' }] } }), update: async () => {} },
       user: { findUnique: async () => ({ tier: 'ELITE', credits: 50 }) },
       workflowRun: { create: async () => ({ id: 'run1' }), update: async row => runs.push(row) },
       socialConnection: { findFirst: async () => null }, generation: { create: async () => {} },
@@ -208,11 +196,16 @@ function workflowFixture(nodeType = 'ai_generate', searchResults = sources) {
     '@/lib/workflow-capacity': { getCapacityInfo: async () => ({ isUnlimited: false, remaining: 10000 }) },
     '@/lib/workflow-starters': load('lib/workflow-starters.ts'),
     '@/lib/brave': { braveSearch: async () => searchResults },
-    '@/lib/business-context-store': { loadBusinessContext: async userId => { assert.equal(userId, 'u1'); return context; } },
+    '@/lib/business-context-store': { loadBusinessContext: async (userId, _voice, clientId) => { assert.equal(userId, 'u1'); assert.equal(clientId, options.clientId || null); return options.context || context; } },
     '@/lib/credit-reservation': { reserveCredits: async () => ({ id: 'debit1' }), refundCredits: async reservation => refunds.push(reservation.id) },
     '@/lib/lead-sourcing-validation': validation,
+    '@/lib/workflow-run-claim': { claimWorkflowRun: async () => ({ run: { id: 'run1' }, existing: false }), CAPACITY_PER_RUN: 100 },
+    '@/lib/public-page': { readPublicPage: async url => { if (!options.page) throw new Error('Unexpected page fetch'); return { url, html: options.page }; } },
+    '@/lib/competitor-diff': load('lib/competitor-diff.ts'),
+    '@/lib/workflow-retry': load('lib/workflow-retry.ts'),
+    '@/lib/workflow-schedule': load('lib/workflow-schedule.ts', { '@/lib/workflow-starters': load('lib/workflow-starters.ts') }),
   });
-  return { run: () => runner.runWorkflow('wf1', 'u1'), requests, refunds, runs };
+  return { run: () => runner.runWorkflow('wf1', 'u1', options.payload), requests, refunds, runs };
 }
 test('real workflow generation uses saved context and voice and completes a logged draft', async () => {
   const f = workflowFixture(); const result = await f.run(); assert.equal(result.status, 'completed');
@@ -226,4 +219,29 @@ test('workflow lead search refunds empty results and does not call AI', async ()
 test('workflow lead search keeps successful research provenance and uses business context', async () => {
   const f = workflowFixture('action_lead_search'); assert.equal((await f.run()).status, 'completed');
   assert.equal(f.refunds.length, 0); assert.match(f.requests[0].system, /Saved Company DNA: founders/);
+});
+
+test('connected page research produces sourced drafts with the pinned client context', async () => {
+  const starter = structuredClone(load('lib/workflow-starters.ts').getWorkflowStarter('research-to-content'));
+  starter.nodes.find(node => node.id === 'research').config.url = 'https://agency.test/pricing';
+  const f = workflowFixture('ai_generate', sources, { graph: starter, clientId: 'client-a', context: { ...context, businessContext: 'Only Client A context' }, page: '<main><h1>Consulting for founders</h1><p>We offer three monthly packages for research and content planning, starting at £79 per month. All plans include one weekly briefing.</p></main>' });
+  assert.equal((await f.run()).status, 'completed');
+  assert.match(f.requests[0].messages[0].content, /https:\/\/agency.test\/pricing/);
+  assert.match(f.requests[0].messages[0].content, /£79/);
+  assert.match(f.requests[0].system, /Only Client A context/);
+  assert.doesNotMatch(f.requests[0].system, /Saved Company DNA: founders/);
+  assert.equal(f.runs[0].data.log.at(-1).output, 'Useful draft');
+});
+
+test('competitor starter refuses to invent a change on a manual run', async () => {
+  const graph = load('lib/workflow-starters.ts').getWorkflowStarter('competitor-to-content');
+  const f = workflowFixture('ai_generate', sources, { graph });
+  assert.equal((await f.run()).status, 'failed'); assert.equal(f.requests.length, 0);
+});
+
+test('competitor evidence reaches the connected content draft', async () => {
+  const graph = load('lib/workflow-starters.ts').getWorkflowStarter('competitor-to-content');
+  const f = workflowFixture('ai_generate', sources, { graph, payload: { watchChanges: 'Price changed from £79 to £89', watchEvidence: JSON.stringify({ sourceUrl: 'https://agency.test/pricing', added: ['£89'] }) } });
+  assert.equal((await f.run()).status, 'completed');
+  assert.match(f.requests[0].messages[0].content, /£79 to £89/); assert.match(f.requests[0].messages[0].content, /https:\/\/agency.test\/pricing/);
 });

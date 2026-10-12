@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { ContactChecker } from "@/components/contact-checker";
+import type { ContactResult } from "@/lib/contact-verification";
 import {
   Search,
   Loader2,
@@ -114,6 +116,7 @@ export function LeadExtractorClient({
   const [deepScanOn, setDeepScanOn] = useState(false);
   const [contextOn, setContextOn] = useState(false);
   const [results, setResults] = useState<ExtractedLead[]>([]);
+  const [contactChecks, setContactChecks] = useState<Record<string, ContactResult>>({});
   const [invalid, setInvalid] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [credits, setCredits] = useState(userCredits);
@@ -184,6 +187,7 @@ export function LeadExtractorClient({
     const headers = [
       "Handle", "Platform", "Name", "Followers", "Website",
       "Emails", "Phones", "Bio", "Approach Strategy", "Profile URL", "Sources",
+      "Mailbox status", "Check provider", "Checked at",
     ];
     const rows = results.map((r) => [
       r.handle,
@@ -197,6 +201,9 @@ export function LeadExtractorClient({
       (r.context ?? "").replace(/\n/g, " "),
       r.profileUrl,
       r.sources.join(", "),
+      r.emails.map(email => `${email}: ${contactChecks[email.toLowerCase()]?.status ?? "unverified"}`).join("; "),
+      r.emails.map(email => contactChecks[email.toLowerCase()]?.provider ?? "").join("; "),
+      r.emails.map(email => contactChecks[email.toLowerCase()]?.checkedAt ?? "").join("; "),
     ]);
     const csv = [headers, ...rows]
       .map((row) =>
@@ -461,14 +468,16 @@ export function LeadExtractorClient({
                 {(lead.emails.length > 0 || lead.phones.length > 0) ? (
                   <div className="space-y-1.5">
                     {lead.emails.map((email, ei) => (
+                      <div key={ei}>
                       <a
-                        key={ei}
                         href={`mailto:${email}`}
-                        className="flex items-center gap-1.5 rounded-md border border-green-500/20 bg-green-500/[0.07] px-2.5 py-1.5 text-xs text-green-300 hover:bg-green-500/10 transition"
+                        className="flex items-center gap-1.5 rounded-md border border-bg-border px-2.5 py-1.5 text-xs text-text-muted transition"
                       >
                         <Mail className="h-3 w-3 shrink-0" />
                         {email}
                       </a>
+                      <ContactChecker email={email} onChecked={(result) => setContactChecks((checks) => ({ ...checks, [email.toLowerCase()]: result }))} />
+                      </div>
                     ))}
                     {lead.phones.map((phone, pi) => (
                       <a

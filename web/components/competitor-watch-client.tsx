@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TierBadge } from "@/components/tier-badge";
+import { ClientContextPicker } from "@/components/client-context-picker";
 import {
   Plus,
   X,
@@ -28,6 +29,8 @@ type Scan = {
   id: string;
   url: string;
   hasChange: boolean;
+  status?: string;
+  evidence?: { added?: string[]; removed?: string[]; sourceUrl?: string; whyItMatters?: string };
   summary: string | null;
   scannedAt: string;
 };
@@ -58,6 +61,7 @@ export function CompetitorWatchClient({
   const [deleting, setDeleting] = useState<string | null>(null);
   const [toggling, setToggling] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
+  const [clientId, setClientId] = useState("");
   const [newLinks, setNewLinks] = useState<NewLinkEntry[]>([{ url: "", label: "" }]);
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +112,7 @@ export function CompetitorWatchClient({
       const res = await fetch("/api/competitor-watch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, links: validLinks }),
+        body: JSON.stringify({ name, links: validLinks, clientWorkspaceId: clientId || null }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -223,7 +227,7 @@ export function CompetitorWatchClient({
           <span
             key={s.id}
             className={`h-2.5 w-2.5 rounded-full ${
-              s.hasChange ? "bg-white/70" : "bg-green-500"
+              s.status === "failed" ? "bg-amber-400" : s.status === "baseline" ? "bg-bg-border" : s.hasChange ? "bg-white/70" : "bg-green-500"
             }`}
             title={`${new Date(s.scannedAt).toLocaleString()} — ${s.summary ?? (s.hasChange ? "Changed" : "No change")}`}
           />
@@ -289,6 +293,7 @@ export function CompetitorWatchClient({
       )}
 
       {/* Watch cards */}
+      <ClientContextPicker value={clientId} onChange={setClientId} />
       <div className="space-y-4">
         {items.map((watch) => {
           const lastScan = watch.scans[0] ?? null;
@@ -333,7 +338,7 @@ export function CompetitorWatchClient({
                     {lastScan ? (
                       <span className="text-xs text-text-dim">
                         Last scan {new Date(lastScan.scannedAt).toLocaleDateString()} —{" "}
-                        {lastScan.hasChange ? (
+                        {lastScan.status === "failed" ? <span className="text-amber-300">Could not check</span> : lastScan.status === "baseline" ? <span>Baseline saved</span> : lastScan.hasChange ? (
                           <span className="text-text-muted font-medium">Changed</span>
                         ) : (
                           <span className="text-green-400">No change</span>
@@ -349,7 +354,7 @@ export function CompetitorWatchClient({
                     <div className="mt-3 space-y-1">
                       {watch.scans.slice(0, 3).map((s) => (
                         <div key={s.id} className="flex items-start gap-2 text-xs text-text-dim">
-                          {s.hasChange ? (
+                          {s.status === "failed" || s.hasChange ? (
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-text-muted mt-0.5" />
                           ) : (
                             <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-400 mt-0.5" />
@@ -360,6 +365,8 @@ export function CompetitorWatchClient({
                             {s.summary ?? (s.hasChange ? "Content changed" : "No changes detected")}
                             {" · "}
                             {new Date(s.scannedAt).toLocaleDateString()}
+                            {s.evidence?.sourceUrl && <a className="ml-2 underline" href={s.evidence.sourceUrl} target="_blank" rel="noreferrer noopener">Check source</a>}
+                            {s.evidence?.whyItMatters && <span className="block mt-1">{s.evidence.whyItMatters}</span>}
                           </span>
                         </div>
                       ))}
