@@ -12,14 +12,14 @@ export function OnboardingChecklist({ steps }: { steps: Step[] }) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-text-muted">Getting started</p>
-          <h2 className="mt-1 text-lg font-semibold">Make Fortify useful for your business</h2>
+          <h2 className="mt-1 text-lg font-semibold">From business context to a useful draft</h2>
         </div>
         <span className="text-xs text-text-muted">{completed} of {steps.length} complete</span>
       </div>
       <div className="h-1.5 overflow-hidden rounded-full bg-bg-elevated" aria-hidden="true">
         <div className="h-full rounded-full bg-green-400" style={{ width: `${completed / steps.length * 100}%` }} />
       </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
         {steps.map((step) => (
           <Link key={step.href} href={step.href} className="group rounded-lg border border-bg-border p-3 transition hover:border-white/20">
             <div className="flex items-center gap-2 text-sm font-medium">

@@ -11,6 +11,7 @@ import {
 import { sendDMConditional } from "@/lib/notifications";
 import { flagAbuse } from "@/lib/abuse";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { loadBusinessContext } from "@/lib/business-context-store";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -51,12 +52,18 @@ export async function POST(req: Request) {
     prospect?: string;
     offer?: string;
     channel?: OutreachChannel;
-    voiceId?: string;
+    voiceId?: string | null;
+    clientWorkspaceId?: string;
   };
   const prospect = body.prospect?.trim();
   const offer = body.offer?.trim();
   const channel = body.channel ?? "dm";
   const voiceId = body.voiceId;
+  if (body.clientWorkspaceId !== undefined && (typeof body.clientWorkspaceId !== "string" || body.clientWorkspaceId.length > 100 || user.tier === "FREE")) return new NextResponse("Client contexts require paid access and a valid selection", { status: 403 });
+
+  if (voiceId !== undefined && voiceId !== null && typeof voiceId !== "string") {
+    return new NextResponse("Invalid voice selection", { status: 400 });
+  }
 
   if (!prospect || prospect.length < 20) {
     return new NextResponse("Need at least 20 chars describing the prospect", {
@@ -72,9 +79,10 @@ export async function POST(req: Request) {
     return new NextResponse("Invalid channel", { status: 400 });
   }
 
-  const activeVoice = voiceId
-    ? await db.brandVoice.findFirst({ where: { id: voiceId, userId }, select: { systemPrompt: true, name: true } })
-    : await db.brandVoice.findFirst({ where: { userId, isActive: true }, select: { systemPrompt: true, name: true } });
+  let context;
+  try { context = await loadBusinessContext(userId, voiceId, body.clientWorkspaceId); }
+  catch { return NextResponse.json({ error: "Client context unavailable" }, { status: 404 }); }
+  const activeVoice = context.voice;
 
   let message: string;
   try {
@@ -83,6 +91,7 @@ export async function POST(req: Request) {
       offer,
       channel,
       voiceSystemPrompt: activeVoice?.systemPrompt,
+      businessContext: context.businessContext,
     });
   } catch (e: any) {
     console.error("[outreach] generation failed", e);
@@ -96,5 +105,5 @@ export async function POST(req: Request) {
     output: message,
   });
 
-  return NextResponse.json({ message, voice: activeVoice?.name ?? null });
+  return NextResponse.json({ message, voice: activeVoice?.name ?? null, contextUsed: context.contextUsed });
 }

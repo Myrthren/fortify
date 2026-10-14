@@ -27,7 +27,7 @@ SUBSCRIPTION TIERS
 - Free (£0/mo): limited access, Hook Generator only
 - Pro (£29/mo): Core AI tools, Brand Voice, Outreach, Lead Sourcing, Lead Extractor, Inspiration, Meta Ads, Shopify, Revenue, Company DNA, Analytics, Matchmaking, Logo Intelligence
 - Elite (£79/mo): Everything in Pro plus Trend Radar, Virality Engine, Fortify Recon, Competitor Watch, Workflows, larger Lead Extractor batches, and live web search in Discord chat
-- Apex (£199/mo): Everything unlimited, Mastermind Pods, deep-scan Lead Extractor, and live web search in Discord chat
+- Apex (£199/mo): Unlimited voices and workflow capacity, 5000 tool credits/mo, Mastermind Pods, deep-scan Lead Extractor, and live web search in Discord chat. Do not claim all tools or credits are unlimited.
 
 KEY FEATURES
 - Lead Extractor — bulk-research TikTok/Instagram business accounts and extract their email and phone (Pro+)

@@ -350,7 +350,7 @@ export function FortifyAI() {
                     <div className="h-1.5 w-20 overflow-hidden rounded-full bg-bg-elevated">
                       <div className={`h-full rounded-full ${barColor(usage.pct)}`} style={{ width: `${usage.pct}%` }} />
                     </div>
-                    <span className="text-[10px] text-text-muted">{usage.pct}%</span>
+                    <span className="text-[10px] text-text-muted" title="Included model-usage allowance consumed in this 24-hour session. Separate from tool credits.">{usage.pct}% of allowance</span>
                   </div>
                 )}
                 {usage?.isFree && !usage.freeTrialExhausted && usage.remainingGbp !== undefined && (

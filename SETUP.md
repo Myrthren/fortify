@@ -318,3 +318,12 @@ Launch configuration:
 Local regression tests: `cd web && npm run test:whop`. Tests mock Whop, Prisma,
 Discord and auth; they do not prove live billing or affiliate payouts. Full
 TypeScript checking is `npx prisma generate && npx tsc --noEmit`.
+
+
+## Buyer-readiness schema and verification rollout
+
+PR #8 adds private client contexts, cached contact checks, watch scan leases/evidence and unique workflow run keys. Review `web/prisma/refinement-session.sql` against a backed-up staging database, apply the additive schema before web deployment, and follow `BUYER_READINESS_ACCEPTANCE.md`. Do not use a destructive schema reset.
+
+Mailbox verification is disabled by default. Configure `HUNTER_API_KEY` and `EMAIL_VERIFICATION_ENABLED=true` in hosting only after approving provider access/budget. DNS-only results never establish mailbox validity; the outbound engine holds unverified/stale/catch-all addresses. Verification does not establish consent.
+
+Deploy the minute workflow and five-minute watch functions with the web release, a nonempty `CRON_SECRET` and the correct `NEXTJS_URL`. Monitor returned errors/deferred jobs and interrupted runs; do not automatically replay an interrupted delivery. Private client contexts do not grant team access.

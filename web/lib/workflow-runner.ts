@@ -11,13 +11,18 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { Resend } from "resend";
 import { db } from "@/lib/db";
-import { getCapacityInfo } from "@/lib/workflow-capacity";
-import { validCron, cronTimeAt } from "@/lib/workflow-starters";
+import { activationIssue } from "@/lib/workflow-starters";
 import { braveSearch } from "@/lib/brave";
-import type { Tier } from "@prisma/client";
+import { loadBusinessContext } from "@/lib/business-context-store";
+import { reserveCredits, refundCredits } from "@/lib/credit-reservation";
+import { parseLeadRequest, validateLeadResults } from "@/lib/lead-sourcing-validation";
+import { claimWorkflowRun } from "@/lib/workflow-run-claim";
+import { retrySafe, retryCount as boundedRetryCount } from "@/lib/workflow-retry";
+import { scheduleMatches } from "@/lib/workflow-schedule";
+import { readPublicPage } from "@/lib/public-page";
+import { meaningfulPageText } from "@/lib/competitor-diff";
 
 // ── Constants ──────────────────────────────────────────────────────────────────
-const CAPACITY_PER_RUN = 100;
 const MAX_LOOP_ITERATIONS = 50;
 const MAX_DELAY_SECONDS = 30; // cap server-side delays
 
@@ -58,6 +63,8 @@ type RunContext = {
   // adjacency: port output → next node id
   adj: Map<string, string>; // key: `${fromId}:${fromPort}` → toId
   nodes: Map<string, WFNode>;
+  businessContext: string;
+  voicePrompt: string;
 };
 
 // Trigger data passed in when a trigger fires
@@ -67,6 +74,11 @@ export type TriggerPayload = {
   memberTier?: string;
   memberCredits?: string;
   watchName?: string;
+  watchChanges?: string;
+  watchEvidence?: string;
+  idempotencyKey?: string;
+  scheduledAt?: Date;
+  source?: "schedule" | "competitor" | "manual" | "webhook";
   leadScore?: string;
   webhookBody?: Record<string, unknown>;
 };
@@ -123,13 +135,15 @@ function evalFilter(expr: string, vars: Record<string, string>): boolean {
 // ── AI helper ─────────────────────────────────────────────────────────────────
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
-async function callClaude(prompt: string, model: string, maxTokens: number): Promise<string> {
+async function callClaude(prompt: string, model: string, maxTokens: number, businessContext = "", voicePrompt = ""): Promise<string> {
   const modelId = model === "sonnet" ? "claude-sonnet-4-5" : "claude-haiku-4-5";
   const msg = await anthropic.messages.create({
     model: modelId,
     max_tokens: Math.min(maxTokens, 2000),
+    system: "Follow the explicit task. Do not invent business facts or results." + businessContext +
+      (voicePrompt ? `\n\nSaved brand voice for writing style:\n${voicePrompt}` : ""),
     messages: [{ role: "user", content: prompt }],
-  });
+  }, { timeout: 20_000, maxRetries: 0 });
   return msg.content.filter(b => b.type === "text").map(b => (b as any).text).join("").trim();
 }
 
@@ -196,14 +210,14 @@ function getResend(): Resend {
   return _resend;
 }
 
-async function sendEmail(to: string, subject: string, body: string, fromName: string): Promise<void> {
+async function sendEmail(to: string, subject: string, body: string, fromName: string, idempotencyKey: string): Promise<void> {
   const { error } = await getResend().emails.send({
     from: `${fromName || "Fortify"} <noreply@fortify-io.com>`,
     to,
     subject,
     html: body.replace(/\n/g, "<br>"),
     text: body,
-  });
+  }, { idempotencyKey });
   if (error) throw new Error(`Resend error: ${error.message}`);
 }
 
@@ -226,7 +240,9 @@ async function httpRequest(
     method: method || "GET",
     headers: { "Content-Type": "application/json", ...headers },
     body: bodyStr,
+    signal: AbortSignal.timeout(12_000),
   });
+  if (!res.ok) throw new Error(`HTTP request returned ${res.status}`);
   return await res.text();
 }
 
@@ -289,15 +305,18 @@ async function execNode(
 
     // ── AI Generate ──────────────────────────────────────────────────────────
     case "ai_generate": {
+      if (c.requiresChange === "true" && !ctx.vars["watch.changes"]) throw new Error("This draft requires observed competitor changes. Wait for a watch event; manual runs cannot invent evidence.");
       const text = await callClaude(
         c.prompt || "Hello",
         c.model || "haiku",
         parseInt(c.maxTokens || "500", 10),
+        ctx.businessContext,
+        ctx.voicePrompt,
       );
       const outVar = c.outputVar || "generated_text";
       ctx.vars[outVar] = text;
       ctx.vars.previous_output = text;
-      return { firedPort: "out", output: text.slice(0, 200) };
+      return { firedPort: "out", output: text.slice(0, 6000) };
     }
 
     // ── AI Summarise ─────────────────────────────────────────────────────────
@@ -305,11 +324,11 @@ async function execNode(
       const input = c.input || ctx.vars.previous_output || "";
       const maxLen = c.maxLength || "150 words";
       const prompt = `Summarise the following text in ${maxLen}:\n\n${input}`;
-      const text = await callClaude(prompt, "haiku", 600);
+      const text = await callClaude(prompt, "haiku", 600, ctx.businessContext);
       const outVar = c.outputVar || "summary";
       ctx.vars[outVar] = text;
       ctx.vars.previous_output = text;
-      return { firedPort: "out", output: text.slice(0, 200) };
+      return { firedPort: "out", output: text.slice(0, 6000) };
     }
 
     // ── AI Analyse ───────────────────────────────────────────────────────────
@@ -317,11 +336,11 @@ async function execNode(
       const input = c.input || ctx.vars.previous_output || "";
       const criteria = c.criteria || "tone, clarity, key themes";
       const prompt = `Analyse the following text for ${criteria}:\n\n${input}`;
-      const text = await callClaude(prompt, "haiku", 800);
+      const text = await callClaude(prompt, "haiku", 800, ctx.businessContext);
       const outVar = c.outputVar || "analysis";
       ctx.vars[outVar] = text;
       ctx.vars.previous_output = text;
-      return { firedPort: "out", output: text.slice(0, 200) };
+      return { firedPort: "out", output: text.slice(0, 6000) };
     }
 
     // ── AI Classify ──────────────────────────────────────────────────────────
@@ -329,7 +348,7 @@ async function execNode(
       const input = c.input || ctx.vars.previous_output || "";
       const categories = c.categories || "positive, negative, neutral";
       const prompt = `Classify the following text into exactly one of these categories: ${categories}.\nRespond with only the category name.\n\nText: ${input}`;
-      const text = await callClaude(prompt, "haiku", 50);
+      const text = await callClaude(prompt, "haiku", 50, ctx.businessContext);
       const outVar = c.outputVar || "category";
       // Clean to just the category
       const cleanedCategory = text.split("\n")[0].trim();
@@ -353,7 +372,8 @@ async function execNode(
       if (!to) throw new Error("No 'To' address configured");
       const subject = c.subject || "Message from Fortify";
       const body = c.body || ctx.vars.previous_output || "";
-      await sendEmail(to, subject, body, c.fromName || "Fortify");
+      const deliveryKey = `workflow-${ctx.runId}-${node.id}-${ctx.vars.loop_index ?? "0"}`;
+      await sendEmail(to, subject, body, c.fromName || "Fortify", deliveryKey);
       return { firedPort: "out", output: `Email sent to ${to}` };
     }
 
@@ -707,41 +727,45 @@ async function execNode(
       return { firedPort: "out", output: `Retry wrapper: ${c.maxRetries || 3} attempts` };
     }
 
+    case "action_research_page": {
+      if (!c.url) throw new Error("Choose a public website URL for research");
+      const page = await readPublicPage(c.url);
+      const text = meaningfulPageText(page.html).slice(0, 10_000);
+      if (text.length < 100) throw new Error("Not enough readable page text; choose another source or inspect it manually");
+      const evidence = JSON.stringify({ sourceUrl: page.url, checkedAt: new Date().toISOString(), observedText: text });
+      ctx.vars[c.outputVar || "research_evidence"] = evidence;
+      ctx.vars.previous_output = evidence;
+      return { firedPort: "out", output: `Read source: ${page.url}\n${text.slice(0, 500)}` };
+    }
+
     // ── Lead Search ──────────────────────────────────────────────────────────
     case "action_lead_search": {
-      const icp = c.icp?.trim();
-      if (!icp || icp.length < 5) throw new Error("Lead Search: ICP not configured (minimum 5 characters)");
-
-      // Credit check and deduction
-      const freshUser = await db.user.findUnique({ where: { id: ctx.userId }, select: { credits: true } });
-      if (!freshUser) throw new Error("Lead Search: user not found");
-      if (freshUser.credits < 50) throw new Error(`Lead Search: insufficient credits (need 50, have ${freshUser.credits})`);
-
-      await db.user.update({ where: { id: ctx.userId }, data: { credits: { decrement: 50 } } });
-      await db.creditTransaction.create({
-        data: { userId: ctx.userId, amount: -50, source: "spend_leads" },
-      });
-
-      const location = c.location?.trim() ?? "";
-      const signal   = c.signal?.trim()   ?? "";
-      const maxCount = Math.min(parseInt(c.count || "8", 10), 15);
+      const input = parseLeadRequest({ icp: c.icp, location: c.location, signal: c.signal });
+      if (!input) throw new Error("Lead Search: configure an ICP of 5–200 characters and optional location/signal of up to 80 characters");
+      const { icp, location, signal } = input;
+      const requested = parseInt(c.count || "8", 10);
+      const maxCount = Number.isFinite(requested) ? Math.max(1, Math.min(requested, 8)) : 8;
       const outVar   = c.outputVar?.trim() || "leads";
+      const reservation = await reserveCredits(ctx.userId, 50, "spend_leads");
+      if (!reservation) throw new Error("Lead Search: insufficient credits (need 50)");
 
-      const query = [icp, location, signal, "company"].filter(Boolean).join(" ");
-      const results = await braveSearch({ query, count: 15 });
+      try {
+        const query = [icp, location, signal, "company"].filter(Boolean).join(" ");
+        const results = await braveSearch({ query, count: 15 });
 
-      if (!results.length) {
-        ctx.vars[outVar]         = "[]";
-        ctx.vars.previous_output = "[]";
-        ctx.vars.lead_count      = "0";
-        return { firedPort: "out", output: `Lead Search: no results for "${icp.slice(0, 40)}"` };
-      }
+        if (!results.length) {
+          await refundCredits(reservation);
+          ctx.vars[outVar]         = "[]";
+          ctx.vars.previous_output = "[]";
+          ctx.vars.lead_count      = "0";
+          return { firedPort: "out", output: `Lead Search: no results for "${icp.slice(0, 40)}"` };
+        }
 
-      const resultList = results
-        .map((r, i) => `${i + 1}. Title: "${r.title}" | URL: ${r.url} | Snippet: ${r.description}`)
-        .join("\n");
+        const resultList = results
+          .map((r, i) => `${i + 1}. Title: "${r.title}" | URL: ${r.url} | Snippet: ${r.description}`)
+          .join("\n");
 
-      const prompt = `You are a B2B sales prospecting expert. The user is looking for leads matching this ideal customer profile (ICP): "${icp}"${location ? `, located in: ${location}` : ""}${signal ? `, with buying signal: ${signal}` : ""}.
+        const prompt = `You are a B2B sales prospecting expert. The user is looking for leads matching this ideal customer profile (ICP): "${icp}"${location ? `, located in: ${location}` : ""}${signal ? `, with buying signal: ${signal}` : ""}.
 
 Below are web search results. For each result that looks like a real company or person matching the ICP, output a scored lead entry. Skip irrelevant results (news articles, job boards, directories, etc.).
 
@@ -751,28 +775,31 @@ ${resultList}
 Return ONLY a JSON array of up to ${maxCount} lead objects with this exact shape:
 [{"company":"name","website":"url","fitScore":7,"fitReason":"one sentence","hook":"personalised opening line for cold outreach"}]`;
 
-      const raw = await callClaude(prompt, "sonnet", 2000);
-      const jsonMatch = raw.match(/\[[\s\S]*\]/);
+        const raw = await callClaude(prompt, "sonnet", 2000, ctx.businessContext);
+        const jsonMatch = raw.match(/\[[\s\S]*\]/);
 
-      let leads: unknown[] = [];
-      if (jsonMatch) {
-        try { leads = JSON.parse(jsonMatch[0]); } catch { /* malformed — return empty */ }
+        if (!jsonMatch) throw new Error("Lead Search returned invalid results");
+        const leads = validateLeadResults(JSON.parse(jsonMatch[0]), results, new Date().toISOString()).slice(0, maxCount);
+        if (!leads.length) await refundCredits(reservation);
+
+        const leadsJson = JSON.stringify(leads);
+        ctx.vars[outVar]         = leadsJson;
+        ctx.vars.previous_output = leadsJson;
+        ctx.vars.lead_count      = String(leads.length);
+
+        await db.generation.create({
+          data: { userId: ctx.userId, type: "lead-sourcing", input: query, output: leadsJson },
+        });
+
+        return { firedPort: "out", output: `Found ${leads.length} lead(s) for "${icp.slice(0, 40)}"` };
+      } catch (error) {
+        await refundCredits(reservation);
+        throw error;
       }
-
-      const leadsJson = JSON.stringify(leads);
-      ctx.vars[outVar]         = leadsJson;
-      ctx.vars.previous_output = leadsJson;
-      ctx.vars.lead_count      = String(leads.length);
-
-      await db.generation.create({
-        data: { userId: ctx.userId, type: "lead-sourcing", input: query, output: leadsJson },
-      });
-
-      return { firedPort: "out", output: `Found ${leads.length} lead(s) for "${icp.slice(0, 40)}"` };
     }
 
     default:
-      return { firedPort: "out", output: `[Unknown node type: ${node.type}]` };
+      throw new Error(`Unsupported workflow node: ${node.type}`);
   }
 }
 
@@ -790,11 +817,7 @@ export async function runWorkflow(
   // 2. Check capacity
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return { runId: "", status: "error", message: "User not found" };
-
-  const cap = await getCapacityInfo(userId, user.tier as Tier);
-  if (!cap.isUnlimited && cap.remaining < CAPACITY_PER_RUN) {
-    return { runId: "", status: "error", message: `Insufficient workflow capacity (${cap.remaining} units remaining, ${CAPACITY_PER_RUN} required). Buy a capacity pack at /dashboard/workflows.` };
-  }
+  if (!["ELITE", "APEX"].includes(user.tier)) return { runId: "", status: "error", message: "Workflows require Elite or Apex" };
 
   // 3. Parse graph
   const raw = workflow.nodes as any;
@@ -811,11 +834,20 @@ export async function runWorkflow(
   if (!nodes.length) {
     return { runId: "", status: "error", message: "Workflow has no nodes" };
   }
+  const graphIssue = activationIssue({ nodes, connections });
+  if (graphIssue) return { runId: "", status: "error", message: graphIssue };
+
+  const business = await loadBusinessContext(userId, undefined, workflow.clientWorkspaceId);
 
   // 4. Create WorkflowRun record
-  const run = await db.workflowRun.create({
-    data: { workflowId, status: "running", usedCapacity: CAPACITY_PER_RUN },
+  const claimed = await claimWorkflowRun(workflowId, userId, user.tier, {
+    idempotencyKey: triggerPayload.idempotencyKey, scheduledAt: triggerPayload.scheduledAt, source: triggerPayload.source,
   });
+  if (!claimed.run) return { runId: "", status: "error", message: claimed.error ?? "Run could not be claimed" };
+  const run = claimed.run;
+  if (claimed.existing) return { runId: run.id, status: run.status, message: "Existing run; no actions were repeated" };
+  await db.workflow.update({ where: { id: workflowId }, data: { lastUsageAt: new Date(), dailyUsage: { increment: 1 } } });
+  const startedAt = Date.now();
 
   // 5. Build adjacency map
   const adj = new Map<string, string>();
@@ -841,9 +873,13 @@ export async function runWorkflow(
     "member.tier":    triggerPayload.memberTier    ?? user.tier  ?? "",
     "member.credits": triggerPayload.memberCredits ?? String(user.credits ?? 0),
     "watch.name":     triggerPayload.watchName     ?? "",
+    "watch.changes":  triggerPayload.watchChanges  ?? "",
+    "watch.evidence": triggerPayload.watchEvidence ?? "",
     "lead.score":     triggerPayload.leadScore     ?? "",
     date:             new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }),
     previous_output:  "",
+    "business.context": business.businessContext,
+    "voice.name": business.voice?.name ?? "",
   };
 
   // Inject webhook body fields as vars
@@ -856,7 +892,8 @@ export async function runWorkflow(
   }
 
   const logs: LogEntry[] = [];
-  const ctx: RunContext = { vars, userId, workflowId, runId: run.id, logs, adj, nodes: nodeMap };
+  const ctx: RunContext = { vars, userId, workflowId, runId: run.id, logs, adj, nodes: nodeMap,
+    businessContext: business.businessContext, voicePrompt: business.voice?.systemPrompt ?? "" };
 
   // 8. Find start node(s) — nodes with no incoming connections
   const hasIncoming = new Set(connections.map(c => c.toId));
@@ -884,6 +921,7 @@ export async function runWorkflow(
     let entry: LogEntry;
 
     try {
+      if (Date.now() - startedAt > 30_000) throw new Error("Run exceeded its execution window. Review logs before retrying delivery actions.");
       const { firedPort, output } = await execNode(node, ctx, notionToken);
       const ms = Date.now() - t0;
       entry = {
@@ -891,7 +929,7 @@ export async function runWorkflow(
         nodeType: node.type,
         nodeLabel: node.label,
         status: "ok",
-        output: output?.slice(0, 500),
+        output: output?.slice(0, 6000),
         ms,
         timestamp: new Date().toISOString(),
       };
@@ -911,7 +949,8 @@ export async function runWorkflow(
 
         const nextId = adj.get(`${node.id}:out`);
         if (nextId) {
-          for (const item of items) {
+          for (const [index, item] of items.entries()) {
+            ctx.vars.loop_index = String(index);
             ctx.vars[itemVar] = item;
             ctx.vars.loop_item = item;
             visited.delete(nextId); // allow re-execution for each iteration
@@ -933,7 +972,7 @@ export async function runWorkflow(
       const errMsg = err?.message ?? String(err);
 
       // Check retry wrapper
-      const maxRetries = parseInt(ctx.vars.__retry_max__ ?? "0", 10);
+      const maxRetries = retrySafe(node.type, node.config) ? boundedRetryCount(ctx.vars.__retry_max__) : 0;
       const retryDelay = parseInt(ctx.vars.__retry_delay__ ?? "5", 10);
 
       if (maxRetries > 0 && retryCount < maxRetries) {
@@ -980,45 +1019,5 @@ export async function runWorkflow(
 // Checks if a cron expression (minute hour dom month dow) matches the current time.
 // Supports: * / lists and ranges (covers 99% of user-entered crons).
 export function cronMatches(expr: string, now: Date = new Date(), timezone = "UTC"): boolean {
-  if (!validCron(expr)) return false;
-  const local = cronTimeAt(now, timezone);
-  if (!local) return false;
-  const parts = expr.trim().split(/\s+/);
-  if (parts.length !== 5) return false;
-
-  const [minPart, hourPart, domPart, monthPart, dowPart] = parts;
-
-  function matchField(part: string, val: number, min: number, max: number): boolean {
-    if (part === "*") return true;
-    for (const seg of part.split(",")) {
-      if (seg.includes("/")) {
-        const [rangeStr, stepStr] = seg.split("/");
-        const step = parseInt(stepStr, 10);
-        const [lo, hi] = rangeStr === "*" ? [min, max] : rangeStr.split("-").map(Number);
-        for (let i = lo; i <= (hi ?? lo); i += step) {
-          if (i === val) return true;
-        }
-      } else if (seg.includes("-")) {
-        const [lo, hi] = seg.split("-").map(Number);
-        if (val >= lo && val <= hi) return true;
-      } else {
-        if (parseInt(seg, 10) === val) return true;
-      }
-    }
-    return false;
-  }
-
-  const m  = local.minute;
-  const h  = local.hour;
-  const d  = local.day;
-  const mo = local.month;
-  const dw = local.weekday;
-
-  return (
-    matchField(minPart,  m,  0, 59) &&
-    matchField(hourPart, h,  0, 23) &&
-    matchField(domPart,  d,  1, 31) &&
-    matchField(monthPart, mo, 1, 12) &&
-    matchField(dowPart,  dw, 0, 6)
-  );
+  return scheduleMatches(expr, now, timezone);
 }

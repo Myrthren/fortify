@@ -17,6 +17,8 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
+  // Build checks must not disclose internal plugin errors/performance metadata.
+  telemetry: false,
   // Sentry organisation + project (set in env or here)
   org:     process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,

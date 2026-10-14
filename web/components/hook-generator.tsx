@@ -2,11 +2,16 @@
 
 import { useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
+import { ClientContextPicker } from "@/components/client-context-picker";
+import { responseError } from "@/lib/response-error";
 
 export function HookGenerator() {
   const [topic, setTopic] = useState("");
   const [hooks, setHooks] = useState<string[]>([]);
   const [voice, setVoice] = useState<string | null>(null);
+  const [dnaUsed, setDnaUsed] = useState(false);
+  const [clientId, setClientId] = useState("");
+  const [contextName, setContextName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,15 +24,16 @@ export function HookGenerator() {
       const res = await fetch("/api/ai/hook", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topic }),
+        body: JSON.stringify({ topic, clientWorkspaceId: clientId || undefined }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Generation failed");
+        throw new Error(await responseError(res));
       }
       const data = await res.json();
       setHooks(data.hooks);
       setVoice(data.voice ?? null);
+      setDnaUsed(data.contextUsed?.companyDna === true);
+      setContextName(data.contextUsed?.client ?? null);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -37,6 +43,7 @@ export function HookGenerator() {
 
   return (
     <div className="space-y-4">
+      <ClientContextPicker value={clientId} onChange={(id) => { setClientId(id); setHooks([]); }} />
       <div className="flex gap-2">
         <input
           className="input"
@@ -60,9 +67,10 @@ export function HookGenerator() {
 
       {hooks.length > 0 && (
         <div>
-          {voice && (
+          {(voice || dnaUsed) && (
             <p className="mb-2 text-xs text-text-muted">
-              Generated in voice: <span className="text-text">{voice}</span>
+              Context used: {contextName ?? (dnaUsed ? "Company DNA" : "No saved business context")}
+              {voice ? ` · Voice: ${voice}` : " · No brand voice"}
             </p>
           )}
           <ul className="space-y-2">

@@ -115,6 +115,11 @@ export async function sendEmail(
   }
 
   const from = campaign.senderEmail ?? process.env.OUTBOUND_FROM_EMAIL;
+  const contact = await db.contactCheck.findUnique({ where: { userId_email: { userId: lead.userId, email: lead.email!.toLowerCase() } } });
+  if (!contact || contact.status !== "deliverable" || contact.provider !== "hunter" || contact.expiresAt <= new Date()) {
+    await markFailed(email.id, lead.id, "Mailbox verification missing, stale or inconclusive. Check the address before queueing again.");
+    return { sent: false, reason: "mailbox not verified" };
+  }
   if (!from) {
     await markFailed(email.id, lead.id, "campaign has no sender address");
     return { sent: false, reason: "no sender address" };

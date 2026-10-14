@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { scanCompetitor } from "@/lib/competitor";
 import { logGeneration } from "@/lib/usage";
 import { sendDMConditional } from "@/lib/notifications";
+import { loadBusinessContext } from "@/lib/business-context-store";
 
 export async function POST(
   _req: Request,
@@ -26,9 +27,11 @@ export async function POST(
   }
 
   try {
+    const context = await loadBusinessContext(userId, null);
     const report = await scanCompetitor({
       name: competitor.name,
       url: competitor.url,
+      businessContext: context.businessContext,
       myProfile: me.profile
         ? {
             niche: me.profile.niche,
@@ -60,7 +63,7 @@ export async function POST(
       );
     }
 
-    return NextResponse.json({ competitor: updated });
+    return NextResponse.json({ competitor: updated, contextUsed: context.contextUsed });
   } catch (e: any) {
     console.error("[competitor scan]", e);
     return new NextResponse(`Scan failed: ${e.message}`, { status: 500 });

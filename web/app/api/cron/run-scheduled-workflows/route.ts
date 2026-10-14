@@ -1,90 +1,47 @@
-/**
- * /api/cron/run-scheduled-workflows
- * -----------------------------------
- * Called every hour at :00 by the Netlify scheduled function
- * netlify/functions/cron-workflows.mts, which sends x-cron-secret.
- * Finds all active workflows with a trigger_schedule node whose cron
- * expression matches the current UTC time, and fires them.
- */
-
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { runWorkflow, cronMatches } from "@/lib/workflow-runner";
+import { runWorkflow } from "@/lib/workflow-runner";
+import { latestScheduleSlot } from "@/lib/workflow-schedule";
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
   const secret = req.headers.get("x-cron-secret");
-  if (secret !== process.env.CRON_SECRET) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
+  if (!secret || secret !== process.env.CRON_SECRET) return new NextResponse("Unauthorized", { status: 401 });
   const now = new Date();
-
-  // Load all active workflows that have nodes saved
-  const workflows = await db.workflow.findMany({
-    where: { active: true },
-    select: {
-      id: true,
-      userId: true,
-      nodes: true,
-      user: { select: { tier: true } },
-    },
-  });
-
-  const fired: string[] = [];
-  const skipped: string[] = [];
-  const errors: Array<{ id: string; error: string }> = [];
-
+  const interrupted = await db.workflowRun.updateMany({ where: { status: "running", startedAt: { lt: new Date(now.getTime() - 10 * 60_000) } },
+    data: { status: "interrupted", completedAt: now } });
+  const workflows = await db.workflow.findMany({ where: { active: true, user: { tier: { in: ["ELITE", "APEX"] } } },
+    orderBy: [{ lastUsageAt: { sort: "asc", nulls: "first" } }, { id: "asc" }], select: { id: true, userId: true, nodes: true, clientWorkspaceId: true } });
+  const changes = await db.competitorWatchScan.findMany({ where: { hasChange: true, status: "changed",
+    scannedAt: { gte: new Date(now.getTime() - 24 * 60 * 60_000) } }, orderBy: { scannedAt: "asc" },
+    include: { watch: { select: { name: true, userId: true, clientWorkspaceId: true } } } });
+  const jobs: { workflowId: string; userId: string; payload: Parameters<typeof runWorkflow>[2] }[] = [];
   for (const wf of workflows) {
-    try {
-      // Parse nodes
-      const raw = wf.nodes as any;
-      let nodes: any[] = [];
-      if (raw && typeof raw === "object" && Array.isArray(raw.nodes)) {
-        nodes = raw.nodes;
-      } else if (Array.isArray(raw)) {
-        nodes = raw;
-      }
-
-      // Find trigger_schedule node
-      const triggerNode = nodes.find((n: any) => n.type === "trigger_schedule");
-      if (!triggerNode) {
-        skipped.push(wf.id);
-        continue;
-      }
-
-      const cronExpr = triggerNode.config?.cron as string | undefined;
-      if (!cronExpr) {
-        skipped.push(wf.id);
-        continue;
-      }
-
-      // Check if this cron expression matches right now
-      if (!cronMatches(cronExpr, now, triggerNode.config?.timezone || "UTC")) {
-        skipped.push(wf.id);
-        continue;
-      }
-
-      // Fire the workflow
-      const result = await runWorkflow(wf.id, wf.userId, {});
-      if (result.status === "error") {
-        errors.push({ id: wf.id, error: result.message ?? "unknown" });
-      } else {
-        fired.push(wf.id);
-      }
-
-    } catch (err: any) {
-      errors.push({ id: wf.id, error: err?.message ?? String(err) });
+    const raw = wf.nodes as any;
+    const nodes: any[] = Array.isArray(raw?.nodes) ? raw.nodes : Array.isArray(raw) ? raw : [];
+    const schedule = nodes.find(node => node.type === "trigger_schedule");
+    if (schedule?.config?.cron) {
+      const slot = latestScheduleSlot(schedule.config.cron, now, schedule.config.timezone || "UTC");
+      if (slot) jobs.push({ workflowId: wf.id, userId: wf.userId, payload: { source: "schedule", scheduledAt: slot.scheduledAt,
+        idempotencyKey: `workflow:${wf.id}:schedule:${slot.wallKey}` } });
+    }
+    const trigger = nodes.find(node => node.type === "trigger_competitor");
+    if (trigger) for (const scan of changes) {
+      if (scan.watch.userId !== wf.userId || scan.watch.clientWorkspaceId !== wf.clientWorkspaceId || (trigger.config?.watchName && trigger.config.watchName !== scan.watch.name)) continue;
+      const evidence = scan.evidence as any;
+      if (!Array.isArray(evidence?.added) || !Array.isArray(evidence?.removed)) continue;
+      jobs.push({ workflowId: wf.id, userId: wf.userId, payload: { source: "competitor", watchName: scan.watch.name,
+        watchChanges: scan.summary ?? "", watchEvidence: JSON.stringify(evidence), idempotencyKey: `workflow:${wf.id}:scan:${scan.id}` } });
     }
   }
-
-  console.log(`[run-scheduled-workflows] ${now.toISOString()} fired=${fired.length} skipped=${skipped.length} errors=${errors.length}`);
-
-  return NextResponse.json({
-    ok: true,
-    timestamp: now.toISOString(),
-    fired: fired.length,
-    skipped: skipped.length,
-    errors: errors.length,
-    errorDetails: errors,
-  });
+  const keys = jobs.map(job => job.payload?.idempotencyKey).filter((key): key is string => !!key);
+  const existing = keys.length ? await db.workflowRun.findMany({ where: { idempotencyKey: { in: keys } }, select: { idempotencyKey: true } }) : [];
+  const claimed = new Set(existing.map(run => run.idempotencyKey));
+  const fresh = jobs.filter(job => !claimed.has(job.payload?.idempotencyKey ?? ""));
+  const batch = fresh.slice(0, 4);
+  const results = await Promise.allSettled(batch.map(job => runWorkflow(job.workflowId, job.userId, job.payload)));
+  const failures = results.filter(result => result.status === "rejected" || ["error", "failed", "interrupted"].includes(result.value.status));
+  return NextResponse.json({ ok: !failures.length, fired: results.length - failures.length, errors: failures.length,
+    interrupted: interrupted.count, deferred: Math.max(0, fresh.length - batch.length),
+    errorDetails: failures.map(result => result.status === "rejected" ? "Run failed; inspect server logs" : { runId: result.value.runId, status: result.value.status, message: result.value.message }) });
 }

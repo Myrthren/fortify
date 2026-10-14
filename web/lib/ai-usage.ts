@@ -1,17 +1,10 @@
 import { db } from "@/lib/db";
 import type { Tier } from "@prisma/client";
-
-export const FREE_TRIAL_BUDGET_GBP = 0.20; // one-time trial for FREE tier
-
-const BUDGETS: Record<Tier, number> = {
-  FREE:  0,      // handled separately via FREE_TRIAL_BUDGET_GBP
-  PRO:   1,
-  ELITE: 5,
-  APEX:  999999,
-};
+import { CHAT_BUDGET_GBP, FREE_TRIAL_BUDGET_GBP } from "@/lib/chat-allowance";
+export { FREE_TRIAL_BUDGET_GBP } from "@/lib/chat-allowance";
 
 export function tierBudget(tier: Tier): number {
-  return BUDGETS[tier];
+  return CHAT_BUDGET_GBP[tier];
 }
 
 // Cost in GBP for token usage

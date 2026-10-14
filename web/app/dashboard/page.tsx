@@ -5,6 +5,7 @@ import { HookGenerator } from "@/components/hook-generator";
 import { TIERS } from "@/lib/tiers";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
+import { buyerOnboarding } from "@/lib/buyer-onboarding";
 import {
   ArrowRight, Sparkles, Workflow, MessagesSquare, Users, UserCircle,
   Briefcase, UsersRound, MessageSquare, Network, Gem, Flame, Trophy, CreditCard, Lock,
@@ -45,11 +46,13 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
 
   const userId = (session.user as any).id as string;
-  const [user, companyDna, firstGeneration] = await Promise.all([db.user.findUnique({
+  const [user, companyDna, firstGeneration, brandVoice, competitorResearch] = await Promise.all([db.user.findUnique({
     where: { id: userId },
     include: { subscription: true, profile: true },
   }), db.companyDna.findUnique({ where: { userId }, select: { totalChars: true } }),
-    db.generation.findFirst({ where: { userId }, select: { id: true } })]);
+    db.generation.findFirst({ where: { userId, type: { in: ["hook", "outreach"] } }, select: { id: true } }),
+    db.brandVoice.findFirst({ where: { userId, isActive: true }, select: { id: true } }),
+    db.competitor.findFirst({ where: { userId, lastScanned: { not: null } }, select: { id: true } })]);
   if (!user) redirect("/login");
 
   const tierMeta = TIERS[user.tier];
@@ -73,17 +76,16 @@ export default async function DashboardPage() {
             You're on <span className="font-medium text-text">{tierMeta.name}</span>.{" "}
             {user.tier === "FREE" && (
               <Link href="/pricing" className="text-[var(--accent)] underline-offset-4 hover:underline">
-                Upgrade for unlimited →
+                Compare paid workflows →
               </Link>
             )}
           </p>
         </div>
 
-        <OnboardingChecklist steps={[
-          { title: "Complete your profile", description: "Get better matches in the member directory.", href: "/dashboard/profile", done: !profileIncomplete },
-          { title: "Add Company DNA", description: "Give AI the context it needs to personalise results.", href: "/dashboard/company-dna", done: (companyDna?.totalChars ?? 0) > 0 },
-          { title: "Try your first tool", description: "Create a hook below and see Fortify in action.", href: "/dashboard#hook-generator", done: !!firstGeneration },
-        ]} />
+        <OnboardingChecklist steps={buyerOnboarding(user.tier, {
+          dna: (companyDna?.totalChars ?? 0) > 0, voice: !!brandVoice,
+          research: !!competitorResearch, draft: !!firstGeneration,
+        })} />
 
         {/* Stat tiles */}
         <div className="anim-fade-up anim-d1 mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">

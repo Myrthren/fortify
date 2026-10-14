@@ -25,9 +25,10 @@ export async function generateOutreach(opts: {
   offer: string; // what you want / are offering
   channel: OutreachChannel;
   voiceSystemPrompt?: string | null;
+  businessContext?: string;
 }): Promise<string> {
   const channelRule = CHANNEL_GUIDELINES[opts.channel];
-  const userPrompt = `Channel: ${opts.channel} (${channelRule})
+  const userPrompt = `${opts.businessContext ?? ""}\n\nChannel: ${opts.channel} (${channelRule})
 
 Prospect:
 ${opts.prospect}

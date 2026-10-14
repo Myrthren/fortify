@@ -11,6 +11,7 @@ import {
 // Node icons scale with their container's font size
 const ni = "h-[1.15em] w-[1.15em]";
 import Link from "next/link";
+import { ClientContextPicker } from "@/components/client-context-picker";
 
 // ── Canvas dimensions ────────────────────────────────────────────────────────
 const CW = 3200;
@@ -92,7 +93,7 @@ const DEFS: Record<string, NodeDef> = {
     label: "AI Generate", icon: <Sparkles className={ni} />, category: "ai", accent: "#38bdf8", ports: ["out"],
     configFields: [
       { key: "prompt", label: "Prompt", type: "textarea", rows: 4, placeholder: "Write a welcome email for {{member.name}} who just joined Fortify...", previewInNode: true,
-        hint: "Variables: {{member.name}} {{member.email}} {{member.tier}} {{previous_output}}" },
+        hint: "Saved business context and active voice apply automatically. Variables: {{watch.changes}} {{watch.evidence}} {{member.name}} {{previous_output}}" },
       { key: "outputVar", label: "Output Variable Name", placeholder: "generated_text",
         hint: "Reference the output in later nodes as {{generated_text}} (or whatever name you choose)." },
       { key: "model", label: "Model", type: "select", placeholder: "Haiku (fast)",
@@ -129,6 +130,13 @@ const DEFS: Record<string, NodeDef> = {
   },
 
   // ── Actions ──────────────────────────────────────────────────────────────
+  action_research_page: {
+    label: "Research Page", icon: <Globe className={ni} />, category: "action", accent: "#34d399", ports: ["out"],
+    configFields: [
+      { key: "url", label: "Public website URL", placeholder: "https://example.com", previewInNode: true, hint: "Reads actual page text with source provenance. Private addresses and failed pages are rejected." },
+      { key: "outputVar", label: "Evidence variable", placeholder: "research_evidence", hint: "Use {{research_evidence}} in the next AI step." },
+    ],
+  },
   action_discord: {
     label: "Discord Post", icon: <MessageSquare className={ni} />, category: "action", accent: "#818cf8", ports: ["out"],
     configFields: [
@@ -344,6 +352,7 @@ type Conn   = { id: string; fromId: string; fromPort: PortKey; toId: string };
 type WorkflowData = {
   id: string; name: string; description: string | null; active: boolean;
   nodes: any[]; connections: any[]; runs: any[];
+  clientWorkspaceId?: string | null;
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -406,6 +415,8 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
   const [saving,   setSaving]   = useState(false);
   const [toggling, setToggling] = useState(false);
   const [running,  setRunning]  = useState(false);
+  const runIdentity = useRef<string | null>(null);
+  const [clientId, setClientId] = useState(init.clientWorkspaceId || "");
   const [lastRunStatus, setLastRunStatus] = useState<"ok" | "error" | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [dirty,    setDirty]    = useState(false);
@@ -558,9 +569,11 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
       const response = await fetch(`/api/workflows/${init.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: wfName, nodes, connections: conns }),
+        body: JSON.stringify({ name: wfName, nodes, connections: conns, clientWorkspaceId: clientId || null }),
       });
       if (!response.ok) throw new Error((await response.json()).error ?? "Could not save workflow.");
+      const saved = await response.json();
+      setActive(saved.workflow.active);
       setDirty(false);
     } catch (error) { setActionError(error instanceof Error ? error.message : "Could not save workflow.");
     } finally { setSaving(false); }
@@ -589,10 +602,12 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
   }
 
   async function runNow() {
+    if (dirty) { setActionError("Save the workflow and selected business context before running."); return; }
     setRunning(true);
     setLastRunStatus(null);
     try {
-      const r = await fetch(`/api/workflows/${init.id}/run`, { method: "POST" });
+      runIdentity.current ??= crypto.randomUUID();
+      const r = await fetch(`/api/workflows/${init.id}/run`, { method: "POST", headers: { "x-idempotency-key": runIdentity.current } });
       const data = await r.json();
       if (!r.ok) {
         setLastRunStatus("error");
@@ -601,6 +616,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
         setShowRuns(true);
         await fetchRuns();
       } else {
+        if (data.status !== "running") runIdentity.current = null;
         setLastRunStatus(data.status === "completed" ? "ok" : "error");
         setShowRuns(true);
         setExpandedRunId(data.runId ?? null);
@@ -608,7 +624,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
       }
     } catch {
       setLastRunStatus("error");
-      setActionError("Could not run workflow.");
+      setActionError("Run outcome is unknown. Retry will check the same run identity before repeating any action.");
     } finally {
       setRunning(false);
     }
@@ -650,6 +666,8 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
         .wf-config-hint { font-size: 10px; color: rgba(255,255,255,0.3); line-height: 1.4; margin-top: 3px; }
       `}</style>
 
+      <ClientContextPicker value={clientId} onChange={(id) => { setClientId(id); setDirty(true); }} />
+      <p className="text-xs text-text-muted mb-2">This context is saved with the workflow. Changing it pauses automated runs until you reactivate.</p>
       <div className="flex h-[calc(100vh-56px)] flex-col select-none">
 
         {/* ── Header ── */}

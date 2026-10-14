@@ -1,8 +1,8 @@
 import type { Config } from "@netlify/functions";
 
 /**
- * Fires every day at 07:00 UTC.
- * Calls the competitor-watch-scan cron endpoint to detect page changes.
+ * Checks for due watches every five minutes. Each watch is due once per day;
+ * failed scans have a bounded retry delay and concurrent scans use a lease.
  */
 export default async function handler() {
   const secret = process.env.CRON_SECRET ?? "";
@@ -14,8 +14,12 @@ export default async function handler() {
   });
 
   console.log(`[cron] competitor-scan → ${res.status} ${res.statusText}`);
+  if (!res.ok) throw new Error(`Watch scheduler returned HTTP ${res.status}`);
+  const result = await res.json();
+  console.log(`[cron] watches: checked=${result.checked}, changed=${result.changed}, errors=${result.errors}`);
+  if (result.ok === false) throw new Error("Watch scheduler reported failures; inspect scan history");
 }
 
 export const config: Config = {
-  schedule: "0 7 * * *",
+  schedule: "*/5 * * * *",
 };

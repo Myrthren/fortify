@@ -16,6 +16,7 @@ const MAX_TEXT_CHARS = 8000;
 export async function scanCompetitor(opts: {
   name: string;
   url: string;
+  businessContext?: string;
   myProfile?: {
     niche?: string | null;
     skills?: string[];
@@ -53,7 +54,7 @@ export async function scanCompetitor(opts: {
       freshness: "pm", // past month
     });
     searchSnippets = results
-      .map((r) => `- ${r.title} (${r.source ?? "?"}, ${r.age ?? "?"}): ${r.description}`)
+      .map((r) => `- ${r.title} (${r.url}, ${r.age ?? "?"}): ${r.description}`)
       .join("\n");
   } catch {
     /* search optional */
@@ -74,7 +75,7 @@ export async function scanCompetitor(opts: {
 Tailor "opportunities" to be specific things THIS user could do given their position.`
     : `The user has not given context about themselves; keep "opportunities" generic but actionable.`;
 
-  const userPrompt = `Competitor: ${opts.name}
+  const userPrompt = `${opts.businessContext ?? ""}\n\nCompetitor: ${opts.name}
 URL: ${url}
 
 Homepage text (truncated):

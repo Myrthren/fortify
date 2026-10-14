@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Loader2, Search, ExternalLink, Copy, Check, ArrowRight } from "lucide-react";
-import type { ScoredLead } from "@/app/api/leads/source/route";
+import type { ScoredLead } from "@/lib/lead-sourcing-validation";
+import { ClientContextPicker } from "@/components/client-context-picker";
 
 export function LeadSourcer() {
   const [icp, setIcp] = useState("");
@@ -12,6 +13,8 @@ export function LeadSourcer() {
   const [leads, setLeads] = useState<ScoredLead[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [dnaUsed, setDnaUsed] = useState(false);
+  const [clientId, setClientId] = useState("");
 
   async function search() {
     if (!icp.trim() || icp.trim().length < 5) {
@@ -25,11 +28,12 @@ export function LeadSourcer() {
       const res = await fetch("/api/leads/source", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ icp: icp.trim(), location: location.trim(), signal: signal.trim() }),
+        body: JSON.stringify({ icp: icp.trim(), location: location.trim(), signal: signal.trim(), clientWorkspaceId: clientId || undefined }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Something went wrong."); return; }
       setLeads(data.leads);
+      setDnaUsed(data.contextUsed?.companyDna === true);
     } catch {
       setError("Request failed. Try again.");
     } finally {
@@ -51,6 +55,7 @@ export function LeadSourcer() {
 
   return (
     <div className="space-y-6">
+      <ClientContextPicker value={clientId} onChange={(id) => { setClientId(id); setLeads(null); }} />
       {/* Search form */}
       <div className="card p-5 space-y-4">
         <div>
@@ -97,7 +102,7 @@ export function LeadSourcer() {
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             {loading ? "Finding leads…" : "Find leads"}
           </button>
-          <p className="text-xs text-text-muted">Costs 50 credits per search</p>
+          <p className="text-xs text-text-muted">50 credits for results · empty or failed searches refunded</p>
         </div>
         {error && (
           <div className="rounded-md border border-red-900/40 bg-red-950/30 px-3 py-2 text-sm text-red-300">
@@ -116,7 +121,8 @@ export function LeadSourcer() {
       {leads && leads.length > 0 && (
         <div className="space-y-3">
           <p className="text-xs text-text-muted">
-            {leads.length} leads scored · sorted by fit
+            {leads.length} prospects discovered · AI fit scores, not verified buying intent
+            {dnaUsed ? " · Company DNA used" : " · No saved Company DNA"}
           </p>
           {[...leads].sort((a, b) => b.fitScore - a.fitScore).map((lead, i) => (
             <div key={i} className="card p-4 space-y-3">
@@ -139,6 +145,10 @@ export function LeadSourcer() {
               </div>
 
               <p className="text-xs text-text-muted leading-relaxed">{lead.fitReason}</p>
+              <p className="text-xs text-text-dim">Unverified prospect · research {new Date(lead.researchedAt).toLocaleDateString()}</p>
+              <a href={lead.sourceUrl} target="_blank" rel="noreferrer noopener" className="text-xs underline text-text-muted">Check source evidence</a>
+              <p className="text-xs text-text-muted">{lead.sourceExcerpt}</p>
+              <p className="text-xs text-amber-300">{lead.signalEvidence ? `Signal evidence to review: “${lead.signalEvidence}”` : "No supported buying signal supplied. Review before outreach."}</p>
 
               <div className="rounded-md border border-bg-border bg-bg-elevated p-3">
                 <p className="text-xs text-text-dim mb-1 uppercase tracking-wide">Outreach hook</p>

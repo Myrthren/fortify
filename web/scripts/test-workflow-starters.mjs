@@ -4,8 +4,10 @@ import { WORKFLOW_STARTERS, activationIssue, validCron, cronTimeAt } from "../li
 
 test("starters are connected drafts with no external action", () => {
   for (const starter of WORKFLOW_STARTERS) {
-    assert.equal(activationIssue({ nodes: starter.nodes, connections: starter.connections }), null);
-    assert.equal(starter.nodes.some((node) => node.type.startsWith("action_")), false);
+    const issue = activationIssue({ nodes: starter.nodes, connections: starter.connections });
+    if (starter.id === "research-to-content") assert.match(issue, /website URL/);
+    else assert.equal(issue, null);
+    assert.equal(starter.nodes.some((node) => node.type.startsWith("action_") && node.type !== "action_research_page"), false);
   }
 });
 

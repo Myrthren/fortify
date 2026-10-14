@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Loader2, Send, Copy, Check } from "lucide-react";
+import { ClientContextPicker } from "@/components/client-context-picker";
+import { responseError } from "@/lib/response-error";
 
 type Channel = "dm" | "email" | "linkedin" | "cold-email";
 
@@ -27,6 +29,9 @@ export function OutreachGenerator({
   );
   const [message, setMessage] = useState<string | null>(null);
   const [voice, setVoice] = useState<string | null>(null);
+  const [dnaUsed, setDnaUsed] = useState(false);
+  const [clientId, setClientId] = useState("");
+  const [contextName, setContextName] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -43,18 +48,18 @@ export function OutreachGenerator({
           channel,
           prospect,
           offer,
-          voiceId: selectedVoiceId || undefined,
+          voiceId: clientId ? undefined : selectedVoiceId || null,
+          clientWorkspaceId: clientId || undefined,
         }),
       });
       if (!res.ok) {
-        const data = await res
-          .json()
-          .catch(async () => ({ error: await res.text() }));
-        throw new Error(data.error ?? "Generation failed");
+        throw new Error(await responseError(res));
       }
       const data = await res.json();
       setMessage(data.message);
       setVoice(data.voice ?? null);
+      setDnaUsed(data.contextUsed?.companyDna === true);
+      setContextName(data.contextUsed?.client ?? null);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -71,6 +76,7 @@ export function OutreachGenerator({
 
   return (
     <div className="space-y-5">
+      <ClientContextPicker value={clientId} onChange={(id) => { setClientId(id); setMessage(null); }} />
       <div>
         <label className="block text-xs font-medium uppercase tracking-wide text-text-muted">
           Channel
@@ -118,7 +124,7 @@ export function OutreachGenerator({
         />
       </div>
 
-      {voices.length > 0 && (
+      {!clientId && voices.length > 0 && (
         <div>
           <label className="block text-xs font-medium uppercase tracking-wide text-text-muted">
             Brand voice (optional)
@@ -165,9 +171,10 @@ export function OutreachGenerator({
 
       {message && (
         <div className="space-y-2">
-          {voice && (
+          {(voice || dnaUsed) && (
             <p className="text-xs text-text-muted">
-              In voice: <span className="text-text">{voice}</span>
+              Context used: {contextName ?? (dnaUsed ? "Company DNA" : "No saved business context")}
+              {voice ? ` · Voice: ${voice}` : " · No brand voice"}
             </p>
           )}
           <div className="card-elevated relative p-4">

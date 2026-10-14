@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { generateHooks } from "@/lib/openai";
 import { generateInVoice } from "@/lib/voice";
 import { canGenerate, logGeneration } from "@/lib/usage";
+import { loadBusinessContext } from "@/lib/business-context-store";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -21,17 +22,18 @@ export async function POST(req: Request) {
     );
   }
 
-  const { topic } = (await req.json()) as { topic: string };
+  const { topic, clientWorkspaceId } = (await req.json()) as { topic: string; clientWorkspaceId?: string };
+  if (clientWorkspaceId !== undefined && (typeof clientWorkspaceId !== "string" || clientWorkspaceId.length > 100 || user.tier === "FREE")) return new NextResponse("Client contexts require paid access and a valid selection", { status: 403 });
   if (!topic || topic.length < 2) {
     return new NextResponse("Topic required", { status: 400 });
   }
 
   // If user has an active brand voice, generate via Claude with that voice.
   // Otherwise fall back to the OpenAI generic hook generator.
-  const activeVoice = await db.brandVoice.findFirst({
-    where: { userId, isActive: true },
-    select: { systemPrompt: true, name: true },
-  });
+  let context;
+  try { context = await loadBusinessContext(userId, undefined, clientWorkspaceId); }
+  catch { return NextResponse.json({ error: "Client context unavailable" }, { status: 404 }); }
+  const activeVoice = context.voice;
 
   let hooks: string[];
   let voiceUsed: string | null = null;
@@ -42,7 +44,7 @@ export async function POST(req: Request) {
       systemPrompt:
         activeVoice.systemPrompt +
         `\n\nWhen asked for hooks, output 5 scroll-stopping short-form video hooks under 12 words each. One per line, no numbering, no hashtags, no emojis.`,
-      userPrompt: `Topic: ${topic}\n\nWrite 5 hooks.`,
+      userPrompt: `${context.businessContext}\n\nTopic: ${topic}\n\nWrite 5 hooks.`,
       maxTokens: 400,
     });
     hooks = text
@@ -51,11 +53,11 @@ export async function POST(req: Request) {
       .filter(Boolean)
       .slice(0, 5);
   } else {
-    hooks = await generateHooks(topic, 5);
+    hooks = await generateHooks(`${context.businessContext}\n\n${topic}`, 5);
   }
 
   const output = hooks.join("\n");
   await logGeneration({ userId, type: "hook", input: topic, output });
 
-  return NextResponse.json({ hooks, voice: voiceUsed });
+  return NextResponse.json({ hooks, voice: voiceUsed, contextUsed: context.contextUsed });
 }

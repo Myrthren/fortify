@@ -31,6 +31,7 @@ export default async function WorkflowDetailPage({ params }: { params: Promise<{
             name: workflow.name,
             description: workflow.description,
             active: workflow.active,
+            clientWorkspaceId: workflow.clientWorkspaceId,
             // nodes field may be { nodes: [], connections: [] } or a plain array
             nodes: (workflow.nodes as any)?.nodes ?? (Array.isArray(workflow.nodes) ? workflow.nodes : []),
             connections: (workflow.nodes as any)?.connections ?? [],
