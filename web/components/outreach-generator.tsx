@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Send, Copy, Check } from "lucide-react";
 import { ClientContextPicker } from "@/components/client-context-picker";
+import { responseError } from "@/lib/response-error";
 
 type Channel = "dm" | "email" | "linkedin" | "cold-email";
 
@@ -52,10 +53,7 @@ export function OutreachGenerator({
         }),
       });
       if (!res.ok) {
-        const data = await res
-          .json()
-          .catch(async () => ({ error: await res.text() }));
-        throw new Error(data.error ?? "Generation failed");
+        throw new Error(await responseError(res));
       }
       const data = await res.json();
       setMessage(data.message);

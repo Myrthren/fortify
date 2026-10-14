@@ -12,7 +12,7 @@
     "db:studio": "prisma studio",
     "test:whop": "node --test scripts/test-whop.cjs",
     "test:workflows": "node --experimental-strip-types --test scripts/test-workflow-starters.mjs",
-    "test:readiness": "node --test scripts/test-buyer-readiness.cjs scripts/test-refinement-session.cjs"
+    "test:readiness": "node --test scripts/test-buyer-readiness.cjs scripts/test-refinement-session.cjs scripts/test-response-error.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

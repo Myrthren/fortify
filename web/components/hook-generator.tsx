@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Loader2, Sparkles } from "lucide-react";
 import { ClientContextPicker } from "@/components/client-context-picker";
+import { responseError } from "@/lib/response-error";
 
 export function HookGenerator() {
   const [topic, setTopic] = useState("");
@@ -26,8 +27,7 @@ export function HookGenerator() {
         body: JSON.stringify({ topic, clientWorkspaceId: clientId || undefined }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Generation failed");
+        throw new Error(await responseError(res));
       }
       const data = await res.json();
       setHooks(data.hooks);
