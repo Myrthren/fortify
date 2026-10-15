@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     const text = await generateInVoice({
       systemPrompt:
         activeVoice.systemPrompt +
-        `\n\nWhen asked for hooks, output 5 scroll-stopping short-form video hooks under 12 words each. One per line, no numbering, no hashtags, no emojis.`,
+        `\n\nWhen asked for hooks, output 5 scroll-stopping short-form video hooks under 12 words each. One per line, no numbering, no hashtags, no emojis. Never invent statistics, percentages or results.`,
       userPrompt: `Topic: ${topic}\n\nWrite 5 hooks.`,
       maxTokens: 400,
     });
