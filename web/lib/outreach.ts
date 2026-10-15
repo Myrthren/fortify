@@ -20,7 +20,8 @@ const BASE_RULES = `Rules:
 - No "Hope you're well", no "Just circling back", no "Quick question"
 - No emojis unless the channel is DM
 - Sound like a peer, not a salesperson
-- Use only facts stated above about the prospect and the offer. Never invent statistics, percentages, results, client names or testimonials; if no figure was given, make the point without one`;
+- Use only facts stated above about the prospect and the offer. Never invent statistics, percentages, results, client names or testimonials; if no figure was given, make the point without one
+- No placeholders like [Name]; if no contact name is given, open without one`;
 
 export async function generateOutreach(opts: {
   prospect: string; // who they are (paste bio, role, recent post, etc.)
