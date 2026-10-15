@@ -25,7 +25,8 @@ test('bootstrap fails closed without required credentials or a dedicated auth or
   }
 });
 test('staging refuses messaging, payment, scheduler and storage credentials', () => {
-  for (const key of ['DISCORD_BOT_TOKEN','RESEND_API_KEY','STRIPE_SECRET_KEY','PAYPAL_CLIENT_SECRET','CRON_SECRET','SMTP_PASSWORD','AWS_SECRET_ACCESS_KEY']) {
+  for (const key of ['DISCORD_BOT_TOKEN','RESEND_API_KEY','STRIPE_SECRET_KEY','PAYPAL_CLIENT_SECRET','CRON_SECRET','SMTP_PASSWORD','AWS_SECRET_ACCESS_KEY',
+    'WHOP_APP_API_KEY','WHOP_CLIENT_SECRET','OUTBOUND_SMTP_PASS','OUTBOUND_IMAP_PASS','R2_SECRET_ACCESS_KEY','BOT_INTERNAL_KEY','TWITTER_ACCESS_TOKEN','TIKTOK_CLIENT_SECRET']) {
     assert.throws(() => assertStagingEnvironment({ ...env(), [key]: 'inert' }));
   }
 });

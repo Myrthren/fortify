@@ -24,7 +24,8 @@ function assertStagingEnvironment(env = process.env) {
   if (auth.protocol !== 'https:' || !auth.hostname.endsWith('.up.railway.app') || auth.username || auth.password || auth.search || auth.hash) {
     throw new Error('Staging AUTH_URL must use its Railway HTTPS domain');
   }
-  const forbidden = /^(DISCORD_BOT_TOKEN|RESEND_API_KEY|CRON_SECRET|WHOP_API_KEY|WHOP_WEBHOOK_SECRET|STRIPE_.*|PAYPAL_.*|SMTP_.*|IMAP_.*|S3_.*|AWS_.*)$/;
+  // Anything that can message, charge, publish, store media or reach the production bot.
+  const forbidden = /^(DISCORD_BOT_TOKEN|BOT_INTERNAL_.*|RESEND_.*|CRON_SECRET|WHOP_.*|STRIPE_.*|PAYPAL_.*|SMTP_.*|IMAP_.*|OUTBOUND_.*(PASS|SECRET|USER|HOST)|S3_.*|AWS_.*|R2_.*|TWITTER_.*|TIKTOK_.*|META_APP_SECRET|FACEBOOK_APP_SECRET|GOOGLE_CLIENT_SECRET|NOTION_.*(SECRET|TOKEN))$/;
   for (const key of Object.keys(env)) {
     if (forbidden.test(key) && env[key]) throw new Error(`Remove external-action credential from staging: ${key}`);
   }
