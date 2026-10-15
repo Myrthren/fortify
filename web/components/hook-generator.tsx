@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { responseError } from "@/lib/response-error";
 import { Loader2, Sparkles } from "lucide-react";
 
 export function HookGenerator() {
@@ -22,8 +23,7 @@ export function HookGenerator() {
         body: JSON.stringify({ topic }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Generation failed");
+        throw new Error(await responseError(res));
       }
       const data = await res.json();
       setHooks(data.hooks);

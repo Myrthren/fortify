@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import { canFallback } from "@/lib/ai-fallback";
+import { groqConfigured, groqMessage } from "@/lib/groq";
 
 let _client: OpenAI | null = null;
 function client(): OpenAI {
@@ -71,18 +73,27 @@ export async function enhanceLogoImage(base64DataUrl: string, prompt: string, si
 }
 
 export async function generateHooks(topic: string, count = 5): Promise<string[]> {
-  const res = await client().chat.completions.create({
-    model: "gpt-4o-mini",
-    temperature: 0.9,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You write scroll-stopping short-form video hooks. Punchy, curious, under 12 words. No hashtags. No emojis. Return one hook per line, no numbering.",
-      },
-      { role: "user", content: `Topic: ${topic}\n\nWrite ${count} hooks.` },
-    ],
-  });
-  const text = res.choices[0]?.message?.content ?? "";
+  const system = "You write scroll-stopping short-form video hooks. Punchy, curious, under 12 words. No hashtags. No emojis. Return one hook per line, no numbering.";
+  const prompt = `Topic: ${topic}\n\nWrite ${count} hooks.`;
+  const fallback = async (): Promise<string> => {
+    const result = await groqMessage({ system, messages: [{ role: "user", content: prompt }], max_tokens: 400 });
+    return result.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n");
+  };
+  let text: string;
+  if (!process.env.OPENAI_API_KEY?.trim()) {
+    if (!groqConfigured()) throw new Error("No hook-generation provider is configured");
+    text = await fallback();
+  } else {
+    try {
+      const res = await client().chat.completions.create({
+        model: "gpt-4o-mini", temperature: 0.9,
+        messages: [{ role: "system", content: system }, { role: "user", content: prompt }],
+      }, { maxRetries: 0, timeout: 20_000 });
+      text = res.choices[0]?.message?.content ?? "";
+    } catch (error) {
+      if (!groqConfigured() || !canFallback(error)) throw error;
+      text = await fallback();
+    }
+  }
   return text.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, count);
 }
