@@ -74,6 +74,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen bg-bg text-text font-sans">
+        {process.env.FORTIFY_ENV === "staging" && (
+          <div role="status" className="bg-amber-300 p-2 text-center text-sm font-semibold text-black">
+            Fortify staging — isolated test data, no live payments or sending
+          </div>
+        )}
         {children}
         <CookieBanner />
       </body>

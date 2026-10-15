@@ -77,6 +77,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ],
   pages: { signIn: "/login", error: "/auth/error" },
   callbacks: {
+    async signIn({ account }) {
+      if (process.env.FORTIFY_ENV !== "staging") return true;
+      return Boolean(process.env.STAGING_TEST_DISCORD_ID) && account?.provider === "discord" &&
+        account.providerAccountId === process.env.STAGING_TEST_DISCORD_ID;
+    },
     async session({ session, user }) {
       if (session.user) {
         (session.user as any).id = user.id;
@@ -121,6 +126,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           where: { id: user.id },
           data: {
             discordId: account.providerAccountId,
+            ...(process.env.FORTIFY_ENV === "staging" && account.providerAccountId === process.env.STAGING_TEST_DISCORD_ID
+              ? { tier: "APEX" as const, credits: 10000 } : {}),
             ...(avatarUrl ? { avatarUrl, image: avatarUrl } : {}),
           },
         });
