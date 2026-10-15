@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { generateHooks } from "@/lib/openai";
 import { generateInVoice } from "@/lib/voice";
 import { canGenerate, logGeneration } from "@/lib/usage";
+import { unsupportedFigures } from "@/lib/facts";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -33,11 +34,9 @@ export async function POST(req: Request) {
     select: { systemPrompt: true, name: true },
   });
 
-  let hooks: string[];
-  let voiceUsed: string | null = null;
-
-  if (activeVoice) {
-    voiceUsed = activeVoice.name;
+  const voiceUsed: string | null = activeVoice?.name ?? null;
+  const generate = async (): Promise<string[]> => {
+    if (!activeVoice) return generateHooks(topic, 5);
     const text = await generateInVoice({
       systemPrompt:
         activeVoice.systemPrompt +
@@ -45,14 +44,18 @@ export async function POST(req: Request) {
       userPrompt: `Topic: ${topic}\n\nWrite 5 hooks.`,
       maxTokens: 400,
     });
-    hooks = text
+    return text
       .split("\n")
       .map((l) => l.trim().replace(/^[-•\d.)\]]+\s*/, ""))
       .filter(Boolean)
       .slice(0, 5);
-  } else {
-    hooks = await generateHooks(topic, 5);
-  }
+  };
+
+  // Drop hooks that cite figures the topic didn't supply; top up once if
+  // that leaves too few to be useful.
+  const supported = (h: string) => !unsupportedFigures(h, topic).length;
+  let hooks = (await generate()).filter(supported);
+  if (hooks.length < 3) hooks = [...new Set([...hooks, ...(await generate()).filter(supported)])].slice(0, 5);
 
   const output = hooks.join("\n");
   await logGeneration({ userId, type: "hook", input: topic, output });
