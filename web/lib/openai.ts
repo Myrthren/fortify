@@ -73,7 +73,7 @@ export async function enhanceLogoImage(base64DataUrl: string, prompt: string, si
 }
 
 export async function generateHooks(topic: string, count = 5): Promise<string[]> {
-  const system = "You write scroll-stopping short-form video hooks. Punchy, curious, under 12 words. No hashtags. No emojis. Return one hook per line, no numbering.";
+  const system = "You write scroll-stopping short-form video hooks. Punchy, curious, under 12 words. No hashtags. No emojis. Never invent statistics, percentages or results. Return one hook per line, no numbering.";
   const prompt = `Topic: ${topic}\n\nWrite ${count} hooks.`;
   const fallback = async (): Promise<string> => {
     const result = await groqMessage({ system, messages: [{ role: "user", content: prompt }], max_tokens: 400 });
