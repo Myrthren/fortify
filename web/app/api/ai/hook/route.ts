@@ -56,8 +56,19 @@ export async function POST(req: Request) {
   // Drop hooks that cite figures the topic didn't supply; top up once if
   // that leaves too few to be useful.
   const supported = (h: string) => !unsupportedFigures(h, topic).length;
-  let hooks = (await generate()).filter(supported);
-  if (hooks.length < 3) hooks = [...new Set([...hooks, ...(await generate()).filter(supported)])].slice(0, 5);
+  const first = await generate();
+  let rawLines = first.length;
+  let hooks = first.filter(supported);
+  if (hooks.length < 3) {
+    const second = await generate();
+    rawLines += second.length;
+    hooks = [...new Set([...hooks, ...second.filter(supported)])].slice(0, 5);
+  }
+  // Never report success with nothing to show. Log counts only, not content.
+  if (!hooks.length) {
+    console.warn(`[hook] no usable hooks after 2 attempts (raw lines: ${rawLines}, voice: ${Boolean(activeVoice)})`);
+    return NextResponse.json({ error: "Couldn't generate usable hooks this time. Please try again." }, { status: 502 });
+  }
 
   const output = hooks.join("\n");
   await logGeneration({ userId, type: "hook", input: `${topic}\nPlatform: ${platform}`, output });
