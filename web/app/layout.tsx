@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: "%s | Fortify",
   },
   description:
-    "The AI tool for content, networking, and growth. Built for the Fortune Fortress community.",
+    "The AI co-pilot for online business: leads, outreach in your brand voice, competitor monitoring and workflows, on the web and in Discord.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
@@ -31,13 +31,13 @@ export const metadata: Metadata = {
     url: BASE_URL,
     siteName: "Fortify",
     title: "Fortify — AI co-pilot for online business",
-    description: "The AI tool for content, networking, and growth. Built for the Fortune Fortress community.",
+    description: "The AI co-pilot for online business: leads, outreach in your brand voice, competitor monitoring and workflows, on the web and in Discord.",
     images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Fortify" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Fortify — AI co-pilot for online business",
-    description: "The AI tool for content, networking, and growth. Built for the Fortune Fortress community.",
+    description: "The AI co-pilot for online business: leads, outreach in your brand voice, competitor monitoring and workflows, on the web and in Discord.",
     images: ["/og-image.png"],
   },
 };

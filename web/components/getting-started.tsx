@@ -49,7 +49,7 @@ export function GettingStarted({ tier }: { tier: Tier }) {
         </div>
         <ol className="list-decimal space-y-2 pl-5 text-sm text-text-muted">
           <li>
-            Join the Fortune Fortress Discord server with the Discord account you signed in with.
+            Join the Fortify Discord server with the Discord account you signed in with.
             {invite && <> <a href={invite} className="text-text underline underline-offset-4">Join the server</a>.</>}
           </li>
           <li>

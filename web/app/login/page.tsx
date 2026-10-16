@@ -7,7 +7,7 @@ import { CREDITS_FREE_START } from "@/lib/credit-costs";
 const AFTER_SIGN_IN = [
   `You start on the Free plan with ${CREDITS_FREE_START} starter credits. No card needed.`,
   "Upgrade from Pricing whenever you like: Pro £29, Elite £79 or Apex £199 a month.",
-  "Paid plans get their Discord role in the Fortune Fortress server automatically.",
+  "Paid plans get their role in the Fortify Discord server automatically.",
 ];
 
 // Only same-site paths, so ?next= cannot bounce someone to another domain.

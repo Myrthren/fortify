@@ -26,7 +26,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "How does the Discord side work?",
-    a: "Fortify's bot lives in the Fortune Fortress Discord server. Join it with the same Discord account you sign in with, and your paid tier's role is granted automatically. Then use slash commands such as /hook, /outreach, /trends and /audit, mention @Fortify to ask questions, and receive alerts and reports by DM.",
+    a: "Fortify's bot lives in the Fortify Discord server. Join it with the same Discord account you sign in with, and your paid tier's role is granted automatically. Then use slash commands such as /hook, /outreach, /trends and /audit, mention @Fortify to ask questions, and receive alerts and reports by DM.",
   },
   {
     q: "Does it actually write in my voice?",

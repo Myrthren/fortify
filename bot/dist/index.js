@@ -54,6 +54,7 @@ const chat_1 = require("./lib/chat");
 const drip_1 = require("./lib/drip");
 const drip_quiz_1 = require("./lib/drip-quiz");
 const drip_scheduler_1 = require("./lib/drip-scheduler");
+const update_log_1 = require("./lib/update-log");
 const OWNER_ID = "731207920007643167";
 const commands = new discord_js_1.Collection();
 for (const cmd of [
@@ -72,6 +73,7 @@ const client = new discord_js_1.Client({
 client.once(discord_js_1.Events.ClientReady, (c) => {
     console.log(`✅ Fortify bot online as ${c.user.tag} — build includes role-toggle handler`);
     (0, drip_scheduler_1.startDripScheduler)(c);
+    (0, update_log_1.startUpdateLog)(c);
 });
 // ── Drip: someone joins the server ───────────────────────────────────────────
 client.on(discord_js_1.Events.GuildMemberAdd, async (member) => {

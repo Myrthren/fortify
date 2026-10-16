@@ -20,7 +20,7 @@ let cachedAt = 0;
 
 const FALLBACK_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
-- Community: Fortune Fortress — a Discord community for online business owners, resellers, and creators
+- Community: the Fortify Discord server, for online business owners, resellers, and creators
 - Tagline: "AI co-pilot for online business and networking"
 
 SUBSCRIPTION TIERS
@@ -59,7 +59,7 @@ async function getKnowledge(): Promise<string> {
 
 // ── System prompt builder ───────────────────────────────────────────────────────
 
-const PERSONA = `You are the Fortify AI — a sharp, peer-to-peer co-pilot built for online business operators, founders, and resellers in the Fortune Fortress community.`;
+const PERSONA = `You are the Fortify AI — a sharp, peer-to-peer co-pilot built for online business operators, founders, and resellers in the Fortify Discord server.`;
 
 const TONE = `TONE
 - Direct, sharp, peer-to-peer. You're talking to operators and founders — not beginners.

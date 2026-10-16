@@ -1,6 +1,6 @@
 # 🏰 Fortify
 
-The AI co-pilot for online business and networking — built for the Fortune Fortress community.
+The AI co-pilot for online business and networking — on the web and in the Fortify Discord server.
 
 ## Structure
 

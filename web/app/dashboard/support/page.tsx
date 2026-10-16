@@ -8,7 +8,7 @@ import { CopyButton } from "@/components/copy-button";
 const FAQS = [
   {
     q: "I paid but didn't get my Discord role",
-    a: "Make sure you're in the Fortune Fortress Discord server. The bot assigns roles automatically after payment — if it doesn't appear within a few minutes, open a ticket with your Discord ID.",
+    a: "Make sure you're in the Fortify Discord server. The bot assigns roles automatically after payment — if it doesn't appear within a few minutes, open a ticket with your Discord ID.",
   },
   {
     q: "I can't log in",

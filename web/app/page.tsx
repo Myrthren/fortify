@@ -43,7 +43,7 @@ export default function HomePage() {
 
           <div className="anim-fade-up anim-d1 mb-6 inline-flex items-center gap-2 rounded-full border border-bg-border bg-bg-panel/70 px-3 py-1 text-xs text-text-muted backdrop-blur">
             <span className="dot-live h-1.5 w-1.5 rounded-full bg-green-400" />
-            Built for the Fortune Fortress
+            Live on the web and in Discord
           </div>
 
           <h1 className="anim-fade-up anim-d2 text-balance text-4xl font-bold tracking-tight sm:text-6xl">
