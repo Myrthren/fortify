@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { generateHooks } from "@/lib/openai";
 import { generateInVoice } from "@/lib/voice";
 import { canGenerate, logGeneration } from "@/lib/usage";
+import { unsupportedFigures } from "@/lib/facts";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -33,26 +34,30 @@ export async function POST(req: Request) {
     select: { systemPrompt: true, name: true },
   });
 
-  let hooks: string[];
-  let voiceUsed: string | null = null;
-
-  if (activeVoice) {
-    voiceUsed = activeVoice.name;
+  const voiceUsed: string | null = activeVoice?.name ?? null;
+  const generate = async (): Promise<string[]> => {
+    if (!activeVoice) return generateHooks(`${topic}\nPlatform: ${platform.slice(0, 40)}`, 5);
     const text = await generateInVoice({
       systemPrompt:
         activeVoice.systemPrompt +
-        `\n\nWhen asked for hooks, output 5 original, scroll-stopping hooks. Vary the framing and opening. One per line, no numbering or hashtags.`,
+        `\n\nWhen asked for hooks, output 5 original, scroll-stopping hooks. Vary the framing and opening. One per line, no numbering or hashtags. Never invent statistics, percentages or results.`,
       userPrompt: `Topic: ${topic}\nPlatform: ${platform.slice(0, 40)}\n\nWrite 5 hooks tailored to the platform.`,
       maxTokens: 400,
     });
-    hooks = text
+    return text
       .split("\n")
-      .map((l) => l.trim().replace(/^[-•\d.)\]]+\s*/, ""))
+      // Strip list markers ("1.", "2)", "-", "•") only; a leading number such
+      // as "47 clients..." is content and must reach the figure check intact.
+      .map((l) => l.trim().replace(/^(?:[-•*]|\d+[.)\]])\s*/, ""))
       .filter(Boolean)
       .slice(0, 5);
-  } else {
-    hooks = await generateHooks(`${topic}\nPlatform: ${platform.slice(0, 40)}`, 5);
-  }
+  };
+
+  // Drop hooks that cite figures the topic didn't supply; top up once if
+  // that leaves too few to be useful.
+  const supported = (h: string) => !unsupportedFigures(h, topic).length;
+  let hooks = (await generate()).filter(supported);
+  if (hooks.length < 3) hooks = [...new Set([...hooks, ...(await generate()).filter(supported)])].slice(0, 5);
 
   const output = hooks.join("\n");
   await logGeneration({ userId, type: "hook", input: `${topic}\nPlatform: ${platform}`, output });

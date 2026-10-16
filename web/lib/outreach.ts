@@ -1,5 +1,6 @@
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
 import { generateInVoice } from "@/lib/voice";
+import { unsupportedFigures } from "@/lib/facts";
 
 export const OUTREACH_CHANNELS = ["dm", "email", "linkedin", "cold-email"] as const;
 export type OutreachChannel = (typeof OUTREACH_CHANNELS)[number];
@@ -18,7 +19,9 @@ const BASE_RULES = `Rules:
 - Cut every word that doesn't earn its place
 - No "Hope you're well", no "Just circling back", no "Quick question"
 - No emojis unless the channel is DM
-- Sound like a peer, not a salesperson`;
+- Sound like a peer, not a salesperson
+- Use only facts stated above about the prospect and the offer. Never invent statistics, percentages, results, client names or testimonials; if no figure was given, make the point without one
+- No placeholders like [Name]; if no contact name is given, open without one`;
 
 export async function generateOutreach(opts: {
   prospect: string; // who they are (paste bio, role, recent post, etc.)
@@ -39,28 +42,40 @@ Write the message now. ${BASE_RULES}
 
 Output ONLY the message (with subject line if email). No commentary, no markdown.`;
 
-  if (opts.voiceSystemPrompt) {
-    return generateInVoice({
-      systemPrompt:
-        opts.voiceSystemPrompt +
-        `\n\nWhen asked to write outreach, follow the user's channel rules and these:\n${BASE_RULES}`,
-      userPrompt,
-      maxTokens: 600,
+  const draft = async (correction = ""): Promise<string> => {
+    if (opts.voiceSystemPrompt) {
+      return generateInVoice({
+        systemPrompt:
+          opts.voiceSystemPrompt +
+          `\n\nWhen asked to write outreach, follow the user's channel rules and these:\n${BASE_RULES}`,
+        userPrompt: userPrompt + correction,
+        maxTokens: 600,
+      });
+    }
+
+    const res = await claude().messages.create({
+      model: CLAUDE_MODELS.fast,
+      max_tokens: 600,
+      system:
+        "You write cold outreach that gets replies. You sound like a sharp human, not a marketer. You never use cliches. " +
+        BASE_RULES,
+      messages: [{ role: "user", content: userPrompt + correction }],
     });
-  }
 
-  const res = await claude().messages.create({
-    model: CLAUDE_MODELS.fast,
-    max_tokens: 600,
-    system:
-      "You write cold outreach that gets replies. You sound like a sharp human, not a marketer. You never use cliches. " +
-      BASE_RULES,
-    messages: [{ role: "user", content: userPrompt }],
-  });
+    return res.content
+      .filter((b) => b.type === "text")
+      .map((b) => (b as { type: "text"; text: string }).text)
+      .join("\n")
+      .trim();
+  };
 
-  return res.content
-    .filter((b) => b.type === "text")
-    .map((b) => (b as { type: "text"; text: string }).text)
-    .join("\n")
-    .trim();
+  // Voices and some models ignore the no-invented-figures rule; check in code
+  // and give the model one chance to rewrite before showing the draft.
+  const message = await draft();
+  const invented = unsupportedFigures(message, opts.prospect, opts.offer);
+  if (!invented.length) return message;
+  const retry = await draft(
+    `\n\nYour previous draft invented these figures: ${invented.join(", ")}. Rewrite it without any percentage, multiplier or money amount that is not stated above.`,
+  );
+  return unsupportedFigures(retry, opts.prospect, opts.offer).length < invented.length ? retry : message;
 }
