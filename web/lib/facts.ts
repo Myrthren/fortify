@@ -3,7 +3,7 @@
 const CLAIM = /[£$€]\s?\d[\d,.]*\s?[kKmM]?\b|\d[\d,.]*\s?(?:%|×|x\b)/g;
 // Counts of 10+ ("47 clients", "30-plus visitors"). Times and durations such as
 // "15-minute call" or "6 AM" are scheduling detail, not claims, so skip them.
-const COUNT = /\b\d{2,}[\d,]*(?![\d,.]|\s?(?:%|×|x\b)|\/|[-\s]?(?:minutes?|mins?|hours?|hrs?|days?|weeks?|months?|am|pm)\b)/gi;
+const COUNT = /\b\d{2,}[\d,]*(?![\d,.]|\s?(?:%|×|x\b)|\/|[-‐‑\s]?(?:minutes?|mins?|hours?|hrs?|days?|weeks?|months?|am|pm)\b)/gi;
 
 function key(claim: string): string {
   const n = claim.replace(/[^\d.]/g, "").replace(/\.$/, "");

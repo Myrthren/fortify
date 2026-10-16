@@ -18,6 +18,8 @@ test('flags invented percentages, multipliers and money seen in live drafts', ()
 
 test('times and durations are not treated as claims', () => {
   assert.deepEqual(unsupportedFigures('A 15-minute call at 10 am, open 24/7?', prospect, offer), []);
+  // Models often emit a non-breaking hyphen (U+2011) in "10‑minute".
+  assert.deepEqual(unsupportedFigures('Can we book a 10‑minute call?', prospect, offer), []);
 });
 
 test('accepts figures the user supplied', () => {
