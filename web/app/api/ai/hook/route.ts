@@ -46,7 +46,9 @@ export async function POST(req: Request) {
     });
     return text
       .split("\n")
-      .map((l) => l.trim().replace(/^[-•\d.)\]]+\s*/, ""))
+      // Strip list markers ("1.", "2)", "-", "•") only; a leading number such
+      // as "47 clients..." is content and must reach the figure check intact.
+      .map((l) => l.trim().replace(/^(?:[-•*]|\d+[.)\]])\s*/, ""))
       .filter(Boolean)
       .slice(0, 5);
   };
