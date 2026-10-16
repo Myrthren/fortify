@@ -34,9 +34,9 @@ export async function POST(req: Request) {
     select: { systemPrompt: true, name: true },
   });
 
-  const voiceUsed: string | null = activeVoice?.name ?? null;
-  const generate = async (): Promise<string[]> => {
-    if (!activeVoice) return generateHooks(`${topic}\nPlatform: ${platform.slice(0, 40)}`, 5);
+  let voiceUsed: string | null = activeVoice?.name ?? null;
+  const generate = async (useVoice = Boolean(activeVoice)): Promise<string[]> => {
+    if (!useVoice || !activeVoice) return generateHooks(`${topic}\nPlatform: ${platform.slice(0, 40)}`, 5);
     const text = await generateInVoice({
       systemPrompt:
         activeVoice.systemPrompt +
@@ -55,20 +55,36 @@ export async function POST(req: Request) {
 
   // Drop hooks that cite figures the topic didn't supply; top up once if
   // that leaves too few to be useful.
-  const supported = (h: string) => !unsupportedFigures(h, topic).length;
+  const flagged: string[] = [];
+  const keep = (lines: string[]) =>
+    lines.filter((h) => {
+      const figures = unsupportedFigures(h, topic);
+      flagged.push(...figures);
+      return !figures.length;
+    });
   const first = await generate();
   let rawLines = first.length;
-  let hooks = first.filter(supported);
+  let hooks = keep(first);
   if (hooks.length < 3) {
     const second = await generate();
     rawLines += second.length;
-    hooks = [...new Set([...hooks, ...second.filter(supported)])].slice(0, 5);
+    hooks = [...new Set([...hooks, ...keep(second)])].slice(0, 5);
   }
-  // Never report success with nothing to show. Log counts only, not content.
+  // Some voices lean on figures in every line. Fall back to the plain
+  // generator rather than show nothing.
+  if (!hooks.length && activeVoice) {
+    const plain = await generate(false);
+    rawLines += plain.length;
+    hooks = keep(plain);
+    voiceUsed = null;
+  }
+  // Never report success with nothing to show. Log figures and counts only.
+  // 503, not 502: the Cloudflare proxy replaces 502 bodies with its own page.
   if (!hooks.length) {
-    console.warn(`[hook] no usable hooks after 2 attempts (raw lines: ${rawLines}, voice: ${Boolean(activeVoice)})`);
-    return NextResponse.json({ error: "Couldn't generate usable hooks this time. Please try again." }, { status: 502 });
+    console.warn(`[hook] no usable hooks (raw lines: ${rawLines}, voice: ${Boolean(activeVoice)}, flagged: ${[...new Set(flagged)].join(" ")})`);
+    return NextResponse.json({ error: "Couldn't generate usable hooks this time. Please try again." }, { status: 503 });
   }
+  if (flagged.length) console.info(`[hook] dropped lines citing: ${[...new Set(flagged)].join(" ")}`);
 
   const output = hooks.join("\n");
   await logGeneration({ userId, type: "hook", input: `${topic}\nPlatform: ${platform}`, output });
