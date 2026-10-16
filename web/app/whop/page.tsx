@@ -8,6 +8,7 @@ export default function WhopPage() {
     <span className="eyebrow">Fortify on Whop</span>
     <h1 className="mt-4 text-4xl font-bold">Purchase. Connect. Get started.</h1>
     <p className="mt-5 text-text-muted">Referred by an affiliate? Use their original Whop checkout link to give them credit.</p>
+    <p className="mt-3 text-sm text-text-muted">These steps are for Whop only. PayPal subscriptions bought from the <a href="/pricing" className="underline">pricing page</a> while signed in activate immediately, with nothing to connect.</p>
     <ol className="mt-8 list-decimal space-y-5 pl-5">
       <li>Buy your Fortify plan on Whop. Already subscribed through PayPal? Contact support before buying a second subscription.</li>
       <li><a href="/login" className="underline">Sign in to Fortify</a> or create your account.</li>

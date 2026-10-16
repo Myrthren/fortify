@@ -7,7 +7,7 @@ export default function TermsPage() {
       <Nav />
       <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <h1 className="text-3xl font-bold mb-2">Terms of Service</h1>
-        <p className="text-sm text-text-muted mb-10">Last updated: May 2026</p>
+        <p className="text-sm text-text-muted mb-10">Last updated: October 2026</p>
 
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-3">1. Acceptance of Terms</h2>
@@ -95,15 +95,17 @@ export default function TermsPage() {
             </li>
           </ul>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
-            Subscriptions are billed monthly in advance via PayPal. By subscribing you authorise us to charge the
-            applicable fee to your PayPal account on a recurring monthly basis until you cancel. Prices are quoted
-            inclusive of any applicable taxes unless otherwise stated.
+            Subscriptions are billed monthly in advance through PayPal or Whop, whichever you choose at checkout. By
+            subscribing you authorise that provider to charge the applicable fee on a recurring monthly basis until
+            you cancel. Prices are quoted inclusive of any applicable taxes unless otherwise stated. There is no free
+            trial of paid plans; the free tier is available to try the Service.
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
             <strong className="text-text">No Refund Policy.</strong> All subscription fees are non-refundable. There
-            are no refunds or credits for partial months of service, plan downgrades, or unused features. If you cancel
-            your subscription, your access to paid features will continue until the end of the current billing period,
-            after which your account will revert to the free tier or be deactivated.
+            are no refunds or credits for partial months of service, plan downgrades, unused credits, or unused
+            features. You can cancel at any time with the provider you paid through. Cancelling a PayPal subscription
+            moves your account to the free tier immediately. For Whop subscriptions, access to paid features follows
+            the status of your Whop membership.
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
             We reserve the right to change our pricing at any time. We will provide at least 30 days&rsquo; advance
@@ -112,9 +114,9 @@ export default function TermsPage() {
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
             Certain features within the Service consume &ldquo;credits&rdquo; that are allocated per subscription tier.
-            Credits are consumed per operation (e.g., lead sourcing searches, AI-generated content). Credits do not
-            roll over between billing periods and have no monetary value. We reserve the right to adjust credit
-            allocations as part of plan updates.
+            Credits are consumed per operation (e.g., lead sourcing searches, competitor scans). Unused credits roll
+            over between billing periods and do not expire, but they have no monetary value and are not refundable.
+            We reserve the right to adjust credit allocations and per-operation costs as part of plan updates.
           </p>
         </section>
 
@@ -234,12 +236,13 @@ export default function TermsPage() {
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-3">9. Termination</h2>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
-            You may cancel your subscription at any time through your account settings or by contacting us at{" "}
+            You may cancel your subscription at any time with the provider you paid through (PayPal or Whop), or
+            contact us at{" "}
             <a href="mailto:support@fortify-io.com" className="underline hover:text-text transition-colors">
               support@fortify-io.com
-            </a>
-            . Cancellation will take effect at the end of your current billing period. No refunds will be issued for
-            the remaining period.
+            </a>{" "}
+            for help. Cancelling a PayPal subscription ends paid access immediately; Whop access follows the status of
+            your Whop membership. No refunds will be issued for any remaining period.
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
             We reserve the right to suspend or terminate your access to the Service at any time, with or without

@@ -21,6 +21,7 @@ export function Footer() {
           <Link href="/terms" className="hover:text-text">Terms</Link>
           <Link href="/privacy" className="hover:text-text">Privacy</Link>
           {discordInvite && <a href={discordInvite} className="hover:text-text">Discord</a>}
+          <a href="mailto:support@fortify-io.com" className="hover:text-text">support@fortify-io.com</a>
         </nav>
       </div>
     </footer>

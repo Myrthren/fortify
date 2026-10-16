@@ -5,6 +5,7 @@ import { HookGenerator } from "@/components/hook-generator";
 import { TIERS } from "@/lib/tiers";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { OnboardingChecklist } from "@/components/onboarding-checklist";
+import { GettingStarted } from "@/components/getting-started";
 import {
   ArrowRight, Sparkles, Workflow, MessagesSquare, Users, UserCircle,
   Briefcase, UsersRound, MessageSquare, Network, Gem, Flame, Trophy, CreditCard, Lock,
@@ -84,6 +85,8 @@ export default async function DashboardPage() {
           { title: "Add Company DNA", description: "Give AI the context it needs to personalise results.", href: "/dashboard/company-dna", done: (companyDna?.totalChars ?? 0) > 0 },
           { title: "Try your first tool", description: "Create a hook below and see Fortify in action.", href: "/dashboard#hook-generator", done: !!firstGeneration },
         ]} />
+
+        <GettingStarted tier={user.tier} />
 
         {/* Stat tiles */}
         <div className="anim-fade-up anim-d1 mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">

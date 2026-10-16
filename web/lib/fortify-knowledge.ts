@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-10";
+export const KNOWLEDGE_VERSION = "2026-10-16";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -81,4 +81,11 @@ BOT SLASH COMMANDS
 - /ticket — raise a support ticket
 
 PRICING
-- Upgrade or subscribe: https://fortify-io.com/pricing`;
+- Upgrade or subscribe: https://fortify-io.com/pricing
+- Monthly plans in GBP via Whop or PayPal; both grant the same tier and Discord role
+- No free trial of paid plans (the Free plan is the trial). Payments are non-refundable
+- Cancel with the provider you paid through. Cancelling PayPal moves the account to Free immediately; Whop access follows the Whop membership
+- PayPal activates instantly (must be signed in). Whop needs Connect Whop in Settings afterwards (guide: https://fortify-io.com/whop)
+- Credits: paid plans add credits on the 1st of each month; unused credits roll over and never expire. Typical costs: lead search 50, Lead Extractor 20 per profile, Recon from 50, competitor scans 35-50, logo generation 150
+- Affiliates: 30% commission for the first 12 months of each referred customer, Whop referral links only (PayPal purchases earn nothing). Details: https://fortify-io.com/affiliates
+- Support email: support@fortify-io.com`;

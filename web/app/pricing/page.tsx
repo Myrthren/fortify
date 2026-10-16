@@ -2,8 +2,11 @@ import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { CheckoutOptions } from "@/components/checkout-options";
+import { FaqSection } from "@/components/faq";
 import { whopCheckoutUrls } from "@/lib/whop-checkout";
-import { Check, Gem, Minus } from "lucide-react";
+import { CREDIT_COSTS } from "@/lib/credit-costs";
+import { auth } from "@/auth";
+import { Check, Coins, Gem, Minus } from "lucide-react";
 
 type PaidKey = "pro" | "elite" | "apex";
 
@@ -144,8 +147,9 @@ const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, 
 
 const DELAYS = ["", "anim-d1", "anim-d2", "anim-d3"];
 
-export default function PricingPage() {
+export default async function PricingPage() {
   const whop = whopCheckoutUrls();
+  const signedIn = !!(await auth())?.user;
   return (
     <>
       <Nav />
@@ -207,12 +211,23 @@ export default function PricingPage() {
                 </ul>
 
                 {t.key === "free" ? (
-                  <a href="/login" className="btn-secondary w-full">Start free</a>
+                  <a href={signedIn ? "/dashboard" : "/login"} className="btn-secondary w-full">
+                    {signedIn ? "Go to dashboard" : "Start free"}
+                  </a>
                 ) : (
-                  <CheckoutOptions tier={t.key} whopUrl={whop[t.key]} planId={t.planId} highlight={t.highlight} />
+                  <CheckoutOptions tier={t.key} whopUrl={whop[t.key]} planId={t.planId} highlight={t.highlight} signedIn={signedIn} />
                 )}
               </div>
             ))}
+          </div>
+
+          <div className="mx-auto mt-8 max-w-3xl rounded-xl border border-bg-border bg-bg-panel px-5 py-4 text-center text-sm leading-relaxed text-text-muted">
+            <p>
+              <span className="font-medium text-text">Pay monthly, cancel anytime</span> with Whop or PayPal.
+              There is no free trial of paid plans (the Free plan is the way to try Fortify), and payments
+              are non-refundable. Cancelling a PayPal plan moves you to Free straight away; Whop access follows
+              your Whop membership.
+            </p>
           </div>
 
           <p className="mt-6 text-center text-sm text-text-muted">
@@ -221,7 +236,12 @@ export default function PricingPage() {
 
           {/* ── Full comparison ── */}
           <div id="compare" className="mt-20 scroll-mt-24">
-            <h2 className="mb-6 text-center text-2xl font-bold tracking-tight sm:text-3xl">Compare plans</h2>
+            <h2 className="mb-2 text-center text-2xl font-bold tracking-tight sm:text-3xl">Compare plans</h2>
+            <p className="mb-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-xs text-text-dim">
+              <span className="inline-flex items-center gap-1.5"><Check className="h-3.5 w-3.5 text-text" aria-hidden /> Included</span>
+              <span className="inline-flex items-center gap-1.5"><Minus className="h-3.5 w-3.5" aria-hidden /> Not included</span>
+              <span className="inline-flex items-center gap-1.5"><SoonBadge /> Not available yet</span>
+            </p>
             <div className="card overflow-x-auto">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
@@ -258,28 +278,70 @@ export default function PricingPage() {
             </div>
           </div>
 
-          <div className="anim-fade-up anim-d4 mx-auto mt-10 max-w-2xl space-y-2 text-center text-xs leading-relaxed text-text-dim">
+          {/* ── Credits ── */}
+          <div id="credits" className="mt-20 scroll-mt-24">
+            <div className="mb-6 text-center">
+              <span className="eyebrow"><Coins className="h-3.5 w-3.5" /> Credits</span>
+              <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">What a credit buys</h2>
+              <p className="mx-auto mt-3 max-w-xl text-sm leading-relaxed text-text-muted">
+                Credits pay for heavier jobs that pull outside data. Everyday writing (hooks, outreach, audits,
+                brand voice) uses each plan&rsquo;s monthly allowances instead. Paid plans add their credits on the
+                1st of every month, unused credits roll over and never expire, and top-up packs start at 800 credits
+                for £8.99.
+              </p>
+            </div>
+            <div className="card mx-auto max-w-2xl overflow-hidden">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-bg-border">
+                    <th className="px-4 py-3 text-left font-medium text-text-muted">Action</th>
+                    <th className="px-4 py-3 text-right font-medium text-text-muted">Credits</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {CREDIT_COSTS.map((c) => (
+                    <tr key={c.action} className="border-t border-bg-border/60">
+                      <td className="px-4 py-2.5 text-text">{c.action}</td>
+                      <td className="px-4 py-2.5 text-right tabular-nums text-text-muted">{c.cost}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="mt-3 text-center text-xs text-text-dim">
+              As a guide, Pro&rsquo;s 500 monthly credits cover about ten lead searches or 25 Lead Extractor profiles.
+            </p>
+          </div>
+
+          <div className="anim-fade-up anim-d4 mx-auto mt-14 max-w-2xl space-y-2 text-center text-xs leading-relaxed text-text-dim">
             <p>
-              Prices in GBP. Pay with Whop or PayPal — both unlock the same tier and Discord roles. Manage or
-              cancel billing with the provider you paid through. Payments are non-refundable; see the{" "}
+              Prices in GBP. Whop and PayPal unlock the same tier and Discord roles; manage or cancel billing with
+              the provider you paid through. See the{" "}
               <Link href="/terms" className="underline hover:text-text-muted">terms</Link>.
             </p>
             <p>
               Paid through Whop? <Link href="/whop" className="underline hover:text-text-muted">Activate your membership</Link>.
-              Referred by an affiliate? Complete your purchase through their Whop link so they receive credit.
+              PayPal needs no extra step. Referred by an affiliate? Buy through their Whop link so they receive credit.
             </p>
           </div>
         </div>
       </section>
+      <FaqSection />
       <Footer />
     </>
   );
 }
 
+// Icons carry no text, so each mark gets a visually hidden label: screen
+// readers and text-only views otherwise see the cell as empty.
 function CellValue({ cell }: { cell: Cell }) {
-  if (cell === true) return <Check className="mx-auto h-4 w-4 text-text" aria-label="Included" />;
-  if (cell === false) return <Minus className="mx-auto h-4 w-4 text-text-dim" aria-label="Not included" />;
+  if (cell === true) return <><Check className="mx-auto h-4 w-4 text-text" aria-hidden /><span className="sr-only">Included</span></>;
+  if (cell === false) return <><Minus className="mx-auto h-4 w-4 text-text-dim" aria-hidden /><span className="sr-only">Not included</span></>;
   if (typeof cell === "string") return <span className="text-text-muted">{cell}</span>;
+  return <SoonBadge />;
+}
+
+function SoonBadge() {
   return (
     <span className="rounded bg-white/[0.06] px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-text-muted">
       Soon

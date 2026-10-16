@@ -2,10 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowRight, Sparkles, Zap, Bot, Network, Radar, ShieldCheck, Workflow, Search,
-  MapPin, Send, Eye, TrendingUp, Plus, Check,
+  MapPin, Send, Eye, TrendingUp, Check,
 } from "lucide-react";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
+import { FaqSection } from "@/components/faq";
 
 export default function HomePage() {
   return (
@@ -161,22 +162,7 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════ FAQ ═══════════════ */}
-      <section id="faq" className="scroll-mt-20 border-t border-bg-border">
-        <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 sm:py-24">
-          <h2 className="mb-8 text-center text-3xl font-bold tracking-tight sm:text-4xl">Questions</h2>
-          <div className="space-y-2">
-            {FAQ.map((f) => (
-              <details key={f.q} className="faq card group px-5 py-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium">
-                  {f.q}
-                  <Plus className="h-4 w-4 shrink-0 text-text-muted transition-transform duration-200 group-open:rotate-45" />
-                </summary>
-                <p className="mt-3 text-sm leading-relaxed text-text-muted">{f.a}</p>
-              </details>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FaqSection />
 
       {/* ═══════════════ CTA BAND ═══════════════ */}
       <section className="relative overflow-hidden border-t border-bg-border">
@@ -213,32 +199,6 @@ const REPLACES = [
   { from: "Trend tracker", to: "Trend Radar", icon: TrendingUp },
 ];
 
-const FAQ = [
-  {
-    q: "What do I get on the free plan?",
-    a: "100 starter credits, 10 outreach messages a month, 5 Trend Radar topics, the Hook Generator and the community — forums, member directory and deal board. No card needed.",
-  },
-  {
-    q: "How do I pay, and can I cancel?",
-    a: "Plans are monthly in GBP, paid through Whop or PayPal — both unlock the same tier and Discord roles. Cancel any time with the provider you paid through. Payments are non-refundable.",
-  },
-  {
-    q: "What are credits for?",
-    a: "Heavier jobs such as scraping leads draw from your monthly credits; everyday writing tools have their own monthly allowances. Paid plans refill credits every month, and you can top up from the Credits page.",
-  },
-  {
-    q: "How does the Discord side work?",
-    a: "Sign in with Discord and your tier's role is granted automatically. The Fortify bot runs commands in the server, answers questions when you mention it, and sends your alerts and reports by DM.",
-  },
-  {
-    q: "Does it actually write in my voice?",
-    a: "Yes. Brand Voice Studio learns from samples of your own writing, and Company DNA gives every tool the context about your business, offer and audience — so outputs are specific, not generic.",
-  },
-  {
-    q: "Who is Fortify for?",
-    a: "Solo founders, agencies, freelancers and community owners who do their own outreach, content and research — and would rather run one subscription than five.",
-  },
-];
 
 function Step({ n, title, body, children }: { n: string; title: string; body: string; children: React.ReactNode }) {
   return (

@@ -20,11 +20,11 @@ const FAQS = [
   },
   {
     q: "I want to cancel my subscription",
-    a: "Go to your PayPal account and cancel the billing agreement. Your access remains active until the end of the current billing period. Please note: all sales are final and we do not offer refunds.",
+    a: "Cancel with the provider you paid through. PayPal: cancel the billing agreement in your PayPal account; your account moves to Free straight away. Whop: cancel in your Whop orders; access follows your Whop membership. Disconnecting Whop in Settings does not cancel Whop billing.",
   },
   {
     q: "Can I get a refund?",
-    a: "All sales are final. We do not offer refunds on any subscription tier or credit purchase. You can cancel your subscription at any time to prevent future billing, and your access continues until the end of the current period.",
+    a: "All sales are final. We do not offer refunds on any subscription tier or credit purchase. You can cancel at any time to stop future billing. For a billing error such as a duplicate charge, email support@fortify-io.com.",
   },
   {
     q: "My AI generation count isn't resetting",

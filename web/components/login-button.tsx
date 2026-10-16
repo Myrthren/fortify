@@ -4,7 +4,7 @@ import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 
-export function LoginButton() {
+export function LoginButton({ callbackUrl = "/dashboard" }: { callbackUrl?: string }) {
   const [pending, setPending] = useState(false);
 
   return (
@@ -13,7 +13,7 @@ export function LoginButton() {
       disabled={pending}
       onClick={() => {
         setPending(true);
-        signIn("discord", { callbackUrl: "/dashboard" });
+        signIn("discord", { callbackUrl });
       }}
       className="btn-secondary w-full py-3 text-base"
       style={{ background: "#5865F2", borderColor: "#4752C4", color: "#fff" }}
