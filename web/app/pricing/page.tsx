@@ -2,76 +2,22 @@ import Link from "next/link";
 import { Nav } from "@/components/nav";
 import { Footer } from "@/components/footer";
 import { CheckoutOptions } from "@/components/checkout-options";
+import { PlanCard } from "@/components/plan-card";
 import { FaqSection } from "@/components/faq";
 import { whopCheckoutUrls } from "@/lib/whop-checkout";
 import { CREDIT_COSTS } from "@/lib/credit-costs";
 import { auth } from "@/auth";
+import { PLANS, type PaidKey } from "@/lib/plans";
 import { Check, Coins, Gem, Minus } from "lucide-react";
 
-type PaidKey = "pro" | "elite" | "apex";
+// PayPal plan ids are public (NEXT_PUBLIC_) and only used by the PayPal button.
+const PAYPAL_PLAN_IDS: Record<PaidKey, string | undefined> = {
+  pro: process.env.NEXT_PUBLIC_PAYPAL_PLAN_PRO,
+  elite: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ELITE,
+  apex: process.env.NEXT_PUBLIC_PAYPAL_PLAN_APEX,
+};
 
-const tiers: {
-  key: "free" | PaidKey;
-  name: string;
-  price: string;
-  blurb: string;
-  planId?: string;
-  highlight?: boolean;
-  highlights: string[];
-}[] = [
-  {
-    key: "free",
-    name: "Free",
-    price: "£0",
-    blurb: "Get inside the gate.",
-    highlights: [
-      "100 starter credits",
-      "10 outreach messages a month",
-      "5 Trend Radar topics",
-      "Forums, member directory and deal board",
-    ],
-  },
-  {
-    key: "pro",
-    name: "Pro",
-    price: "£29",
-    blurb: "For operators getting started.",
-    planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_PRO,
-    highlights: [
-      "500 credits a month",
-      "Brand Voice Studio and unlimited AI chat",
-      "Social lead extraction and lead scoring",
-      "Competitor Scanner for 3 rivals",
-    ],
-  },
-  {
-    key: "elite",
-    name: "Elite",
-    price: "£79",
-    blurb: "The full outbound and research stack.",
-    planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_ELITE,
-    highlight: true,
-    highlights: [
-      "1,500 credits a month",
-      "Unlimited outreach, audits and trend topics",
-      "Local business leads with Fortify Recon",
-      "Workflows and live Competitor Watch",
-    ],
-  },
-  {
-    key: "apex",
-    name: "Apex",
-    price: "£199",
-    blurb: "No ceilings, plus strategy on tap.",
-    planId: process.env.NEXT_PUBLIC_PAYPAL_PLAN_APEX,
-    highlights: [
-      "5,000 credits a month",
-      "AI Advisor strategy briefs on Claude Opus",
-      "Unlimited voices, competitors and workflows",
-      "Mastermind Pods and Apex-only channels",
-    ],
-  },
-];
+const tiers = PLANS;
 
 // A cell is either included (true), not included (false), a value, or coming soon.
 type Cell = boolean | string | { soon: true; note?: string };
@@ -153,7 +99,7 @@ export default async function PricingPage() {
   return (
     <>
       <Nav />
-      <section className="relative overflow-hidden">
+      <section className="relative overflow-x-clip">
         {/* Ambient background */}
         <div className="pointer-events-none absolute inset-x-0 top-0 h-[520px] overflow-hidden">
           <div className="aurora aurora-violet left-1/2 top-[-180px] h-[440px] w-[720px] -translate-x-1/2" />
@@ -173,51 +119,15 @@ export default async function PricingPage() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {tiers.map((t, i) => (
-              <div
-                key={t.key}
-                className={`bento anim-fade-up ${DELAYS[i]} flex flex-col p-6 ${
-                  t.highlight ? "ring-1 ring-white/25" : ""
-                }`}
-                style={t.highlight ? { boxShadow: "0 0 50px -18px rgba(255,255,255,0.35)" } : undefined}
-              >
-                <div className="mb-6">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium text-text-muted">{t.name}</span>
-                    {t.highlight && (
-                      <span className="rounded-full bg-white px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-black">
-                        Recommended
-                      </span>
-                    )}
-                  </div>
-                  <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-4xl font-bold tracking-tight">{t.price}</span>
-                    {t.price !== "£0" && <span className="text-sm text-text-muted">/mo</span>}
-                  </div>
-                  <p className="mt-2 text-sm text-text-muted">{t.blurb}</p>
-                </div>
-
-                <ul className="mb-6 flex-1 space-y-2.5 text-sm">
-                  {i > 0 && (
-                    <li className="text-xs text-text-dim">Everything in {tiers[i - 1].name}, plus:</li>
-                  )}
-                  {t.highlights.map((f) => (
-                    <li key={f} className="flex items-start gap-2.5">
-                      <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/[0.06]">
-                        <Check className="h-2.5 w-2.5 text-text" />
-                      </span>
-                      <span className="text-text">{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
+              <PlanCard key={t.key} plan={t} previous={tiers[i - 1]?.name} className={`anim-fade-up ${DELAYS[i]}`}>
                 {t.key === "free" ? (
                   <a href={signedIn ? "/dashboard" : "/login"} className="btn-secondary w-full">
                     {signedIn ? "Go to dashboard" : "Start free"}
                   </a>
                 ) : (
-                  <CheckoutOptions tier={t.key} whopUrl={whop[t.key]} planId={t.planId} highlight={t.highlight} signedIn={signedIn} />
+                  <CheckoutOptions tier={t.key} whopUrl={whop[t.key]} planId={PAYPAL_PLAN_IDS[t.key]} highlight={t.highlight} signedIn={signedIn} />
                 )}
-              </div>
+              </PlanCard>
             ))}
           </div>
 
@@ -242,7 +152,7 @@ export default async function PricingPage() {
               <span className="inline-flex items-center gap-1.5"><Minus className="h-3.5 w-3.5" aria-hidden /> Not included</span>
               <span className="inline-flex items-center gap-1.5"><SoonBadge /> Not available yet</span>
             </p>
-            <div className="card overflow-x-auto">
+            <div className="card hidden overflow-x-auto md:block">
               <table className="w-full min-w-[640px] text-sm">
                 <thead>
                   <tr className="border-b border-bg-border">
@@ -275,6 +185,39 @@ export default async function PricingPage() {
                   </tbody>
                 ))}
               </table>
+            </div>
+
+            {/* Phones: each feature on its own row with all four plans side by side,
+                under a plan header that stays pinned while scrolling. */}
+            <div className="md:hidden">
+              <div className="sticky top-14 z-10 grid grid-cols-4 gap-1 rounded-xl border border-bg-border bg-bg/90 px-2 py-2 text-center backdrop-blur">
+                {tiers.map((t) => (
+                  <div key={t.key} className={`rounded-md py-1 ${t.highlight ? "bg-white/[0.06]" : ""}`}>
+                    <p className={`text-xs font-semibold ${t.highlight ? "text-text" : "text-text-muted"}`}>{t.name}</p>
+                    <p className="text-[10px] text-text-dim">{t.price}{t.price !== "£0" && "/mo"}</p>
+                  </div>
+                ))}
+              </div>
+              {COMPARISON.map((group) => (
+                <div key={group.section} className="mt-6">
+                  <p className="px-1 pb-2 text-[11px] font-semibold uppercase tracking-wider text-text-dim">{group.section}</p>
+                  <div className="card divide-y divide-bg-border/60">
+                    {group.rows.map((row) => (
+                      <div key={row.label} className="px-3 py-3">
+                        <p className="text-sm text-text">{row.label}</p>
+                        <div className="mt-2 grid grid-cols-4 gap-1 text-center text-xs leading-snug">
+                          {row.cells.map((cell, ci) => (
+                            <div key={ci} className={`flex min-h-[28px] items-center justify-center rounded-md px-0.5 py-1 ${tiers[ci].highlight ? "bg-white/[0.04]" : ""}`}>
+                              <span className="sr-only">{tiers[ci].name}: </span>
+                              <CellValue cell={cell} />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
