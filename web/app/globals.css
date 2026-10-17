@@ -274,6 +274,9 @@ h1 { letter-spacing: -0.03em; }
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.35s;
+  /* Covers the whole card, so without this it swallows clicks on links and
+     buttons inside it (checkout buttons on /pricing included). */
+  pointer-events: none;
 }
 .bento:hover {
   transform: translateY(-4px);
