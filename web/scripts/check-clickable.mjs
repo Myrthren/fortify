@@ -41,12 +41,20 @@ function findChrome() {
 // Runs inside the page. Returns blocked controls and per-plan checkout status.
 const AUDIT = `(() => {
   const label = (el) => (el.innerText || el.getAttribute("aria-label") || el.tagName).trim().replace(/\\s+/g, " ").slice(0, 60);
+  const describe = (el) => el ? el.tagName.toLowerCase() + (el.className && typeof el.className === "string" ? "." + el.className.trim().split(/\\s+/).slice(0, 3).join(".") : "") : "nothing";
+  let lastHit = null;
+  // An inline link that wraps has one box per line, and the centre of its
+  // overall box can fall between them, so test the centre of each fragment.
   const reachable = (el) => {
     el.scrollIntoView({ block: "center", inline: "center" });
-    const r = el.getBoundingClientRect();
-    if (r.width === 0 || r.height === 0) return null; // hidden at this size: not our concern
-    const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    return hit === el || el.contains(hit);
+    const rects = [...el.getClientRects()].filter((r) => r.width > 0 && r.height > 0);
+    if (!rects.length) return null; // hidden at this size: not our concern
+    for (const r of rects) {
+      const hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      if (hit === el || el.contains(hit)) return true;
+      lastHit = hit;
+    }
+    return false;
   };
   const controls = [...document.querySelectorAll(".bento a, .bento button, .card a, .card button, .card-elevated a, .card-elevated button, main a.btn-primary, main a.btn-secondary")];
   const blocked = [];
@@ -55,7 +63,7 @@ const AUDIT = `(() => {
     const ok = reachable(el);
     if (ok === null) continue;
     checked++;
-    if (!ok) blocked.push(label(el));
+    if (!ok) blocked.push(label(el) + " (under " + describe(lastHit) + ")");
   }
   const plans = {};
   if (location.pathname === "/pricing") {
