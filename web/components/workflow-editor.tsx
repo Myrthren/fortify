@@ -11,6 +11,7 @@ import {
 // Node icons scale with their container's font size
 const ni = "h-[1.15em] w-[1.15em]";
 import Link from "next/link";
+import { readableRunError } from "@/lib/workflow-errors";
 
 // ── Canvas dimensions ────────────────────────────────────────────────────────
 const CW = 3200;
@@ -1167,7 +1168,7 @@ export function WorkflowEditor({ workflow: init }: { workflow: WorkflowData }) {
                               </span>
                               <span className="text-text-muted font-medium shrink-0 w-28 truncate">{log.nodeLabel}</span>
                               <span className="text-text-dim flex-1 truncate">
-                                {log.error ? <span className="text-red-300">{log.error}</span> : log.output}
+                                {log.error ? <span className="text-red-300">{readableRunError(String(log.error))}</span> : log.output}
                               </span>
                               <span className="shrink-0 text-text-dim">{log.ms}ms</span>
                             </div>

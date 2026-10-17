@@ -8,7 +8,8 @@
  * Capacity cost: 100 units per run.
  */
 
-import Anthropic from "@anthropic-ai/sdk";
+import { claude } from "@/lib/claude";
+import { readableRunError } from "@/lib/workflow-errors";
 import { Resend } from "resend";
 import { db } from "@/lib/db";
 import { getCapacityInfo } from "@/lib/workflow-capacity";
@@ -121,11 +122,10 @@ function evalFilter(expr: string, vars: Record<string, string>): boolean {
 }
 
 // ── AI helper ─────────────────────────────────────────────────────────────────
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
-
+// Shared client: falls back to Groq when Anthropic is unavailable or out of credit.
 async function callClaude(prompt: string, model: string, maxTokens: number): Promise<string> {
   const modelId = model === "sonnet" ? "claude-sonnet-4-5" : "claude-haiku-4-5";
-  const msg = await anthropic.messages.create({
+  const msg = await claude().messages.create({
     model: modelId,
     max_tokens: Math.min(maxTokens, 2000),
     messages: [{ role: "user", content: prompt }],
@@ -930,7 +930,10 @@ export async function runWorkflow(
 
     } catch (err: any) {
       const ms = Date.now() - t0;
-      const errMsg = err?.message ?? String(err);
+      const rawMsg = err?.message ?? String(err);
+      // Members see the readable version; the raw one stays in the function logs.
+      console.error(`[workflow] ${ctx.workflowId} node ${node.type} failed:`, rawMsg);
+      const errMsg = readableRunError(rawMsg);
 
       // Check retry wrapper
       const maxRetries = parseInt(ctx.vars.__retry_max__ ?? "0", 10);

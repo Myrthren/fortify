@@ -5,6 +5,7 @@ import { DashboardNav } from "@/components/dashboard-nav";
 import { WorkflowsClient } from "@/components/workflows-client";
 import { LockedPage } from "@/components/locked-page";
 import { getCapacityInfo, CAPACITY_PACKS } from "@/lib/workflow-capacity";
+import { readableRunError } from "@/lib/workflow-errors";
 import { Workflow, Crosshair, Bot, Send } from "lucide-react";
 
 export default async function WorkflowsPage() {
@@ -80,9 +81,12 @@ export default async function WorkflowsPage() {
             runCount: w._count.runs,
             lastRunAt: w.runs[0]?.startedAt?.toISOString() ?? null,
             lastRunStatus: (w.runs[0] as any)?.status ?? null,
-            lastError: Array.isArray(w.runs[0]?.log)
-              ? ((w.runs[0]?.log as any[]).find((entry) => entry?.status === "error" && entry?.error)?.error ?? null)
-              : null,
+            lastError: (() => {
+              const raw = Array.isArray(w.runs[0]?.log)
+                ? (w.runs[0]?.log as any[]).find((entry) => entry?.status === "error" && entry?.error)?.error
+                : null;
+              return typeof raw === "string" ? readableRunError(raw) : null;
+            })(),
           }))}
           tier={user.tier}
         />

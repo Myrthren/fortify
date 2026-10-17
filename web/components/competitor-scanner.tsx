@@ -582,13 +582,13 @@ function CompetitorDetail({
         </span>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 rounded-lg border border-bg-border bg-bg-panel p-1">
+      {/* Tabs: a 4×2 grid on phones (eight in a row is ~760px wide), one row from sm up */}
+      <div className="grid grid-cols-4 gap-1 rounded-lg border border-bg-border bg-bg-panel p-1 sm:flex">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-3 py-2 text-sm transition ${
+            className={`flex min-w-0 flex-col items-center justify-center gap-1 rounded-md px-1 py-2 text-[11px] leading-tight transition sm:flex-1 sm:flex-row sm:gap-1.5 sm:px-3 sm:text-sm ${
               tab === t.key
                 ? "bg-white/10 font-medium text-text"
                 : "text-text-muted hover:text-text"
