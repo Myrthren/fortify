@@ -150,6 +150,12 @@ async function connect(port) {
     close: () => socket.close(),
   };
   await api.send("Page.enable");
+  // Visit as someone who has already answered the cookie banner. The fixed
+  // banner otherwise covers whatever sits at the bottom of a phone screen,
+  // which is expected and dismissible, not the overlay bug this test is for.
+  await api.send("Page.addScriptToEvaluateOnNewDocument", {
+    source: `try { localStorage.setItem("fortify-cookie-consent", "declined"); } catch {}`,
+  });
   return api;
 }
 
