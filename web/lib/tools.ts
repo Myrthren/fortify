@@ -63,7 +63,7 @@ export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "members" | "deals" 
   dna:              { key: "dna", href: "/dashboard/company-dna", label: "Company DNA", desc: "The context every tool works from", icon: Dna, minTier: "PRO" },
 
   workflows:        { key: "workflows", href: "/dashboard/workflows", label: "Workflows", desc: "Multi-step AI automations", icon: Workflow, minTier: "ELITE" },
-  advisor:          { key: "advisor", href: "/dashboard/advisor", label: "AI Advisor", desc: "Claude Opus strategy briefings", icon: Zap, minTier: "APEX" },
+  advisor:          { key: "advisor", href: "/dashboard/advisor", label: "AI Advisor", desc: "In-depth strategy briefings", icon: Zap, minTier: "APEX" },
   matchmaking:      { key: "matchmaking", href: "/dashboard/matchmaking", label: "AI Matchmaking", desc: "Members worth talking to", icon: Handshake, minTier: "PRO" },
 };
 

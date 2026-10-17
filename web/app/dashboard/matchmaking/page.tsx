@@ -45,7 +45,7 @@ export default async function MatchmakingPage() {
             <Sparkles className="h-5 w-5 text-text-muted" />
           </div>
           <p className="text-text-muted">
-            Claude reads your profile + every member, then surfaces who&apos;s worth a conversation — with a tailored opener.
+            Fortify reads your profile and every member, then surfaces who&apos;s worth a conversation — with a tailored opener.
           </p>
         </div>
       </div>
@@ -63,7 +63,7 @@ export default async function MatchmakingPage() {
           <div className="card p-6">
             <h3 className="font-semibold">Add your profile first</h3>
             <p className="mt-1 text-sm text-text-muted">
-              Set at least your niche and a few skills so Claude knows who to match you with.
+              Set at least your niche and a few skills so Fortify knows who to match you with.
             </p>
             <Link href="/dashboard/profile" className="btn-primary mt-4 w-fit">Edit profile</Link>
           </div>

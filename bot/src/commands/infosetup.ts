@@ -62,7 +62,7 @@ export function infoEmbed() {
           "**Free** · ten generations a day\n" +
           "**Pro £29** · unlimited AI, Brand Voice, audits, trend radar\n" +
           "**Elite £79** · competitor scanner, weekly strategy reports\n" +
-          "**Apex £199** · Claude Opus, custom workflows, auto-publish",
+          "**Apex £199** · AI Advisor strategy briefs, unlimited limits, auto-publish",
       },
       {
         name: "Not sure where to start",

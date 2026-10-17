@@ -40,7 +40,7 @@ export default async function VoicePage() {
             <span className="eyebrow">Content</span>
             <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">Brand Voice Studio</h1>
             <p className="mt-3 text-text-muted">
-              Train Claude on your writing. Every output sounds like you, not generic AI.
+              Train Fortify on your writing. Every output sounds like you, not generic AI.
             </p>
           </div>
           <span className="text-sm text-text-muted">

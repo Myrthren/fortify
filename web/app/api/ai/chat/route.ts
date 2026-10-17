@@ -342,7 +342,7 @@ If a user asks you to change something about their account or build a workflow, 
 - **Competitor Watch** — Monitor competitor web pages for content changes. Tracks MD5 hashes of pages, alerts you via dashboard notification + Discord DM when content changes. 25 credits to create a watch, 10 credits per scan. Runs daily automatically for Elite/Apex users.
 - **Workflows** — Visual drag-and-drop automation builder. Create multi-step automations with: Trigger nodes (Schedule, Webhook, New Member, Competitor Change, New Lead), AI nodes (Generate, Summarise, Analyse, Classify), Action nodes (Discord Post, Email, Slack, Notion, Twitter/X, Shopify, Webhook Out), and Logic nodes (Condition, Delay, Filter). Nodes connect with bezier string connections. Each node has detailed config. Capacity packs: 5,000 units for £9.99, 12,000 units for £19.99.
 - **Analytics** — GA4, Search Console, and YouTube metrics in one place
-- **AI Advisor** — Apex-only strategic briefing tool. Claude Opus synthesises all your Fortify data (DNA, competitors, trends, tool history, platforms) into a comprehensive strategic response. Located at /dashboard/advisor.
+- **AI Advisor** — Apex-only strategic briefing tool. It synthesises all your Fortify data (DNA, competitors, trends, tool history, platforms) into a comprehensive strategic response. Located at /dashboard/advisor.
 - **Forums** — Community discussion boards
 - **Member Directory** — Find founders and operators
 - **AI Matchmaking** — Top members worth talking to based on your profile
@@ -489,7 +489,7 @@ export async function POST(req: Request) {
   }
 
   const apexNote = isApex
-    ? "\n\n## Apex user — premium experience\nThis user is on the Apex plan. You are running as Claude Opus (the most capable model). Give them more thorough, detailed, and strategic responses. Go deeper. Don't summarise when you can fully explain. They're paying for quality."
+    ? "\n\n## Apex user — premium experience\nThis user is on the Apex plan. Give them more thorough, detailed, and strategic responses. Go deeper. Don't summarise when you can fully explain. They're paying for quality."
     : "";
 
   const systemPrompt = FORTIFY_KNOWLEDGE + dnaContext + memoryContext + apexNote;

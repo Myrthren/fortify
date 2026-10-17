@@ -220,7 +220,7 @@ export function AdvisorClient({ pastSessions: initial }: Props) {
               Describe a challenge on the left and your Advisor will synthesise everything it knows about your business — competitors, trends, DNA, tool usage, platform data — into a strategic response.
             </p>
             <p className="mt-4 text-xs text-text-dim">
-              Running on Claude Opus · Apex exclusive
+              Apex exclusive
             </p>
           </div>
         )}

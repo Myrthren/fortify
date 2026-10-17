@@ -57,7 +57,7 @@ export const PLANS: Plan[] = [
     blurb: "No ceilings, plus strategy on tap.",
     highlights: [
       "5,000 credits a month",
-      "AI Advisor strategy briefs on Claude Opus",
+      "AI Advisor: in-depth strategy briefs",
       "Unlimited voices, competitors and workflows",
       "Mastermind Pods and Apex-only channels",
     ],

@@ -7,7 +7,7 @@ export default function PrivacyPage() {
       <Nav />
       <main className="mx-auto max-w-3xl px-4 py-16 sm:px-6">
         <h1 className="text-3xl font-bold mb-2">Privacy Policy</h1>
-        <p className="text-sm text-text-muted mb-10">Last updated: May 2026</p>
+        <p className="text-sm text-text-muted mb-10">Last updated: October 2026</p>
 
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-3">1. Information We Collect</h2>
@@ -88,12 +88,26 @@ export default function PrivacyPage() {
           </p>
           <ul className="text-text-muted text-sm leading-relaxed mb-3 list-disc list-inside space-y-1 pl-2">
             <li>
-              <strong className="text-text">PayPal</strong> &mdash; payment processing and subscription billing.
+              <strong className="text-text">PayPal and Whop</strong> &mdash; payment processing and subscription billing.
             </li>
             <li>
               <strong className="text-text">Anthropic (Claude API)</strong> &mdash; AI language model processing for
               generating outreach hooks, content ideas, lead analysis, and other AI-powered features. Queries may
               include contextual data you provide to the relevant features.
+            </li>
+            <li>
+              <strong className="text-text">Groq</strong> &mdash; AI language model processing, used for the same
+              features when Anthropic is unavailable. The same contextual data may be sent.
+            </li>
+            <li>
+              <strong className="text-text">OpenAI</strong> &mdash; AI image generation and some text features,
+              such as logo generation.
+            </li>
+            <li>
+              <strong className="text-text">Resend</strong> &mdash; sending account, workflow and notification emails.
+            </li>
+            <li>
+              <strong className="text-text">Cloudflare R2</strong> &mdash; storage for media you upload.
             </li>
             <li>
               <strong className="text-text">Apify</strong> &mdash; web scraping and data extraction infrastructure

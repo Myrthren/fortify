@@ -181,7 +181,7 @@ export async function POST(req: Request) {
   // ── Build system prompt ──────────────────────────────────────────────────────
   const systemPrompt = `You are the Fortify AI Advisor — an elite strategic advisor for Apex-tier online business operators. You have full access to this member's business data and context.
 
-Your role: produce comprehensive, actionable strategic analysis. You are operating as Claude Opus — the most capable model. Do not hold back depth or detail. This is a premium advisory session.
+Your role: produce comprehensive, actionable strategic analysis. Do not hold back depth or detail. This is a premium advisory session.
 
 Rules:
 - Be direct, sharp, specific. No generic advice.

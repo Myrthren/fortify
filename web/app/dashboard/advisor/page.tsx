@@ -22,10 +22,10 @@ export default async function AdvisorPage() {
         active="advisor"
         requiredTier="APEX"
         title="AI Advisor"
-        description="Your dedicated AI strategic advisor. It reads all your Fortify data — Company DNA, competitors, trends, tool history, connected platforms — and gives you comprehensive, personalised strategic analysis using Claude Opus."
+        description="Your dedicated AI strategic advisor. It reads all your Fortify data — Company DNA, competitors, trends, tool history, connected platforms — and gives you comprehensive, personalised strategic analysis."
         icon={<Zap />}
         features={[
-          { icon: <Brain />, title: "Claude Opus Intelligence", desc: "The most capable Claude model. Deeper reasoning, more thorough analysis, genuinely expert-level responses." },
+          { icon: <Brain />, title: "Deep Strategic Analysis", desc: "Longer, more thorough answers than everyday chat, built around your own business data." },
           { icon: <Telescope />, title: "Full Context Synthesis", desc: "Reads your DNA, competitors, trend watch terms, tool usage patterns, and platform data before responding." },
           { icon: <ClipboardList />, title: "Saved Strategy Sessions", desc: "Every session is saved. Build a library of strategic decisions and track how your thinking evolves." },
         ]}
@@ -67,7 +67,7 @@ export default async function AdvisorPage() {
             </span>
           </div>
           <p className="mt-2 text-text-muted max-w-2xl">
-            Your personal strategic advisor. Describe any challenge and it synthesises everything it knows about your business — using Claude Opus — into a comprehensive strategic brief.
+            Your personal strategic advisor. Describe any challenge and it synthesises everything it knows about your business into a comprehensive strategic brief.
           </p>
         </div>
 
