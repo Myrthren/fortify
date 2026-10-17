@@ -1,0 +1,42 @@
+name: Checkout click test
+
+# After each web deploy, load the public checkout pages in Chrome and fail if
+# any card link or Subscribe button can't be clicked. Also runs daily, and on
+# demand from the Actions tab.
+on:
+  push:
+    branches: [main]
+    paths: ["web/**"]
+  schedule:
+    - cron: "15 7 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: check-clickable
+  cancel-in-progress: true
+
+jobs:
+  clickable:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Wait for Netlify to serve this commit
+        if: github.event_name == 'push'
+        run: |
+          for i in $(seq 1 60); do
+            live=$(curl -fsS https://fortify-io.com/api/version | jq -r .commit || true)
+            if [ "$live" = "$GITHUB_SHA" ]; then echo "Live: $live"; exit 0; fi
+            sleep 20
+          done
+          echo "::warning::fortify-io.com did not serve $GITHUB_SHA within 20 minutes; checking whatever is live."
+
+      - name: Check card links and checkout buttons
+        run: node web/scripts/check-clickable.mjs https://fortify-io.com
+        env:
+          CHROME_PATH: /usr/bin/google-chrome

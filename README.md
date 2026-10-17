@@ -84,7 +84,7 @@ deploy.
 | Cadence | Jobs |
 |---|---|
 | Every 15 min | `outbound-tick` |
-| Hourly | `run-scheduled-workflows` :00, `whop-reconcile` :00, `expire-bans` :20, `auto-publish` :45 |
+| Hourly | `run-scheduled-workflows` :00, `whop-reconcile` :00, `expire-bans` :20, `auto-publish` :45, `paypal-expire` :50 |
 | Daily | `shopify-stock-check` 06:00, `shopify-out-of-stock` 06:15, `shopify-milestone` 06:30, `competitor-watch-scan` 07:00, `trend-alert` 07:30, `renewal-reminder` 08:00, `onboarding` 08:30, `payment-rescue` 09:00 |
 | Mondays | `weekly-report` 09:00, `content-brief` 09:30, `match-alert` 10:00, `shopify-weekly-revenue` 10:30, `competitor-monitor` 11:00, `stripe-mrr-check` 11:30 |
 | Monthly | `monthly-credits` — 1st at 00:00 |
@@ -95,6 +95,16 @@ All times UTC.
 the env var and redeploying, every job returns 401 — and a 401 still looks like a
 successful HTTP response to a scheduler, so the failure is silent. After changing
 it, check Netlify → Logs → Functions for `[cron] <name> → 200 OK`.
+
+## Checks
+
+`npm run test:whop`, `test:workflows`, `test:fallback`, `test:refinements` and
+`test:billing` (all in `web/`) are offline unit tests.
+
+`node web/scripts/check-clickable.mjs [url]` loads the public pages in headless
+Chrome at desktop and phone width and fails if any card link or checkout button
+is covered. The **Checkout click test** GitHub Action runs it after every web
+push (once `/api/version` reports the new commit) and daily.
 
 ## Deploy
 
