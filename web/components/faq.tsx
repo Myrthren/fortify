@@ -2,7 +2,7 @@ import { Plus } from "lucide-react";
 
 // Shared by the landing page and /pricing so the two never disagree.
 // Keep billing answers in line with the PayPal and Whop webhooks: a PayPal
-// cancellation drops the account to Free immediately.
+// cancellation keeps the tier until the paid month ends (cron/paypal-expire).
 export const FAQ: { q: string; a: string }[] = [
   {
     q: "What do I get on the free plan?",
@@ -10,7 +10,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "How do I pay, and can I cancel?",
-    a: "Plans are monthly in GBP: Pro £29, Elite £79, Apex £199. Pay through Whop or PayPal — both unlock the same tier and Discord roles. Cancel any time with the provider you paid through. With PayPal, cancelling moves you to Free straight away; with Whop, access follows your Whop membership.",
+    a: "Plans are monthly in GBP: Pro £29, Elite £79, Apex £199. Pay through Whop or PayPal — both unlock the same tier and Discord roles. Cancel any time with the provider you paid through. With PayPal, you keep your plan until the end of the month you've paid for; with Whop, access follows your Whop membership.",
   },
   {
     q: "Do you offer refunds?",

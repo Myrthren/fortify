@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { verifyWebhookSignature } from "@/lib/paypal";
+import { getSubscription, verifyWebhookSignature } from "@/lib/paypal";
+import { formatAccessDate, paidThrough } from "@/lib/paypal-access";
 import { syncTierRole, sendDM } from "@/lib/discord";
 import { sendDMConditional, alertOwner } from "@/lib/notifications";
 import { runWorkflow } from "@/lib/workflow-runner";
@@ -71,6 +72,33 @@ export async function POST(req: Request) {
       });
       if (sub) {
         const status = type.split(".").pop()!; // CANCELLED / SUSPENDED / EXPIRED
+
+        // A cancellation keeps the tier until the paid month runs out; the
+        // hourly paypal-expire job downgrades after that. Suspension (failed
+        // payment) and expiry still end access straight away.
+        if (status === "CANCELLED") {
+          let paypalSub = null;
+          try { paypalSub = await getSubscription(subId); } catch { /* fall back to stored dates */ }
+          const until = paidThrough(paypalSub, sub.nextBillingAt);
+          if (until) {
+            await db.subscription.update({
+              where: { paypalSubId: subId },
+              data: { status, cancelledAt: new Date(), nextBillingAt: until },
+            });
+            if (sub.user.discordId) {
+              await sendDM(
+                sub.user.discordId,
+                `Your Fortify subscription has been cancelled and won't renew. You keep ${sub.tier} access until ${formatAccessDate(until)}, then move to the Free tier. Resubscribe any time at https://fortify-io.com/pricing`
+              );
+            }
+            await alertOwner(
+              "dmOwnerChurn",
+              `Churn: **${sub.user.name ?? sub.user.email ?? "unknown"}** — ${sub.tier} tier — cancelled, access until ${formatAccessDate(until)}`
+            );
+            break;
+          }
+        }
+
         await db.$transaction([
           db.subscription.update({
             where: { paypalSubId: subId },

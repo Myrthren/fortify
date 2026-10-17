@@ -44,7 +44,7 @@ export default function TermsPage() {
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
             The Service integrates with third-party platforms including Meta (Facebook, Instagram), Google, Shopify,
-            Stripe, TikTok, YouTube, Discord, Apify, and Anthropic&rsquo;s Claude AI. Data sourced from these
+            Stripe, TikTok, YouTube, Discord, Apify, and AI model providers including Anthropic, Groq and OpenAI. Data sourced from these
             third-party APIs is provided for informational and automation purposes. We do not guarantee the accuracy,
             completeness, or timeliness of data obtained from third-party sources.
           </p>
@@ -104,7 +104,8 @@ export default function TermsPage() {
             <strong className="text-text">No Refund Policy.</strong> All subscription fees are non-refundable. There
             are no refunds or credits for partial months of service, plan downgrades, unused credits, or unused
             features. You can cancel at any time with the provider you paid through. Cancelling a PayPal subscription
-            moves your account to the free tier immediately. For Whop subscriptions, access to paid features follows
+            stops renewal and keeps paid features until the end of the billing period already paid for, after which
+            your account moves to the free tier. For Whop subscriptions, access to paid features follows
             the status of your Whop membership.
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
@@ -241,7 +242,7 @@ export default function TermsPage() {
             <a href="mailto:support@fortify-io.com" className="underline hover:text-text transition-colors">
               support@fortify-io.com
             </a>{" "}
-            for help. Cancelling a PayPal subscription ends paid access immediately; Whop access follows the status of
+            for help. Cancelling a PayPal subscription takes effect at the end of the billing period already paid for; Whop access follows the status of
             your Whop membership. No refunds will be issued for any remaining period.
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">

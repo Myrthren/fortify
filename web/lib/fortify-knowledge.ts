@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-16";
+export const KNOWLEDGE_VERSION = "2026-10-17";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -21,7 +21,7 @@ SUBSCRIPTION TIERS
 - Free (£0/mo): 100 starter credits, Hook Generator, 10 cold outreach messages/mo, Trend Radar (5 watch terms), community forums, read-only member directory and deal board
 - Pro (£29/mo): Core AI tools, 500 credits/mo, Brand Voice Studio (1 voice), Funnel Auditor (5/mo), Cold Outreach (50/mo), Competitor Scanner (3 tracked), Lead Sourcing, Inspiration Engine, Meta Ads dashboard, Shopify dashboard, Revenue/Stripe dashboard, Company DNA, Matchmaking, Logo Intelligence, Lead Extractor (10 accounts/batch)
 - Elite (£79/mo): Everything in Pro, 1500 credits/mo, 3 brand voices, unlimited audits & outreach, unlimited Trend Radar watch terms, 10 competitors tracked, Virality Engine, Fortify Recon, Competitor Watch, Workflows (automation builder), Lead Extractor (25 accounts/batch + web search fallback + AI approach strategy), live web search in Discord chat
-- Apex (£199/mo): Everything unlimited — unlimited brand voices, watch terms, competitors, workflows, 5000 credits/mo, AI Advisor (Claude Opus strategy briefs), Mastermind Pods access, auto-publish to YouTube and Facebook, Lead Extractor (50 accounts/batch + optional deep scan), live web search in Discord chat
+- Apex (£199/mo): Everything unlimited — unlimited brand voices, watch terms, competitors, workflows, 5000 credits/mo, AI Advisor (in-depth strategy briefs), Mastermind Pods access, auto-publish to YouTube and Facebook, Lead Extractor (50 accounts/batch + optional deep scan), live web search in Discord chat
 
 PLATFORM FEATURES
 Content:
@@ -84,7 +84,7 @@ PRICING
 - Upgrade or subscribe: https://fortify-io.com/pricing
 - Monthly plans in GBP via Whop or PayPal; both grant the same tier and Discord role
 - No free trial of paid plans (the Free plan is the trial). Payments are non-refundable
-- Cancel with the provider you paid through. Cancelling PayPal moves the account to Free immediately; Whop access follows the Whop membership
+- Cancel with the provider you paid through. Cancelling PayPal keeps the plan until the end of the paid month, then moves the account to Free; Whop access follows the Whop membership
 - PayPal activates instantly (must be signed in). Whop needs Connect Whop in Settings afterwards (guide: https://fortify-io.com/whop)
 - Credits: paid plans add credits on the 1st of each month; unused credits roll over and never expire. Typical costs: lead search 50, Lead Extractor 20 per profile, Recon from 50, competitor scans 35-50, logo generation 150
 - Affiliates: 30% commission for the first 12 months of each referred customer, Whop referral links only (PayPal purchases earn nothing). Details: https://fortify-io.com/affiliates

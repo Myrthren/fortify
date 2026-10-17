@@ -20,7 +20,7 @@ const FAQS = [
   },
   {
     q: "I want to cancel my subscription",
-    a: "Cancel with the provider you paid through. PayPal: cancel the billing agreement in your PayPal account; your account moves to Free straight away. Whop: cancel in your Whop orders; access follows your Whop membership. Disconnecting Whop in Settings does not cancel Whop billing.",
+    a: "Cancel with the provider you paid through. PayPal: cancel the billing agreement in your PayPal account; you keep your plan until the end of the month you've paid for, then move to Free. Whop: cancel in your Whop orders; access follows your Whop membership. Disconnecting Whop in Settings does not cancel Whop billing.",
   },
   {
     q: "Can I get a refund?",

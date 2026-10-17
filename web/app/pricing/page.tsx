@@ -76,7 +76,7 @@ const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, 
     rows: [
       { label: "Workflows", cells: [false, false, "Standard capacity", "Unlimited"] },
       { label: "Weekly AI strategy report (Discord)", cells: [false, false, true, true] },
-      { label: "AI Advisor (Claude Opus)", cells: [false, false, false, true] },
+      { label: "AI Advisor (in-depth strategy briefs)", cells: [false, false, false, true] },
     ],
   },
   {
@@ -135,7 +135,7 @@ export default async function PricingPage() {
             <p>
               <span className="font-medium text-text">Pay monthly, cancel anytime</span> with Whop or PayPal.
               There is no free trial of paid plans (the Free plan is the way to try Fortify), and payments
-              are non-refundable. Cancelling a PayPal plan moves you to Free straight away; Whop access follows
+              are non-refundable. Cancelling a PayPal plan keeps your access until the end of the month you paid for; Whop access follows
               your Whop membership.
             </p>
           </div>
