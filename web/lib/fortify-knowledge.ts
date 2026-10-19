@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-19";
+export const KNOWLEDGE_VERSION = "2026-10-19-advisor-sections";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -24,6 +24,7 @@ SUBSCRIPTION TIERS
 - Apex (£199/mo): Everything unlimited — unlimited brand voices, watch terms, competitors, workflows, 5000 credits/mo, monthly Growth Brief (the AI Advisor writes a plan from the member's own data on the 1st of each month, saved in AI Advisor), Weekly Lead Pack of 25, AI Advisor (in-depth strategy briefs on demand), Mastermind Pods (not live yet; they launch once there are enough Apex members), auto-publish to YouTube and Facebook, Lead Extractor (50 accounts/batch + optional deep scan), live web search in Discord chat
 
 PLATFORM FEATURES
+- AI Advisor — Apex-only strategy sessions at /dashboard/advisor. Writes diagnosis, recommended strategy and a prioritised action plan in three sections, saving each as it finishes. If interrupted, open the saved session and choose Continue session. Older sessions and monthly Growth Briefs remain available.
 Content:
 - Hook Generator — 5 viral hooks on any topic (Free+)
 - Brand Voice Studio — train Claude on your exact tone; use it in all AI tools (Pro+)

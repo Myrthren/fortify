@@ -26,13 +26,18 @@ export async function POST(req: Request) {
   if (!user) return new NextResponse("Not found", { status: 404 });
 
   const { title, messages } = await req.json();
-  if (!messages?.length) return NextResponse.json({ error: "No messages" }, { status: 400 });
+  if (!Array.isArray(messages) || !messages.length || messages.some((m) => !m || typeof m !== "object" || Array.isArray(m))) {
+    return NextResponse.json({ error: "No valid messages" }, { status: 400 });
+  }
+  // Advisor progress is server-owned. A normal chat save must not mint a
+  // resumable run that bypasses Advisor session and retry limits.
+  const chatMessages = messages.map(({ advisor, ...message }) => message);
 
   const sessionTitle = (title || (messages[0]?.content as string)?.slice(0, 60) || "Chat").trim();
 
   // Create the session
   const newSession = await db.chatSession.create({
-    data: { userId, title: sessionTitle, messages },
+    data: { userId, title: sessionTitle, messages: chatMessages },
   });
 
   // Enforce Pro limit: max 30 sessions

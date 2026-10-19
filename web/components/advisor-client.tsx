@@ -1,14 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Send, ChevronDown, ChevronRight, Zap } from "lucide-react";
-
-type AdvisorSession = {
-  id: string;
-  title: string;
-  messages: { role: "user" | "assistant"; content: string }[];
-  createdAt: string;
-};
+import { Loader2, Send, Zap } from "lucide-react";
+import { ADVISOR_SECTIONS, runAdvisorRequests, type AdvisorSession } from "@/lib/advisor-run";
 
 type Props = {
   pastSessions: AdvisorSession[];
@@ -28,43 +22,26 @@ export function AdvisorClient({ pastSessions: initial }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [currentSession, setCurrentSession] = useState<AdvisorSession | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [runningId, setRunningId] = useState<string | null>(null);
 
-  async function runAdvisor() {
-    if (!challenge.trim() || loading) return;
+  async function runAdvisor(resume?: AdvisorSession) {
+    if ((!resume && !challenge.trim()) || loading) return;
     setLoading(true);
+    setRunningId(resume?.id ?? null);
     setError("");
 
     try {
-      const res = await fetch("/api/ai/advisor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ challenge: challenge.trim() }),
+      await runAdvisorRequests(resume ? { session: resume } : { challenge: challenge.trim() }, (saved) => {
+        setSessions((prev) => [saved, ...prev.filter((s) => s.id !== saved.id)]);
+        setCurrentSession(saved);
+        setRunningId(saved.id);
+        if (!resume) setChallenge("");
       });
-
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? `Error ${res.status}`);
-      }
-
-      const data = await res.json();
-      const newSession: AdvisorSession = {
-        id: data.sessionId,
-        title: data.title,
-        messages: [
-          { role: "user", content: challenge.trim() },
-          { role: "assistant", content: data.response },
-        ],
-        createdAt: new Date().toISOString(),
-      };
-
-      setSessions((prev) => [newSession, ...prev]);
-      setCurrentSession(newSession);
-      setChallenge("");
     } catch (err: any) {
       setError(err.message ?? "Something went wrong. Try again.");
     } finally {
       setLoading(false);
+      setRunningId(null);
     }
   }
 
@@ -85,6 +62,7 @@ export function AdvisorClient({ pastSessions: initial }: Props) {
             placeholder="What challenge or decision do you want strategic advice on?"
             className="w-full resize-none rounded-md border border-bg-border bg-bg px-3 py-2 text-sm placeholder:text-text-dim focus:outline-none focus:ring-1 focus:ring-white/20 min-h-[120px]"
             disabled={loading}
+            maxLength={4000}
           />
 
           {error && (
@@ -92,8 +70,8 @@ export function AdvisorClient({ pastSessions: initial }: Props) {
           )}
 
           <button
-            onClick={runAdvisor}
-            disabled={!challenge.trim() || loading}
+            onClick={() => runAdvisor()}
+            disabled={challenge.trim().length < 10 || loading}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-md bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white/90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {loading ? (
@@ -137,18 +115,20 @@ export function AdvisorClient({ pastSessions: initial }: Props) {
                   key={s.id}
                   onClick={() => {
                     setCurrentSession(s);
-                    setExpandedId(s.id);
+                    setError("");
                   }}
                   className={`w-full text-left rounded-md px-2.5 py-2 text-xs transition ${
                     currentSession?.id === s.id
                       ? "bg-white/[0.06] text-text"
                       : "text-text-muted hover:bg-white/[0.04] hover:text-text"
                   }`}
+                  disabled={loading}
                 >
                   <div className="font-medium truncate">
                     {s.title.replace(/^Strategy: /, "")}
                   </div>
                   <div className="text-text-dim mt-0.5">
+                    {s.completedSections !== null && s.completedSections < ADVISOR_SECTIONS.length && "In progress · "}
                     {new Date(s.createdAt).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
@@ -178,6 +158,22 @@ export function AdvisorClient({ pastSessions: initial }: Props) {
                 })}
               </p>
             </div>
+
+            {currentSession.completedSections !== null && currentSession.completedSections < ADVISOR_SECTIONS.length && (
+              <div className="mb-6 rounded-md border border-bg-border bg-white/[0.03] p-4" role="status" aria-live="polite">
+                <p className="text-sm text-text-muted">
+                  {currentSession.completedSections} of {ADVISOR_SECTIONS.length} sections saved.
+                  {loading && runningId === currentSession.id
+                    ? ` Writing ${ADVISOR_SECTIONS[currentSession.completedSections].title.toLowerCase()}…`
+                    : " Continue this session to finish your brief."}
+                </p>
+                {!loading && (
+                  <button onClick={() => runAdvisor(currentSession)} className="btn-secondary mt-3 text-xs">
+                    Continue session
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="space-y-6">
               {currentSession.messages.map((msg, i) => (
@@ -233,6 +229,10 @@ export function AdvisorClient({ pastSessions: initial }: Props) {
 function MarkdownRenderer({ content }: { content: string }) {
   // Convert markdown to simple HTML
   const html = content
+    // Model and member text must remain text, never executable markup.
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
     // Headers
     .replace(/^### (.+)$/gm, "<h3>$1</h3>")
     .replace(/^## (.+)$/gm, "<h2>$1</h2>")

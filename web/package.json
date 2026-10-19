@@ -13,6 +13,7 @@
     "test:whop": "node --test scripts/test-whop.cjs",
     "test:workflows": "node --experimental-strip-types --test scripts/test-workflow-starters.mjs",
     "test:fallback": "node --test scripts/test-ai-fallback.cjs scripts/test-response-error.cjs scripts/test-facts.cjs",
+    "test:advisor": "node --test scripts/test-advisor.cjs",
     "test:refinements": "node --experimental-strip-types --test scripts/test-refinements.mjs",
     "test:billing": "node --experimental-strip-types --test scripts/test-paypal-access.mjs scripts/test-lead-pack.mjs"
   },

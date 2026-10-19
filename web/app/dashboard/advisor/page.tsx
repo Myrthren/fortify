@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { LockedPage } from "@/components/locked-page";
 import { AdvisorClient } from "@/components/advisor-client";
+import { advisorSessionView } from "@/lib/advisor-run";
 import { Zap, Brain, Telescope, ClipboardList } from "lucide-react";
 
 export default async function AdvisorPage() {
@@ -39,19 +40,12 @@ export default async function AdvisorPage() {
       userId,
       title: { startsWith: "Strategy:" },
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: { updatedAt: "desc" },
     take: 20,
     select: { id: true, title: true, messages: true, createdAt: true },
   });
 
-  const pastSessions = rawSessions.map((s) => ({
-    id: s.id,
-    title: s.title,
-    messages: (s.messages as any[]).filter(
-      (m) => m.role === "user" || m.role === "assistant"
-    ),
-    createdAt: s.createdAt.toISOString(),
-  }));
+  const pastSessions = rawSessions.map(advisorSessionView);
 
   return (
     <div className="min-h-screen">
