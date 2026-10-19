@@ -45,9 +45,9 @@ export const PLANS: Plan[] = [
     highlight: true,
     highlights: [
       "1,500 credits a month",
+      "Weekly lead pack: 15 new local leads, drafts included",
+      "Fortify Recon, Workflows and live Competitor Watch",
       "Unlimited outreach, audits and trend topics",
-      "Local business leads with Fortify Recon",
-      "Workflows and live Competitor Watch",
     ],
   },
   {
@@ -57,9 +57,9 @@ export const PLANS: Plan[] = [
     blurb: "No ceilings, plus strategy on tap.",
     highlights: [
       "5,000 credits a month",
-      "AI Advisor: in-depth strategy briefs",
+      "Monthly Growth Brief, written from your own data",
+      "Weekly lead pack of 25, plus AI Advisor on demand",
       "Unlimited voices, competitors and workflows",
-      "Mastermind Pods and Apex-only channels",
     ],
   },
 ];

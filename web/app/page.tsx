@@ -156,7 +156,7 @@ export default function HomePage() {
           <BentoCard
             icon={<Network className="h-5 w-5" />}
             title="Networking"
-            body="AI matchmaking, a live deal board, and mastermind pods."
+            body="AI matchmaking and a live deal board, with mastermind pods coming for Apex."
           />
         </div>
       </section>

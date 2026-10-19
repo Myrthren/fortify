@@ -191,8 +191,8 @@ function upgradeNudge(): StagePayload {
         .setDescription(
           "Free covers ten generations a day, which is enough to prove the tools work and not enough to run on.\n\n" +
             "**Pro — £29/mo** · unlimited generations, Brand Voice (trains on your own writing so every output sounds like you), five funnel audits a month, trend radar.\n" +
-            "**Elite — £79/mo** · adds the competitor scanner, unlimited audits and weekly strategy reports.\n" +
-            "**Apex — £199/mo** · adds AI Advisor strategy briefs, unlimited limits and auto-publish.\n\n" +
+            "**Elite — £79/mo** · adds a weekly lead pack (new local leads with outreach drafted), the competitor scanner and unlimited audits.\n" +
+            "**Apex — £199/mo** · adds a monthly Growth Brief written from your data, the AI Advisor, bigger lead packs and unlimited limits.\n\n" +
             "Monthly, cancel anytime."
         )
         .setFooter({ text: "Fortify · fortify-io.com/pricing" }),

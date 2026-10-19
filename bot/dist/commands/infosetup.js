@@ -45,8 +45,8 @@ function infoEmbed() {
         name: "Tiers",
         value: "**Free** · ten generations a day\n" +
             "**Pro £29** · unlimited AI, Brand Voice, audits, trend radar\n" +
-            "**Elite £79** · competitor scanner, weekly strategy reports\n" +
-            "**Apex £199** · AI Advisor strategy briefs, unlimited limits, auto-publish",
+            "**Elite £79** · weekly lead pack, Recon, competitor scanner, weekly strategy reports\n" +
+            "**Apex £199** · monthly Growth Brief, AI Advisor, bigger lead packs, unlimited limits",
     }, {
         name: "Not sure where to start",
         value: "Four questions, thirty seconds, and it names the three tools to open first. Only you see the answers.",
