@@ -1,7 +1,7 @@
 import {
   Sparkles, Send, ClipboardCheck, Radar, TrendingUp, Search, Lightbulb, BarChart3,
   ShoppingBag, LineChart, Clapperboard, Dna, MapPin, Eye, Workflow, Zap, Activity,
-  Handshake, Palette, AtSign, Target, type LucideIcon,
+  Handshake, Palette, AtSign, Target, PackageOpen, type LucideIcon,
 } from "lucide-react";
 import type { Tier } from "@prisma/client";
 
@@ -17,7 +17,7 @@ export type ActiveKey =
   | "revenue" | "virality" | "dna" | "logo" | "members" | "deals" | "pods"
   | "forums" | "messages" | "connections" | "notifications" | "profile"
   | "settings" | "support" | "credits" | "recon" | "competitor-watch"
-  | "workflows" | "advisor" | "outbound" | "lead-extractor";
+  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack";
 
 export type HubKey = "leads" | "competitors" | "insights";
 
@@ -46,6 +46,7 @@ export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "members" | "deals" 
   logo:             { key: "logo", href: "/dashboard/logo", label: "Logo Intelligence", desc: "Critique and refine your brand mark", icon: Palette, minTier: "PRO" },
 
   "lead-extractor": { key: "lead-extractor", href: "/dashboard/lead-extractor", label: "Lead Extractor", tabLabel: "Social leads", desc: "Contacts from TikTok and Instagram profiles", icon: AtSign, minTier: "PRO", hub: "leads" },
+  "lead-pack":      { key: "lead-pack", href: "/dashboard/lead-pack", label: "Weekly Lead Pack", tabLabel: "Weekly pack", desc: "New local leads with drafts, every Monday", icon: PackageOpen, minTier: "ELITE", hub: "leads" },
   recon:            { key: "recon", href: "/dashboard/recon", label: "Fortify Recon", tabLabel: "Local leads", desc: "Local businesses from Google Maps", icon: MapPin, minTier: "ELITE", hub: "leads" },
   leads:            { key: "leads", href: "/dashboard/leads", label: "Lead Sourcing", tabLabel: "Lead scoring", desc: "Score prospects against your ideal customer", icon: Target, minTier: "PRO", hub: "leads" },
   outreach:         { key: "outreach", href: "/dashboard/outreach", label: "Cold Outreach", tabLabel: "Outreach", desc: "Messages in your voice that get replies", icon: Send, hub: "leads" },
@@ -68,7 +69,7 @@ export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "members" | "deals" 
 };
 
 export const HUBS: Record<HubKey, { label: string; desc: string; icon: LucideIcon; tabs: ActiveKey[] }> = {
-  leads:       { label: "Leads & Outreach", desc: "Find leads, score them, write to them", icon: Search, tabs: ["lead-extractor", "recon", "leads", "outreach", "outbound"] },
+  leads:       { label: "Leads & Outreach", desc: "Find leads, score them, write to them", icon: Search, tabs: ["lead-extractor", "recon", "lead-pack", "leads", "outreach", "outbound"] },
   competitors: { label: "Competitors", desc: "Scan rivals and watch for changes", icon: Radar, tabs: ["competitors", "competitor-watch"] },
   insights:    { label: "Business Insights", desc: "Revenue, Shopify, ads and analytics", icon: LineChart, tabs: ["revenue", "shopify", "ads", "analytics"] },
 };

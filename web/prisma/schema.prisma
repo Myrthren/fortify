@@ -110,6 +110,7 @@ model User {
   chatSessions          ChatSession[]
   notifications         Notification[]
   reconSearches         ReconSearch[]
+  leadPackSetting       LeadPackSetting?
   leadStatuses          LeadStatus[]
   revenueEvents         RevenueEvent[]
   milestoneAwards       MilestoneAward[]
@@ -549,6 +550,25 @@ model Generation {
 }
 
 // ─── Fortify Recon ────────────────────────────────────
+// Weekly lead pack (Elite+): Recon runs for this category and location once a
+// week and delivers new businesses with drafted outreach (lib/lead-pack.ts).
+// pendingRunId is the Apify run in flight between cron ticks.
+model LeadPackSetting {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  category     String
+  location     String
+  offer        String?
+  enabled      Boolean   @default(true)
+  pendingRunId String?
+  pendingSince DateTime?
+  lastRunAt    DateTime?
+  lastError    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model ReconSearch {
   id         String   @id @default(cuid())
   userId     String
