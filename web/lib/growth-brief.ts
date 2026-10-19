@@ -1,7 +1,8 @@
 import { db } from "@/lib/db";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
-import { advisorSystemPrompt, buildAdvisorContext } from "@/lib/advisor";
+import { advisorSystemPrompt, buildAdvisorContext, inventedTools } from "@/lib/advisor";
 import { sendDMConditional } from "@/lib/notifications";
+import { unsupportedFigures } from "@/lib/facts";
 
 // Monthly Growth Brief (Apex): once a calendar month, the AI Advisor writes a
 // plan from everything Fortify knows about the member plus what they did in
@@ -61,29 +62,58 @@ A numbered list of 3–6 concrete actions, each naming the Fortify tool to use.
 
 Keep it under 900 words. Use only facts in the context: never invent figures, results, competitor moves or customer names. Where you're inferring, say so.`;
 
-/** Writes and saves one member's brief for the month of `now`. */
-export async function writeGrowthBrief(userId: string, now: Date) {
+/** Drafts one member's brief without saving it. Returns any problems left. */
+export async function composeGrowthBrief(userId: string, now: Date) {
   const since = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  const [context, activity, user] = await Promise.all([
+  const [context, activity] = await Promise.all([
     buildAdvisorContext(userId),
     recentActivity(userId, since),
-    db.user.findUnique({ where: { id: userId }, select: { discordId: true } }),
   ]);
 
   const month = briefMonth(now);
   const request = BRIEF_REQUEST(month);
-  const res = await claude().messages.create({
-    model: CLAUDE_MODELS.fast,
-    max_tokens: 2500,
-    system: advisorSystemPrompt(context + "\n" + activity),
-    messages: [{ role: "user", content: request }],
+  const system = advisorSystemPrompt(context + "\n" + activity);
+  const write = async (extra = "") => {
+    const res = await claude().messages.create({
+      model: CLAUDE_MODELS.fast,
+      max_tokens: 2500,
+      system,
+      messages: [{ role: "user", content: request + extra }],
+    });
+    return res.content
+      .filter((b) => b.type === "text")
+      .map((b) => (b as { type: "text"; text: string }).text)
+      .join("\n")
+      .trim();
+  };
+
+  // Models still invent plausible tool names and numbers. Check both against
+  // the real tool list and the member's own data, and allow one rewrite.
+  const problems = (text: string) => ({
+    tools: inventedTools(text, system),
+    figures: unsupportedFigures(text, system, request),
   });
-  const brief = res.content
-    .filter((b) => b.type === "text")
-    .map((b) => (b as { type: "text"; text: string }).text)
-    .join("\n")
-    .trim();
+  let brief = await write();
   if (!brief) throw new Error("Empty brief");
+  const first = problems(brief);
+  const count = (p: ReturnType<typeof problems>) => p.tools.length + p.figures.length;
+  if (count(first)) {
+    const notes = [
+      first.tools.length ? `These are not Fortify tools and must not appear: ${first.tools.join(", ")}. Use only the listed tools, by their exact names.` : "",
+      first.figures.length ? `These figures are not in my data, so remove them: ${first.figures.join(", ")}.` : "",
+    ].filter(Boolean).join(" ");
+    const retry = await write(`\n\n${notes}`);
+    if (retry && count(problems(retry)) < count(first)) brief = retry;
+  }
+  return { brief, month, remaining: problems(brief), rewritten: count(first) > 0 };
+}
+
+/** Writes and saves one member's brief for the month of `now`. */
+export async function writeGrowthBrief(userId: string, now: Date) {
+  const [{ brief, month }, user] = await Promise.all([
+    composeGrowthBrief(userId, now),
+    db.user.findUnique({ where: { id: userId }, select: { discordId: true } }),
+  ]);
 
   const session = await db.chatSession.create({
     data: {

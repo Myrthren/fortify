@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { TOOLS } from "@/lib/tools";
 
 // Shared by the AI Advisor (app/api/ai/advisor) and the monthly Growth Brief
 // (lib/growth-brief.ts), so both read the same picture of the member.
@@ -147,6 +148,38 @@ export async function buildAdvisorContext(userId: string): Promise<string> {
   return lines.join("\n");
 }
 
+// Real, available tools only (from the same registry as the nav), so the
+// Advisor can't recommend things that don't exist.
+const EXTRA_PLACES = [
+  "Hook Generator (dashboard home): 5 hooks on any topic",
+  "Member Directory, Deal Board and Forums (Community menu)",
+  "Fortify Discord bot: slash commands such as /hook, /outreach, /audit, /trends; alerts and reports by DM",
+];
+export const FORTIFY_TOOL_NAMES = Object.values(TOOLS).filter((t) => !t.soon).map((t) => t.label);
+const FORTIFY_TOOL_LIST = [
+  ...Object.values(TOOLS).filter((t) => !t.soon).map((t) => `- ${t.label}${t.minTier ? ` (${t.minTier[0]}${t.minTier.slice(1).toLowerCase()}+)` : ""}: ${t.desc} — ${t.href}`),
+  ...EXTRA_PLACES.map((p) => `- ${p}`),
+].join("\n");
+
+const ALLOWED_FORTIFY_PHRASES = ["fortify recon", "fortify discord", "fortify ai", "fortify ai advisor", "fortify advisor", "fortify dashboard", "fortify community"];
+
+/**
+ * "Fortify Something" names in a reply that aren't real tools. Names that
+ * appear in `known` (the member's own data, e.g. their workflow names) are
+ * fine. Matches whole capitalised names, so "Fortify Discord server" passes
+ * but "Fortify Discord Pulse" doesn't.
+ */
+export function inventedTools(text: string, known = ""): string[] {
+  const found = text.match(/\bFortify(?:\s+[A-Z][\w&'-]*){1,4}/g) ?? [];
+  const knownLower = known.toLowerCase();
+  const bad = found
+    .map((m) => m.replace(/\s+/g, " ").trim())
+    .filter((m) => !ALLOWED_FORTIFY_PHRASES.includes(m.toLowerCase()))
+    .filter((m) => !FORTIFY_TOOL_NAMES.some((name) => m.toLowerCase() === `fortify ${name.toLowerCase()}`))
+    .filter((m) => !knownLower.includes(m.toLowerCase()));
+  return [...new Set(bad)];
+}
+
 /** The Advisor's system prompt around a context document. */
 export function advisorSystemPrompt(contextDoc: string): string {
   return `You are the Fortify AI Advisor — an elite strategic advisor for Apex-tier online business operators. You have full access to this member's business data and context.
@@ -159,9 +192,14 @@ Rules:
 - Identify what they're not doing that they should be, based on their data.
 - Structure your response clearly with headers.
 - End with a concrete prioritised action list (numbered, specific, actionable).
-- Reference Fortify tools they can use for each recommendation.
+- Reference Fortify tools they can use for each recommendation, using only the tools listed below, by their exact names. If nothing listed fits, say what they'd need to do outside Fortify. Never invent a Fortify tool, feature, data feed or integration.
+- Never propose discounts, free trials, giveaways, price changes or new offers unless the member's own data mentions them. If pricing looks worth testing, raise it as a question, not a plan.
+- Don't assume channels, audiences or assets the member hasn't got.
 - Never mention "I'm Claude" or reveal internal infrastructure.
 - This member paid £199/mo — give them an answer worth that.
+
+## Fortify tools you can recommend (nothing else exists)
+${FORTIFY_TOOL_LIST}
 
 ${contextDoc}`;
 }
