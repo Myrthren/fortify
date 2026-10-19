@@ -10,30 +10,75 @@ const openai_1 = __importDefault(require("openai"));
 /**
  * AI client for the bot.
  *
- * When GROQ_API_KEY is set, calls are routed to Groq (OpenAI-compatible API)
- * through an adapter that accepts and returns Anthropic Messages shapes, so every
- * call site (`claude().messages.create(...)`, `res.content`, `stop_reason`,
- * tool_use / tool_result blocks) keeps working unchanged. Without GROQ_API_KEY
- * it falls back to Anthropic. The Claude model names callers pass are ignored on
- * Groq; GROQ_MODEL overrides the default Groq model.
+ * Anthropic is the primary provider. When a call fails because Anthropic is
+ * unavailable (outage, rate limit, auth, or out of credit) and GROQ_API_KEY is
+ * set, the same call is retried on Groq through an adapter that accepts and
+ * returns Anthropic Messages shapes, so every call site (`claude().messages
+ * .create(...)`, `res.content`, `stop_reason`, tool_use / tool_result blocks)
+ * keeps working unchanged. Mirrors web/lib/claude.ts.
+ *
+ * After a billing or auth failure Anthropic is skipped for ANTHROPIC_COOLDOWN_MS,
+ * so replies don't wait on a refusal every time while the account is unfunded;
+ * it is tried again automatically once the cooldown ends.
  */
 const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
 const GROQ_DEFAULT_MODEL = "openai/gpt-oss-120b";
+const ANTHROPIC_COOLDOWN_MS = 10 * 60 * 1000;
 let _client = null;
+let anthropicSkipUntil = 0;
 function claude() {
     if (!_client) {
-        const groqKey = process.env.GROQ_API_KEY;
-        if (groqKey) {
-            _client = groqAdapter(new openai_1.default({ apiKey: groqKey, baseURL: GROQ_BASE_URL }));
-        }
-        else {
-            const apiKey = process.env.ANTHROPIC_API_KEY;
-            if (!apiKey)
-                throw new Error("Neither GROQ_API_KEY nor ANTHROPIC_API_KEY is set");
-            _client = new sdk_1.default({ apiKey });
-        }
+        const apiKey = process.env.ANTHROPIC_API_KEY?.trim();
+        const groqKey = process.env.GROQ_API_KEY?.trim();
+        if (!apiKey && !groqKey)
+            throw new Error("Neither ANTHROPIC_API_KEY nor GROQ_API_KEY is set");
+        const primary = apiKey ? new sdk_1.default({ apiKey, maxRetries: 0, timeout: 30_000 }) : null;
+        const fallback = groqKey ? groqAdapter(new openai_1.default({ apiKey: groqKey, baseURL: GROQ_BASE_URL })) : null;
+        const create = async (params) => {
+            if (!primary)
+                return fallback.messages.create(params);
+            if (fallback && Date.now() < anthropicSkipUntil)
+                return fallback.messages.create(params);
+            try {
+                return await primary.messages.create(params);
+            }
+            catch (error) {
+                if (!fallback || !canFallback(error))
+                    throw error;
+                if (isAccountProblem(error))
+                    anthropicSkipUntil = Date.now() + ANTHROPIC_COOLDOWN_MS;
+                console.warn(`[ai] Anthropic failed (${describe(error)}); answering with Groq`);
+                return fallback.messages.create(params);
+            }
+        };
+        _client = { messages: { create } };
     }
     return _client;
+}
+// Only provider availability failures qualify. Invalid prompts, oversized input
+// and refusals must not be retried at another provider. Same rule as
+// web/lib/ai-fallback.ts.
+function canFallback(error) {
+    const e = error;
+    if (!e || typeof e !== "object")
+        return false;
+    if ([401, 402, 408, 429].includes(e.status ?? 0) || (e.status ?? 0) >= 500)
+        return true;
+    if (["APIConnectionError", "APIConnectionTimeoutError"].includes(e.name ?? ""))
+        return true;
+    return e.status === 400 && isAccountProblem(error);
+}
+// Billing or key problems won't fix themselves in seconds, unlike an outage.
+function isAccountProblem(error) {
+    const e = error;
+    if ([401, 402].includes(e?.status ?? 0))
+        return true;
+    const details = `${e?.message ?? ""} ${JSON.stringify(e?.error ?? {})}`;
+    return /credit balance is too low|insufficient[_ ](?:credit|quota)|billing[_ ]hard[_ ]limit/i.test(details);
+}
+function describe(error) {
+    const e = error;
+    return `${e?.status ?? "no status"}: ${(e?.message ?? String(error)).slice(0, 120)}`;
 }
 exports.CLAUDE_MODELS = {
     fast: "claude-sonnet-4-6",
