@@ -88,7 +88,6 @@ const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, 
       { label: "Member directory and deal board", cells: ["Read-only", true, true, true] },
       { label: "AI Matchmaking", cells: [false, true, true, true] },
       { label: "Mastermind Pods (launch with the first Apex members)", cells: [false, false, false, SOON()] },
-      { label: "Early access to new features", cells: [false, false, false, true] },
     ],
   },
 ];

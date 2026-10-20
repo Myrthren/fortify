@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   since.setDate(since.getDate() - 7);
 
   const users = await db.user.findMany({
-    where: { tier: { in: ["PRO", "ELITE", "APEX"] }, discordId: { not: null } },
+    where: { tier: { in: ["ELITE", "APEX"] }, discordId: { not: null } },
     select: {
       id: true,
       name: true,

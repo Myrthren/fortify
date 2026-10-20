@@ -57,7 +57,7 @@ const TOGGLES: { key: keyof Prefs; label: string; desc: string; comingSoon?: boo
   { key: "dmShopifyMilestone",     label: "Shopify — revenue milestone",desc: "When your store crosses $500, $1k, $5k, $10k… this month." },
   { key: "dmStripeMrrDrop",        label: "Stripe — MRR change",        desc: "Alert when MRR drops >10% or spikes >25% week over week." },
   { key: "dmContentBrief",         label: "Weekly content brief",       desc: "3 content ideas based on trending Reddit posts in your niche." },
-  { key: "dmWeeklyReport",    label: "Weekly strategy report",desc: "Your weekly AI digest delivered straight to DMs." },
+  { key: "dmWeeklyReport",    label: "Weekly strategy report",desc: "Strategy reports for Elite and Apex. Also controls lead-pack DMs and Apex Growth Brief DMs." },
   { key: "dmRenewalReminder", label: "Renewal reminder",      desc: "3 days before your next billing date.", comingSoon: true },
   { key: "dmLimitWarning",    label: "Usage limit warning",   desc: "When you hit 80% of your monthly quota.", comingSoon: true },
   { key: "dmTrendAlerts",     label: "Trend alerts",          desc: "When a term you're tracking spikes across the web." },
