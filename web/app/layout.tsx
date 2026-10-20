@@ -10,6 +10,7 @@ import "./immersive-theme.css";
 import "./classic-theme.css";
 import "./workspace-navigation.css";
 import "./workspace-operations.css";
+import "./planning-canvas.css";
 
 const BASE_URL = "https://fortify-io.com";
 

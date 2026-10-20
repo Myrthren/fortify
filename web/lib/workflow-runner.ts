@@ -781,11 +781,15 @@ export async function runWorkflow(
   workflowId: string,
   userId: string,
   triggerPayload: TriggerPayload = {},
+  expectedUpdatedAt?: string,
 ): Promise<{ runId: string; status: string; message?: string }> {
 
   // 1. Load workflow
   const workflow = await db.workflow.findFirst({ where: { id: workflowId, userId } });
   if (!workflow) return { runId: "", status: "error", message: "Workflow not found" };
+  if (expectedUpdatedAt && workflow.updatedAt.toISOString() !== expectedUpdatedAt) {
+    return { runId: "", status: "error", message: "The procedure changed. Reload the plan and review its latest actions before running." };
+  }
 
   // 2. Check capacity
   const user = await db.user.findUnique({ where: { id: userId } });

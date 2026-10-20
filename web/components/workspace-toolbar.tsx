@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, Coins, Compass, Fingerprint, Radar, Activity, Workflow } from "lucide-react";
+import { ArrowUpRight, Coins, Compass, Fingerprint, Radar, Activity, Workflow, Layers } from "lucide-react";
 import { ToolSearch } from "./tool-search";
 import type { Tier } from "@prisma/client";
 
@@ -8,6 +8,7 @@ export function WorkspaceToolbar({ tier, credits, active }: { tier: Tier; credit
     <ToolSearch tier={tier}/>
     <nav aria-label="Workspace shortcuts" className="workspace-shortcuts">
       {[
+        { label:"Plans", href:"/dashboard/plans", icon:Layers, keys:["plans"] },
         { label:"Pipeline", href:"/dashboard/pipeline", icon:Compass, keys:["pipeline","leads","lead-extractor","recon","outreach","outbound"] },
         { label:"Content", href:"/dashboard/voice", icon:Fingerprint, keys:["voice","inspiration","virality"] },
         { label:"Research", href:"/dashboard/competitors", icon:Radar, keys:["competitors","competitor-watch","trends"] },
