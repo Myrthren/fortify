@@ -1,4 +1,7 @@
 "use client";
+import { SavePipelineLead } from "./save-pipeline-lead";
+import { PIPELINE_STAGES, leadUrl, isPipelineStage, type PipelineStage } from "@/lib/pipeline";
+import { responseError } from "@/lib/response-error";
 
 import { useState } from "react";
 import {
@@ -20,12 +23,16 @@ import {
 } from "lucide-react";
 import { TierBadge } from "@/components/tier-badge";
 
-type LeadStatus = "new" | "contacted" | "qualified" | "dead";
+type LeadStatus = PipelineStage;
+function leadStatusKey(url: string) { try { return leadUrl(url); } catch { return url; } }
 
 const STATUS_CONFIG: Record<LeadStatus, { label: string; cls: string }> = {
   new:       { label: "New",       cls: "border-white/10 bg-white/[0.04] text-text-dim" },
   contacted: { label: "Contacted", cls: "border-white/15 bg-white/[0.05] text-text-muted" },
   qualified: { label: "Qualified", cls: "border-green-500/30 bg-green-500/10 text-green-400" },
+  "draft-ready": { label: "Draft ready", cls: "border-white/15 text-text-muted" },
+  replied: { label: "Replied", cls: "border-green-500/30 text-green-400" },
+  won: { label: "Won", cls: "border-green-500/30 text-green-400" },
   dead:      { label: "Dead",      cls: "border-red-500/30 bg-red-500/10 text-red-400" },
 };
 
@@ -62,17 +69,19 @@ interface ReconClientProps {
   pastSearches: PastSearch[];
   userCredits: number;
   initialLeadStatuses: { url: string; status: string }[];
+  initialSearchId?: string;
 }
 
 const COUNT_OPTIONS = [10, 20, 30, 50] as const;
 
-export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: ReconClientProps) {
-  const [location, setLocation] = useState("");
-  const [category, setCategory] = useState("");
+export function ReconClient({ pastSearches, userCredits, initialLeadStatuses, initialSearchId }: ReconClientProps) {
+  const initialSearch = pastSearches.find(item => item.id === initialSearchId);
+  const [location, setLocation] = useState(initialSearch?.location ?? "");
+  const [category, setCategory] = useState(initialSearch?.category ?? "");
   const [leadCount, setLeadCount] = useState<number>(10);
   const [extractEmails, setExtractEmails] = useState(false);
   const [applyContext, setApplyContext] = useState(false);
-  const [results, setResults] = useState<Lead[]>([]);
+  const [results, setResults] = useState<Lead[]>(initialSearch?.leads ?? []);
   const [rawCount, setRawCount] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,7 +99,7 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
 
   // Lead status tracking (keyed by URL, persisted server-side across all searches)
   const [leadStatuses, setLeadStatuses] = useState<Map<string, LeadStatus>>(
-    () => new Map(initialLeadStatuses.map((s) => [s.url, s.status as LeadStatus]))
+    () => new Map(initialLeadStatuses.filter(s => isPipelineStage(s.status)).map((s) => [leadStatusKey(s.url), s.status as LeadStatus]))
   );
 
   // Status filter
@@ -192,17 +201,21 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
     });
   }
 
-  function setLeadStatus(url: string, status: LeadStatus) {
+  async function setLeadStatus(url: string, status: LeadStatus) {
+    const key = leadStatusKey(url);
+    const previous = leadStatuses.get(key);
     setLeadStatuses((prev) => {
       const next = new Map(prev);
-      next.set(url, status);
+      next.set(key, status);
       return next;
     });
-    fetch("/api/recon/lead-status", {
+    try { const response = await fetch("/api/recon/lead-status", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url, status }),
-    }).catch(() => {});
+    });
+    if (!response.ok) throw new Error(await responseError(response));
+    } catch (e) { setError((e as Error).message); setLeadStatuses(current => { const next = new Map(current); if (next.get(key) === status) { if (previous) next.set(key, previous); else next.delete(key); } return next; }); }
   }
 
   function exportCSV() {
@@ -215,7 +228,7 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
       lead.rating != null ? String(lead.rating) : "",
       lead.description ?? "",
       (lead.emails ?? []).join("; "),
-      leadStatuses.get(lead.url) ?? "new",
+      leadStatuses.get(leadStatusKey(lead.url)) ?? "new",
     ]);
     const csv = [headers, ...rows]
       .map((row) =>
@@ -255,10 +268,10 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
   const filteredResults =
     statusFilter === "all"
       ? results
-      : results.filter((lead) => (leadStatuses.get(lead.url) ?? "new") === statusFilter);
+      : results.filter((lead) => (leadStatuses.get(leadStatusKey(lead.url)) ?? "new") === statusFilter);
 
   const statusCounts = results.reduce<Record<string, number>>((acc, lead) => {
-    const s = leadStatuses.get(lead.url) ?? "new";
+    const s = leadStatuses.get(leadStatusKey(lead.url)) ?? "new";
     acc[s] = (acc[s] ?? 0) + 1;
     return acc;
   }, {});
@@ -469,7 +482,7 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
               {/* Status filter pills */}
               <div className="flex items-center gap-1.5 ml-1">
                 <Filter className="h-3 w-3 text-text-dim" />
-                {(["all", "new", "contacted", "qualified", "dead"] as const).map((s) => {
+                {(["all", ...PIPELINE_STAGES.map(item => item.value)] as const).map((s) => {
                   const count = s === "all" ? results.length : (statusCounts[s] ?? 0);
                   if (s !== "all" && count === 0) return null;
                   return (
@@ -504,7 +517,7 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
           <div className="grid gap-3 sm:grid-cols-2">
             {filteredResults.map((lead, i) => {
               const globalIndex = results.indexOf(lead);
-              const status = leadStatuses.get(lead.url) ?? "new";
+              const status = leadStatuses.get(leadStatusKey(lead.url)) ?? "new";
               return (
                 <div key={i} className="card-elevated p-4 space-y-2">
                   {/* Domain + rating + status row */}
@@ -525,6 +538,7 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
                     {/* Status selector */}
                     <select
                       value={status}
+                      disabled={!lead.url}
                       onChange={(e) => setLeadStatus(lead.url, e.target.value as LeadStatus)}
                       className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-medium bg-transparent cursor-pointer transition focus:outline-none ${STATUS_CONFIG[status].cls}`}
                     >
@@ -614,6 +628,7 @@ export function ReconClient({ pastSearches, userCredits, initialLeadStatuses }: 
                   )}
 
                   {/* Actions row */}
+                  <SavePipelineLead lead={{ url: lead.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lead.title} ${lead.address ?? ""}`)}`, company: lead.title, source: "recon", context: [lead.description, lead.address, lead.context].filter(Boolean).join("\n").slice(0, 6000), email: lead.emails?.[0] }}/>
                   <div className="flex items-center gap-2 pt-1">
                     <a
                       href={lead.url}

@@ -1,4 +1,5 @@
 "use client";
+import { SavePipelineLead } from "./save-pipeline-lead";
 
 import { useState, useRef } from "react";
 import {
@@ -410,6 +411,7 @@ export function LeadExtractorClient({
           <div className="grid gap-3 sm:grid-cols-2">
             {results.map((lead, i) => (
               <div key={i} className="card-elevated p-4 space-y-3">
+                <SavePipelineLead lead={{ url: lead.profileUrl, company: lead.name ?? `@${lead.handle}`, source: "lead-extractor", email: lead.emails[0], context: [lead.bio, lead.website ? `Website: ${lead.website}` : "", lead.context].filter(Boolean).join("\n").slice(0, 6000) }}/>
                 {/* Platform + handle header */}
                 <div className="flex items-center gap-2.5">
                   <PlatformIcon

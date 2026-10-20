@@ -1,4 +1,5 @@
 "use client";
+import { SavePipelineLead } from "./save-pipeline-lead";
 
 import { useState } from "react";
 import { ChevronDown, Download, Globe, Loader2, Mail, MapPin, PackageOpen, Phone, Star } from "lucide-react";
@@ -187,6 +188,7 @@ function PackCard({ pack, open, onToggle }: { pack: PackView; open: boolean; onT
                     </a>
                   ))}
                 </div>
+                <SavePipelineLead lead={{ url: lead.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${lead.title} ${lead.address ?? ""}`)}`, company: lead.title, source: "weekly-pack", context: [lead.description, lead.address].filter(Boolean).join("\n").slice(0, 6000), email: lead.emails?.[0], draft: lead.draft }}/>
                 {lead.draft && (
                   <div className="mt-3 rounded-lg border border-bg-border bg-bg-subtle p-3">
                     <div className="mb-1.5 flex items-center justify-between">

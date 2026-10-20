@@ -16,9 +16,13 @@ const CHANNELS: { value: Channel; label: string }[] = [
 export function OutreachGenerator({
   voices = [],
   initialProspect = "",
+  pipelineLeadId,
+  initialDraft,
 }: {
   voices?: { id: string; name: string; isActive: boolean }[];
   initialProspect?: string;
+  pipelineLeadId?: string;
+  initialDraft?: string | null;
 }) {
   const [channel, setChannel] = useState<Channel>("dm");
   const [prospect, setProspect] = useState(initialProspect);
@@ -26,7 +30,9 @@ export function OutreachGenerator({
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>(
     () => voices.find((v) => v.isActive)?.id ?? ""
   );
-  const [message, setMessage] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(initialDraft ?? null);
+  const [pipelineSaved, setPipelineSaved] = useState(false);
+  const [warning, setWarning] = useState("");
   const [voice, setVoice] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -34,6 +40,7 @@ export function OutreachGenerator({
 
   async function generate() {
     setError(null);
+    setWarning(""); setPipelineSaved(false);
     setMessage(null);
     setLoading(true);
     try {
@@ -45,6 +52,7 @@ export function OutreachGenerator({
           prospect,
           offer,
           voiceId: selectedVoiceId || undefined,
+          pipelineLeadId,
         }),
       });
       if (!res.ok) {
@@ -53,6 +61,7 @@ export function OutreachGenerator({
       const data = await res.json();
       setMessage(data.message);
       setVoice(data.voice ?? null);
+      setPipelineSaved(data.pipelineSaved === true); setWarning(data.warning ?? "");
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -163,6 +172,8 @@ export function OutreachGenerator({
 
       {message && (
         <div className="space-y-2">
+          {pipelineSaved && <p role="status" className="text-sm text-text-muted">Draft saved to this prospect’s pipeline record.</p>}
+          {warning && <p role="alert" className="workspace-error">{warning}</p>}
           {voice && (
             <p className="text-xs text-text-muted">
               In voice: <span className="text-text">{voice}</span>

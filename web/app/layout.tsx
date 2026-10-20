@@ -9,6 +9,7 @@ import "./command-theme.css";
 import "./immersive-theme.css";
 import "./classic-theme.css";
 import "./workspace-navigation.css";
+import "./workspace-operations.css";
 
 const BASE_URL = "https://fortify-io.com";
 

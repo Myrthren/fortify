@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && node scripts/ensure-site-appearance.cjs && next build",
+    "build": "prisma generate && node scripts/ensure-site-appearance.cjs && node scripts/ensure-workspace.cjs && next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "prisma db push",
@@ -16,7 +16,8 @@
     "test:advisor": "node --test scripts/test-advisor.cjs",
     "test:refinements": "node --experimental-strip-types --test scripts/test-refinements.mjs",
     "test:billing": "node --experimental-strip-types --test scripts/test-paypal-access.mjs scripts/test-lead-pack.mjs",
-    "test:theme": "node --test scripts/test-site-theme.cjs"
+    "test:theme": "node --test scripts/test-site-theme.cjs",
+    "test:workspace": "node --test scripts/test-workspace.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

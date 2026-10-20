@@ -1,7 +1,7 @@
 import { WorkspaceToolbar } from "./workspace-toolbar";
 import Link from "next/link";
 import Image from "next/image";
-import { Lock, Menu, MessageSquare, Users, LayoutDashboard, Sparkles } from "lucide-react";
+import { Lock, Menu, MessageSquare, Users, LayoutDashboard, Sparkles, Activity } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { TIERS } from "@/lib/tiers";
 import { isOwner } from "@/lib/owner";
@@ -30,6 +30,7 @@ const COMMUNITY = [
 ] as const;
 
 const ACCOUNT = [
+  { key: "activity", href: "/dashboard/activity", label: "Workspace activity" },
   { key: "profile",  href: "/dashboard/profile",  label: "Profile" },
   { key: "settings", href: "/dashboard/settings", label: "Settings" },
   { key: "credits",  href: "/dashboard/credits",  label: "Credits" },
@@ -185,6 +186,8 @@ export function DashboardNav({
                 </div>
               </div>
             </div>
+
+            <Link href="/dashboard/activity" aria-current={active === "activity" ? "page" : undefined} className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 transition ${active === "activity" ? "font-medium text-text" : "text-text-muted hover:bg-white/[0.04] hover:text-text"}`}><Activity size={13}/> Activity</Link>
 
             {/* Community dropdown */}
             <div className="group relative">

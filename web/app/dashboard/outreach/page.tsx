@@ -6,17 +6,21 @@ import { checkMonthly } from "@/lib/usage";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { OutreachGenerator } from "@/components/outreach-generator";
 import Link from "next/link";
+import { prospectContext } from "@/lib/pipeline";
+import { notFound } from "next/navigation";
 
 export default async function OutreachPage({
   searchParams,
 }: {
-  searchParams: Promise<{ prospect?: string }>;
+  searchParams: Promise<{ prospect?: string; lead?: string }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
   const userId = (session.user as any).id;
   const params = await searchParams;
-  const initialProspect = params.prospect ?? "";
+  const pipelineLead = params.lead ? await db.leadStatus.findFirst({ where: { id: params.lead, userId } }) : null;
+  if (params.lead && !pipelineLead) notFound();
+  const initialProspect = pipelineLead ? prospectContext(pipelineLead) : params.prospect ?? "";
 
   const [user, voices] = await Promise.all([
     db.user.findUnique({ where: { id: userId } }),
@@ -57,7 +61,8 @@ export default async function OutreachPage({
           </div>
         )}
         <div className="card p-5 sm:p-6">
-          <OutreachGenerator voices={voices} initialProspect={initialProspect} />
+          {pipelineLead && <div className="pipeline-outreach-context"><strong>Writing for {pipelineLead.company || "your saved prospect"}</strong><p>Your saved research is included below. Generated drafts will be saved back to this lead.</p><Link href={`/dashboard/pipeline?lead=${encodeURIComponent(pipelineLead.id)}`}>Back to prospect →</Link></div>}
+          <OutreachGenerator key={pipelineLead?.id ?? "new"} voices={voices} initialProspect={initialProspect} pipelineLeadId={pipelineLead?.id} initialDraft={pipelineLead?.draft}/>
         </div>
       </main>
     </div>

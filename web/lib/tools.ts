@@ -17,7 +17,7 @@ export type ActiveKey =
   | "revenue" | "virality" | "dna" | "logo" | "members" | "deals" | "pods"
   | "forums" | "messages" | "connections" | "notifications" | "profile"
   | "settings" | "support" | "credits" | "recon" | "competitor-watch"
-  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack";
+  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity";
 
 export type HubKey = "leads" | "competitors" | "insights";
 
@@ -39,7 +39,8 @@ export type Tool = {
 // time, so server and client agree) once sending is live.
 const OUTBOUND_LIVE = process.env.NEXT_PUBLIC_OUTBOUND_ENABLED === "true";
 
-export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "members" | "deals" | "pods" | "forums" | "messages" | "connections" | "notifications" | "profile" | "settings" | "support" | "credits">, Tool> = {
+export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "activity" | "members" | "deals" | "pods" | "forums" | "messages" | "connections" | "notifications" | "profile" | "settings" | "support" | "credits">, Tool> = {
+  pipeline: { key: "pipeline", href: "/dashboard/pipeline", label: "Lead Pipeline", desc: "Research, drafts and follow-ups for every prospect", icon: Target, hub: "leads" },
   voice:            { key: "voice", href: "/dashboard/voice", label: "Brand Voice Studio", desc: "Train AI on your tone of voice", icon: Sparkles, minTier: "PRO" },
   inspiration:      { key: "inspiration", href: "/dashboard/inspiration", label: "Content Inspiration", desc: "Mine Reddit and YouTube for angles", icon: Lightbulb, minTier: "PRO" },
   virality:         { key: "virality", href: "/dashboard/virality", label: "Virality Engine", desc: "Score and publish short-form video", icon: Clapperboard, minTier: "ELITE" },
@@ -69,7 +70,7 @@ export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "members" | "deals" 
 };
 
 export const HUBS: Record<HubKey, { label: string; desc: string; icon: LucideIcon; tabs: ActiveKey[] }> = {
-  leads:       { label: "Leads & Outreach", desc: "Find leads, score them, write to them", icon: Search, tabs: ["lead-extractor", "recon", "lead-pack", "leads", "outreach", "outbound"] },
+  leads:       { label: "Leads & Outreach", desc: "Find leads, score them, write to them", icon: Search, tabs: ["pipeline", "lead-extractor", "recon", "lead-pack", "leads", "outreach", "outbound"] },
   competitors: { label: "Competitors", desc: "Scan rivals and watch for changes", icon: Radar, tabs: ["competitors", "competitor-watch"] },
   insights:    { label: "Business Insights", desc: "Revenue, Shopify, ads and analytics", icon: LineChart, tabs: ["revenue", "shopify", "ads", "analytics"] },
 };

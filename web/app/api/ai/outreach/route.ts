@@ -47,16 +47,16 @@ export async function POST(req: Request) {
     );
   }
 
-  const body = (await req.json()) as {
-    prospect?: string;
-    offer?: string;
-    channel?: OutreachChannel;
-    voiceId?: string;
-  };
+  const body = await req.json().catch(() => null);
+  if (!body || typeof body !== "object" || Array.isArray(body) || typeof body.prospect !== "string" || typeof body.offer !== "string" || body.prospect.length > 12000 || body.offer.length > 6000 || (body.voiceId !== undefined && typeof body.voiceId !== "string")) return new NextResponse("Invalid outreach request", { status: 400 });
   const prospect = body.prospect?.trim();
   const offer = body.offer?.trim();
   const channel = body.channel ?? "dm";
   const voiceId = body.voiceId;
+  const pipelineLeadId = body.pipelineLeadId;
+  if (pipelineLeadId !== undefined && (typeof pipelineLeadId !== "string" || !pipelineLeadId || pipelineLeadId.length > 200)) return new NextResponse("Invalid pipeline lead", { status: 400 });
+  const pipelineLead = pipelineLeadId ? await db.leadStatus.findFirst({ where: { id: pipelineLeadId, userId } }) : null;
+  if (pipelineLeadId && !pipelineLead) return new NextResponse("Lead not found", { status: 404 });
 
   if (!prospect || prospect.length < 20) {
     return new NextResponse("Need at least 20 chars describing the prospect", {
@@ -89,12 +89,19 @@ export async function POST(req: Request) {
     return new NextResponse(`Generation failed: ${e.message}`, { status: 500 });
   }
 
-  await logGeneration({
+  const generation = {
     userId,
     type: "outreach",
-    input: JSON.stringify({ channel, prospect, offer }),
+    input: JSON.stringify({ channel, prospect, offer, ...(pipelineLeadId ? { pipelineLeadId } : {}) }),
     output: message,
-  });
+  };
+  await logGeneration(generation);
+  if (pipelineLead) {
+    const saved = await db.leadStatus.updateMany({ where: { id: pipelineLead.id, userId, updatedAt: pipelineLead.updatedAt },
+      data: { draft: message, draftChannel: channel, ...(["new", "qualified", "draft-ready"].includes(pipelineLead.status) ? { status: "draft-ready" } : {}) } }).catch(() => ({ count: 0 }));
+    // Keep the generated result in history even if the prospect changed meanwhile.
+    if (!saved.count) return NextResponse.json({ message, voice: activeVoice?.name ?? null, pipelineSaved: false, warning: "Your draft is saved in activity history, but the prospect could not be updated. Copy this message before leaving, then review the pipeline." });
+  }
 
-  return NextResponse.json({ message, voice: activeVoice?.name ?? null });
+  return NextResponse.json({ message, voice: activeVoice?.name ?? null, pipelineSaved: !!pipelineLead });
 }

@@ -1,12 +1,12 @@
-import { creationTitle } from "@/lib/recent-creations";
-import { DashboardOverview } from "@/components/dashboard-overview";
+import { getWorkspaceSnapshot } from "@/lib/workspace-activity";
+import { WorkspaceActivity } from "@/components/workspace-activity";
+import { OperationalDashboardHeader } from "@/components/operational-dashboard-header";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { HookGenerator } from "@/components/hook-generator";
 import { TIERS } from "@/lib/tiers";
 import { DashboardNav } from "@/components/dashboard-nav";
-import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import { GettingStarted } from "@/components/getting-started";
 import {
   ArrowRight, Sparkles, Workflow, MessagesSquare, Users, UserCircle,
@@ -39,40 +39,27 @@ const COMMUNITY_TILES: Tile[] = [
   { href: "/dashboard/profile", name: "Your Profile", desc: "Niche, skills, what you offer", icon: UserCircle },
 ];
 
-const SUBSCRIPTION_LABEL: Record<string, string> = {
-  ACTIVE: "Active", CANCELLED: "Cancelled", SUSPENDED: "Paused", EXPIRED: "Expired",
-};
-
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user) redirect("/login");
 
   const userId = (session.user as any).id as string;
-  const [user, companyDna, recentGenerations] = await Promise.all([db.user.findUnique({
+  if (typeof userId !== "string" || !userId) redirect("/login");
+  const [user, snapshot] = await Promise.all([db.user.findUnique({
     where: { id: userId },
-    include: { subscription: true, profile: true },
-  }), db.companyDna.findUnique({ where: { userId }, select: { totalChars: true } }),
-    db.generation.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 3, select: { id: true, type: true, input: true, createdAt: true } })]);
+  }), getWorkspaceSnapshot(userId)]);
   if (!user) redirect("/login");
 
   const tierMeta = TIERS[user.tier];
-  const profileIncomplete = !user.profile || (!user.profile.niche && user.profile.skills.length === 0 && user.profile.canOffer.length === 0);
   const firstName = user.name?.split(" ")[0] ?? "operator";
-  const subStatus = user.subscription?.status;
-  const subscriptionLabel = subStatus ? (SUBSCRIPTION_LABEL[subStatus] ?? subStatus) : "None";
 
   return (
     <div className="relative min-h-screen">
       <DashboardNav user={user} active="dashboard" />
 
       <main className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-        <DashboardOverview firstName={firstName} tier={tierMeta.name} xp={user.xp} streak={user.streak} subscription={subscriptionLabel} recentWork={recentGenerations.map(item => ({ id: item.id, type: item.type, title: creationTitle(item.input, item.type), date: item.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" }) }))} />
-
-        <OnboardingChecklist steps={[
-          { title: "Complete your profile", description: "Get better matches in the member directory.", href: "/dashboard/profile", done: !profileIncomplete },
-          { title: "Add Company DNA", description: "Give AI the context it needs to personalise results.", href: "/dashboard/company-dna", done: (companyDna?.totalChars ?? 0) > 0 },
-          { title: "Try your first tool", description: "Create a hook below and see Fortify in action.", href: "/dashboard#hook-generator", done: recentGenerations.length > 0 },
-        ]} />
+        <OperationalDashboardHeader name={firstName} tier={tierMeta.name} credits={user.credits}/>
+        <WorkspaceActivity initial={snapshot} tier={user.tier}/>
 
         <GettingStarted tier={user.tier} />
 

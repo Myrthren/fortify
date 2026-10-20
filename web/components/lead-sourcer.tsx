@@ -1,4 +1,5 @@
 "use client";
+import { SavePipelineLead } from "./save-pipeline-lead";
 
 import { useState } from "react";
 import { Loader2, Search, ExternalLink, Copy, Check, ArrowRight } from "lucide-react";
@@ -146,6 +147,7 @@ export function LeadSourcer() {
               </div>
 
               <div className="flex gap-2">
+                <SavePipelineLead lead={{ url: lead.website, company: lead.company, source: "lead-sourcing", context: `${lead.fitReason}\nSuggested opening: ${lead.hook}` }}/>
                 <button
                   onClick={() => copyHook(`${i}`, lead.hook)}
                   className="btn-ghost text-xs gap-1.5"

@@ -6,7 +6,8 @@ import { ReconClient } from "@/components/recon-client";
 import { LockedPage } from "@/components/locked-page";
 import { Search, MapPin, ClipboardList, Crosshair } from "lucide-react";
 
-export default async function ReconPage() {
+export default async function ReconPage({ searchParams }: { searchParams: Promise<{ search?: string }> }) {
+  const params = await searchParams;
   const session = await auth();
   if (!session?.user) redirect("/login");
   const userId = (session.user as any).id;
@@ -69,6 +70,7 @@ export default async function ReconPage() {
           pastSearches={serialisedSearches}
           userCredits={user.credits}
           initialLeadStatuses={leadStatuses}
+          initialSearchId={params.search}
         />
       </main>
     </div>
