@@ -1,3 +1,5 @@
+import { AdminSiteAppearance } from "@/components/admin-site-appearance";
+import { getSiteTheme } from "@/lib/site-appearance";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -23,6 +25,7 @@ export default async function AdminPage() {
   if (!user) redirect("/login");
   if (!isOwner(user.discordId)) redirect("/dashboard");
 
+  const siteTheme = await getSiteTheme();
   const tierMeta = TIERS[user.tier];
 
   const announcements = await db.announcement.findMany({
@@ -112,6 +115,12 @@ export default async function AdminPage() {
             <UsersRound className="h-3.5 w-3.5" /> <span className="tier-text">Mastermind Pods</span>
           </Link>
         </div>
+
+        <section>
+          <h2 className="text-lg font-semibold tracking-tight">Site appearance</h2>
+          <p className="mt-1 mb-4 text-sm text-text-muted">Choose the theme everyone sees across Fortify.</p>
+          <AdminSiteAppearance initialTheme={siteTheme} />
+        </section>
 
         {/* Reset limits */}
         <section>

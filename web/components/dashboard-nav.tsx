@@ -1,6 +1,7 @@
+import { WorkspaceToolbar } from "./workspace-toolbar";
 import Link from "next/link";
 import Image from "next/image";
-import { Lock, Menu, MessageSquare, Users } from "lucide-react";
+import { Lock, Menu, MessageSquare, Users, LayoutDashboard, Sparkles } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { TIERS } from "@/lib/tiers";
 import { isOwner } from "@/lib/owner";
@@ -79,6 +80,7 @@ function DropdownLink({
   return (
     <Link
       href={href}
+      aria-current={active ? "page" : undefined}
       className={`flex items-center rounded-md px-3 py-1.5 text-sm transition ${
         active
           ? "bg-white/[0.06] font-medium text-text"
@@ -128,24 +130,25 @@ export function DashboardNav({
   const displayName = user.username ? `@${user.username}` : user.email;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-bg-border bg-bg/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+    <header className="workspace-header sticky top-0 z-40 border-b border-bg-border bg-bg/80 backdrop-blur">
+      <div className="workspace-topbar mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
 
         {/* ── Left: Logo + primary nav ── */}
         <div className="flex items-center gap-1">
           <Logo withWord />
 
-          <nav className="ml-4 hidden items-center gap-0.5 text-sm sm:flex">
+          <nav className="workspace-primary ml-4 hidden items-center gap-0.5 text-sm sm:flex">
             {/* Dashboard */}
             <Link
               href="/dashboard"
+              aria-current={active === "dashboard" ? "page" : undefined}
               className={`rounded-md px-3 py-1.5 transition ${
                 active === "dashboard"
                   ? "font-medium text-text"
                   : "text-text-muted hover:bg-white/[0.04] hover:text-text"
               }`}
             >
-              Dashboard
+              <LayoutDashboard className="workspace-nav-icon" size={14}/> Dashboard
             </Link>
 
             {/* AI Tools dropdown */}
@@ -158,7 +161,7 @@ export function DashboardNav({
                     : "text-text-muted hover:bg-white/[0.04] hover:text-text"
                 }`}
               >
-                AI Tools
+                <Sparkles className="workspace-nav-icon" size={14}/> AI Tools
                 <ChevronDown />
               </button>
               <div className={`${MENU_PANEL} left-0 w-56`}>
@@ -193,7 +196,7 @@ export function DashboardNav({
                     : "text-text-muted hover:bg-white/[0.04] hover:text-text"
                 }`}
               >
-                Community
+                <Users className="workspace-nav-icon" size={14}/> Community
                 <ChevronDown />
               </button>
               <div className={`${MENU_PANEL} left-0 w-48`}>
@@ -215,7 +218,7 @@ export function DashboardNav({
         </div>
 
         {/* ── Right: icons + meta + account dropdown ── */}
-        <div className="flex items-center gap-2 text-sm">
+        <div className="workspace-account-actions flex items-center gap-2 text-sm">
 
           {/* Notifications bell */}
           <NotificationBell active={active === "notifications"} />
@@ -247,7 +250,7 @@ export function DashboardNav({
           </Link>
 
           {/* Username / email display */}
-          <span className="hidden max-w-[160px] truncate text-text-muted md:inline">
+          <span className="workspace-username hidden max-w-[160px] truncate text-text-muted md:inline">
             {displayName}
           </span>
 
@@ -291,7 +294,7 @@ export function DashboardNav({
                   : "text-text-muted hover:bg-white/[0.04] hover:text-text"
               }`}
             >
-              Account
+              <span className="workspace-avatar" aria-hidden="true">{(user.username || user.email || "F").slice(0, 1).toUpperCase()}</span> Account
               <ChevronDown />
             </button>
             <div className={`${MENU_PANEL} right-0 w-44`}>
@@ -319,7 +322,7 @@ export function DashboardNav({
           </div>
 
           {/* Mobile menu: a native <details> sheet, so it needs no client JS */}
-          <details className="mobile-menu sm:hidden">
+          <details className="workspace-mobile-menu mobile-menu sm:hidden">
             <summary
               aria-label="Open menu"
               className="flex cursor-pointer list-none items-center rounded-md p-1.5 text-text-muted transition hover:bg-white/[0.04] hover:text-text"
@@ -364,6 +367,8 @@ export function DashboardNav({
           </details>
         </div>
       </div>
+
+      <WorkspaceToolbar tier={user.tier} credits={user.credits} active={active} />
 
       {/* ── Hub tabs: the tools a merged section stands in for ── */}
       {activeHub && (

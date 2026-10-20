@@ -1,3 +1,5 @@
+import { ParticleField } from "@/components/particle-field";
+import { CommandHero } from "@/components/command-hero";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -13,58 +15,7 @@ export default function HomePage() {
     <>
       <Nav />
 
-      {/* ═══════════════ HERO ═══════════════ */}
-      <section className="relative overflow-hidden border-b border-bg-border">
-        {/* Ambient background */}
-        <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="aurora aurora-violet left-1/2 top-[-10%] h-[520px] w-[520px] -translate-x-1/2" />
-          <div className="aurora aurora-indigo left-[15%] top-[20%] h-[360px] w-[360px]" />
-          <div className="aurora aurora-white right-[12%] top-[8%] h-[300px] w-[300px]" />
-        </div>
-        <div className="bg-grid-fade absolute inset-0" />
-
-        <div className="relative mx-auto max-w-4xl px-4 pt-14 pb-20 text-center sm:px-6 sm:pt-20 sm:pb-28">
-          {/* Energy core centerpiece */}
-          <div className="anim-fade-up mb-10 flex justify-center">
-            <div className="core">
-              <div className="core-ring" />
-              <div className="core-ring-2" />
-              <div className="core-bloom" />
-              <div className="core-sonar" />
-              <div className="core-sonar s2" />
-              <div className="core-sonar s3" />
-              <div className="orbit"><span className="orbit-dot" /></div>
-              <div className="orbit orbit-rev"><span className="orbit-dot" style={{ background: "var(--accent)" }} /></div>
-              <div className="core-disc">
-                <Image src="/fortify-mark.png" alt="Fortify" width={62} height={62} priority />
-              </div>
-            </div>
-          </div>
-
-          <div className="anim-fade-up anim-d1 mb-6 inline-flex items-center gap-2 rounded-full border border-bg-border bg-bg-panel/70 px-3 py-1 text-xs text-text-muted backdrop-blur">
-            <span className="dot-live h-1.5 w-1.5 rounded-full bg-green-400" />
-            Live on the web and in Discord
-          </div>
-
-          <h1 className="anim-fade-up anim-d2 text-balance text-4xl font-bold tracking-tight sm:text-6xl">
-            The AI co-pilot for<br className="hidden sm:inline" />{" "}
-            <span className="text-shine">online business.</span>
-          </h1>
-
-          <p className="anim-fade-up anim-d3 mx-auto mt-6 max-w-xl text-balance text-base text-text-muted sm:text-lg">
-            Fortify finds leads, writes the outreach in your voice, watches your competitors and automates
-            the work you keep putting off — on the web and inside your Discord.
-          </p>
-
-          <div className="anim-fade-up anim-d4 mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/login" className="btn-primary group w-full sm:w-auto">
-              Start free <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-            </Link>
-            <Link href="/pricing" className="btn-secondary w-full sm:w-auto">View pricing</Link>
-          </div>
-          <p className="anim-fade-up anim-d5 mt-4 text-xs text-text-dim">Free plan, no card needed. Sign in with Discord.</p>
-        </div>
-      </section>
+      <CommandHero />
 
       {/* ═══════════════ TOOLS YOU CAN CANCEL ═══════════════ */}
       <section className="border-b border-bg-border py-14 sm:py-16">
@@ -86,7 +37,8 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════ HOW IT WORKS ═══════════════ */}
-      <section className="border-b border-bg-border">
+      <section className="signal-section border-b border-bg-border">
+        <ParticleField className="section-particle-wave" />
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
           <div className="mb-12 text-center sm:mb-16">
             <span className="eyebrow"><Zap className="h-3.5 w-3.5" /> How it works</span>
@@ -111,7 +63,8 @@ export default function HomePage() {
       </section>
 
       {/* ═══════════════ FEATURES (BENTO) ═══════════════ */}
-      <section id="features" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 sm:py-28">
+      <section id="features" className="signal-section mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 sm:py-28">
+        <ParticleField shape="halo" className="section-particle-halo" />
         <div className="mb-12 text-center sm:mb-16">
           <span className="eyebrow">
             <Sparkles className="h-3.5 w-3.5" /> The arsenal
@@ -165,7 +118,8 @@ export default function HomePage() {
       <FaqSection />
 
       {/* ═══════════════ CTA BAND ═══════════════ */}
-      <section className="relative overflow-hidden border-t border-bg-border">
+      <section className="signal-section relative overflow-hidden border-t border-bg-border">
+        <ParticleField className="cta-particle-wave" />
         <div className="pointer-events-none absolute inset-0">
           <div className="aurora aurora-violet left-1/2 top-1/2 h-[420px] w-[620px] -translate-x-1/2 -translate-y-1/2" />
         </div>

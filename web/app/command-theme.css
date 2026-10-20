@@ -1,0 +1,88 @@
+/* Fortify / Signal — shared public and signed-in visual language. */
+:root[data-theme="scifi"]{color-scheme:dark;--bg:#050505;--bg-subtle:#0c0c0c;--bg-panel:#111111;--bg-elevated:#161616;--border:#1f1f1f;--border-strong:#2a2a2a;--text:#fafafa;--text-muted:#8a8a8a;--text-dim:#777777;--accent:#ffffff;--accent-deep:#e5e5e5;--accent-glow:rgba(255,255,255,.1)}
+:root[data-theme="scifi"] body{background:var(--bg)}
+:root[data-theme="scifi"] a,:root[data-theme="scifi"] button,:root[data-theme="scifi"] input,:root[data-theme="scifi"] textarea,:root[data-theme="scifi"] select{outline-offset:4px}
+:root[data-theme="scifi"] :focus-visible{outline:2px solid var(--accent)}
+:root[data-theme="scifi"] .eyebrow,:root[data-theme="scifi"] .signal-coordinate,:root[data-theme="scifi"] .command-rail,:root[data-theme="scifi"] .workspace-tag,:root[data-theme="scifi"] .command-stats>div>span{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:10px;letter-spacing:.13em}
+:root[data-theme="scifi"] .eyebrow{color:var(--accent);font-weight:500}
+:root[data-theme="scifi"] .btn-primary{background:#d6d6d6;color:#141414;border:1px solid #e3e3e3;border-radius:6px;box-shadow:inset 0 1px 0 #f6f6f633;min-height:42px}
+:root[data-theme="scifi"] .btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 24px #cacaca18}
+:root[data-theme="scifi"] .btn-primary::after{display:none}
+:root[data-theme="scifi"] .btn-secondary,:root[data-theme="scifi"] .btn-ghost,:root[data-theme="scifi"] .seg,:root[data-theme="scifi"] .input{border-radius:6px}
+:root[data-theme="scifi"] .btn-secondary{background:#151515;box-shadow:none}
+:root[data-theme="scifi"] .btn-secondary:hover:not(:disabled){background:#232323;border-color:#616161;transform:none;box-shadow:none}
+:root[data-theme="scifi"] .input{background:#0f0f0f;box-shadow:none}
+:root[data-theme="scifi"] .input:focus{border-color:var(--accent);box-shadow:0 0 0 3px #cacaca16}
+:root[data-theme="scifi"] .card,:root[data-theme="scifi"] .card-elevated,:root[data-theme="scifi"] .bento{border-radius:8px;border-color:var(--border);background:linear-gradient(145deg,#181818,#111111);box-shadow:inset 0 1px 0 #ffffff03}
+:root[data-theme="scifi"] .bento:hover,:root[data-theme="scifi"] .card-interactive:hover{transform:translateY(-2px);border-color:#505050;box-shadow:0 8px 26px #0003}
+:root[data-theme="scifi"] .bento::before{pointer-events:none;background:linear-gradient(135deg,#cacaca55,transparent 55%)}
+:root[data-theme="scifi"] .icon-tile{border-radius:6px;background:#1b1b1b;box-shadow:none}
+:root[data-theme="scifi"] .seg-active{background:#cacaca13;border-color:#cacaca66;color:#e2e2e2;box-shadow:none}
+:root[data-theme="scifi"] .dash-ambient{height:520px}
+:root[data-theme="scifi"] .dash-ambient::before{background:radial-gradient(ellipse,#cacaca09,transparent 70%);filter:blur(30px)}
+:root[data-theme="scifi"] .dash-ambient::after,:root[data-theme="scifi"] .bg-grid-fade{background-image:radial-gradient(#bfbfbf20 .7px,transparent .7px);background-size:12px 12px}
+:root[data-theme="scifi"] .aurora{opacity:.25}
+:root[data-theme="scifi"] .text-shine{animation:none;background:linear-gradient(100deg,#ededed,#cacaca)}
+:root[data-theme="scifi"] .tier-text{animation:none}
+:root[data-theme="scifi"] .command-hero{position:relative;overflow:hidden;border-bottom:1px solid var(--border);background:radial-gradient(ellipse at 78% 50%,#2d2d2d30,transparent 55%),#0a0a0a}
+:root[data-theme="scifi"] .command-hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(#d4d4d419 .6px,transparent .6px);background-size:10px 10px;mask-image:linear-gradient(90deg,transparent 20%,#000 90%);pointer-events:none}
+:root[data-theme="scifi"] .command-hero-inner{max-width:1152px;margin:auto;min-height:590px;display:grid;grid-template-columns:1.1fr 1fr;align-items:center;padding:60px 24px 44px;position:relative}
+:root[data-theme="scifi"] .command-copy{z-index:1}
+:root[data-theme="scifi"] .command-copy h1{font-size:clamp(40px,5.2vw,68px);line-height:1.1;letter-spacing:-.055em;font-weight:500;margin:27px 0 22px}
+:root[data-theme="scifi"] .command-copy h1 span{color:#a8a8a8}
+:root[data-theme="scifi"] .command-copy>p{max-width:400px;color:var(--text-muted);font-size:15px;line-height:1.85}
+:root[data-theme="scifi"] .command-actions{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+:root[data-theme="scifi"] .command-copy>.command-note{font-size:11px;margin-top:16px;color:var(--text-dim)}
+:root[data-theme="scifi"] .signal-dot{display:inline-block;width:5px;height:5px;background:var(--accent);border-radius:50%;box-shadow:0 0 10px #cacaca55;vertical-align:middle;margin-right:7px}
+:root[data-theme="scifi"] .signal-field{position:relative;width:100%;max-width:500px;aspect-ratio:1;color:#c9c9c9;isolation:isolate}
+:root[data-theme="scifi"] .signal-field::before{content:"";position:absolute;inset:18%;border-radius:50%;background:radial-gradient(circle,#cacaca08,transparent 65%);box-shadow:0 0 80px #cacaca05;z-index:-1}
+:root[data-theme="scifi"] .signal-field svg{position:relative;width:100%;height:100%;filter:drop-shadow(0 0 3px #cacaca15)}
+:root[data-theme="scifi"] .signal-axis{position:absolute;background:#cacaca12}
+:root[data-theme="scifi"] .axis-x{top:50%;left:0;right:0;height:1px}
+:root[data-theme="scifi"] .axis-y{left:50%;top:0;bottom:0;width:1px}
+:root[data-theme="scifi"] .signal-coordinate{position:absolute;color:#9c9c9c;font-size:8px;white-space:nowrap}
+:root[data-theme="scifi"] .coordinate-top{top:0;left:10px}:root[data-theme="scifi"] .coordinate-bottom{bottom:0;right:10px}
+:root[data-theme="scifi"] .signal-cross{position:absolute;color:#8e8e8e;font-size:18px;font-weight:300}:root[data-theme="scifi"] .cross-top{top:25px;right:0}:root[data-theme="scifi"] .cross-bottom{bottom:25px;left:0}
+:root[data-theme="scifi"] .command-rail{position:relative;max-width:1104px;margin:auto;display:flex;justify-content:space-between;gap:20px;padding:23px 0;border-top:1px solid #2e2e2e;color:#9e9e9e;font-size:9px}
+:root[data-theme="scifi"] .command-rail>span:last-child{display:flex;align-items:center;gap:18px}:root[data-theme="scifi"] .command-rail i{width:3px;height:3px;border-radius:50%;background:#cacaca}
+:root[data-theme="scifi"] .dashboard-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:28px}:root[data-theme="scifi"] .dashboard-heading h1{font-size:30px;letter-spacing:-.035em;font-weight:500;margin:10px 0 8px}:root[data-theme="scifi"] .dashboard-heading p{color:var(--text-muted);font-size:13px}
+:root[data-theme="scifi"] .workspace-tag{border:1px solid var(--border);border-radius:4px;padding:9px 12px;white-space:nowrap;font-size:9px;color:var(--text-muted)}
+:root[data-theme="scifi"] .command-brief{position:relative;border:1px solid var(--border-strong);border-radius:8px;background:linear-gradient(110deg,#191919,#0f0f0f 65%);display:grid;grid-template-columns:1.15fr 1fr 1fr;align-items:center;overflow:hidden;min-height:282px}
+:root[data-theme="scifi"] .brief-copy{padding:30px 0 30px 30px;z-index:1}:root[data-theme="scifi"] .brief-copy .eyebrow{font-size:8px}:root[data-theme="scifi"] .brief-copy h2{font-size:29px;line-height:1.18;font-weight:500;margin:16px 0 12px;letter-spacing:-.035em}:root[data-theme="scifi"] .brief-copy p{font-size:12px;line-height:1.8;color:var(--text-muted);max-width:290px;margin-bottom:20px}:root[data-theme="scifi"] .brief-copy .btn-primary{font-size:11px;min-height:36px;padding:8px 12px}
+:root[data-theme="scifi"] .signal-compact{max-width:280px}:root[data-theme="scifi"] .signal-compact .signal-coordinate{font-size:5px}
+:root[data-theme="scifi"] .brief-links{position:relative;padding:15px 24px 15px 10px}:root[data-theme="scifi"] .brief-links a{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);padding:21px 0;color:var(--accent)}:root[data-theme="scifi"] .brief-links a:last-child{border:0}:root[data-theme="scifi"] .brief-links a>span{flex:1;color:var(--text);font-size:12px}:root[data-theme="scifi"] .brief-links small{display:block;color:var(--text-muted);font-size:10px;margin-top:6px}:root[data-theme="scifi"] .brief-links a:hover>span{color:var(--accent)}
+:root[data-theme="scifi"] .command-stats{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--border);border-radius:6px;margin:18px 0 28px;background:#121212}:root[data-theme="scifi"] .command-stats>div{padding:18px 22px;border-right:1px solid var(--border)}:root[data-theme="scifi"] .command-stats>div:last-child{border:0}:root[data-theme="scifi"] .command-stats>div>span{font-size:8px;color:var(--text-muted);display:block}:root[data-theme="scifi"] .command-stats strong{display:block;font-size:21px;font-weight:500;margin-top:9px;font-variant-numeric:tabular-nums}
+:root[data-theme="scifi"] .preview-banner{display:flex;justify-content:center;align-items:center;gap:20px;padding:11px 18px;border-bottom:1px solid #3f3f3f;background:#191919;font-size:11px;color:#bdbdbd}:root[data-theme="scifi"] .preview-banner a{color:#e2e2e2;text-decoration:underline;text-underline-offset:3px}:root[data-theme="scifi"] .preview-nav{display:flex;gap:24px;align-items:center}:root[data-theme="scifi"] .preview-nav a{color:var(--text-muted);font-size:12px}:root[data-theme="scifi"] .preview-nav a[aria-current]{color:var(--accent)}
+:root[data-theme="scifi"] .preview-assistant{border:1px solid var(--border-strong);border-radius:8px;background:#121212;max-width:800px;margin:45px auto;overflow:hidden}:root[data-theme="scifi"] .assistant-top{padding:20px 26px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px}:root[data-theme="scifi"] .assistant-top small{display:block;font-size:11px;color:var(--text-muted);margin-top:3px}:root[data-theme="scifi"] .assistant-thread{padding:32px;display:grid;gap:28px}:root[data-theme="scifi"] .assistant-user{margin-left:auto;background:#232323;border:1px solid #3f3f3f;padding:16px 20px;border-radius:8px;max-width:82%;font-size:13px;line-height:1.7}:root[data-theme="scifi"] .assistant-answer{font-size:13px;line-height:1.9;color:#c3c3c3;max-width:90%}:root[data-theme="scifi"] .assistant-answer h2{font-weight:500;font-size:20px;color:var(--text);margin:14px 0}:root[data-theme="scifi"] .assistant-answer li{margin-top:10px}:root[data-theme="scifi"] .assistant-context{font:9px ui-monospace,monospace;color:var(--accent);letter-spacing:.09em}:root[data-theme="scifi"] .assistant-composer{margin:0 26px 18px;padding:15px 18px;border:1px solid var(--border-strong);border-radius:6px;display:flex;align-items:center;justify-content:space-between;color:var(--text-muted);font-size:12px}:root[data-theme="scifi"] .assistant-disclaimer{text-align:center;color:var(--text-dim);font-size:10px;padding:0 15px 22px}
+@media(min-width:768px){:root[data-theme="scifi"] .command-nav{height:70px}}
+@media(max-width:767px){:root[data-theme="scifi"] .command-hero-inner{grid-template-columns:1fr;padding:50px 24px 30px;min-height:0}:root[data-theme="scifi"] .command-copy h1{font-size:46px}:root[data-theme="scifi"] .command-copy>p{font-size:14px}:root[data-theme="scifi"] .command-hero-inner>.signal-field{max-width:300px;justify-self:center;margin:35px 0 10px}:root[data-theme="scifi"] .command-rail{margin:0 24px;padding:18px 0;font-size:8px}:root[data-theme="scifi"] .command-rail>span:last-child{display:none}:root[data-theme="scifi"] .dashboard-heading{align-items:flex-start}:root[data-theme="scifi"] .dashboard-heading h1{font-size:26px}:root[data-theme="scifi"] .workspace-tag{display:none}:root[data-theme="scifi"] .command-brief{grid-template-columns:1.2fr 1fr}:root[data-theme="scifi"] .brief-copy{padding:24px 0 24px 22px}:root[data-theme="scifi"] .brief-copy h2{font-size:25px}:root[data-theme="scifi"] .brief-links{grid-column:1/-1;display:grid;grid-template-columns:1fr;padding:0 22px}:root[data-theme="scifi"] .brief-links a{padding:16px 0}:root[data-theme="scifi"] .brief-links a:first-child{border-top:1px solid var(--border)}:root[data-theme="scifi"] .signal-compact .signal-coordinate{display:none}:root[data-theme="scifi"] .command-stats{grid-template-columns:repeat(2,1fr)}:root[data-theme="scifi"] .command-stats>div{padding:16px}:root[data-theme="scifi"] .command-stats>div:nth-child(2){border-right:0}:root[data-theme="scifi"] .command-stats>div:nth-child(-n+2){border-bottom:1px solid var(--border)}:root[data-theme="scifi"] .preview-banner{gap:12px;flex-wrap:wrap}:root[data-theme="scifi"] .preview-nav{gap:14px}:root[data-theme="scifi"] .assistant-thread{padding:22px}:root[data-theme="scifi"] .assistant-answer{max-width:100%}:root[data-theme="scifi"] .assistant-user{max-width:95%}}
+
+/* Self-hosted display typography; body copy retains the existing Inter stack. */
+@font-face{font-family:"Chakra Petch";src:url("/fonts/chakra-petch/ChakraPetch-Regular.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"Chakra Petch";src:url("/fonts/chakra-petch/ChakraPetch-Medium.ttf") format("truetype");font-style:normal;font-weight:500;font-display:swap}
+@font-face{font-family:"Chakra Petch";src:url("/fonts/chakra-petch/ChakraPetch-SemiBold.ttf") format("truetype");font-style:normal;font-weight:600;font-display:swap}
+@font-face{font-family:"Chakra Petch";src:url("/fonts/chakra-petch/ChakraPetch-Bold.ttf") format("truetype");font-style:normal;font-weight:700;font-display:swap}
+
+:root[data-theme="scifi"] h1,:root[data-theme="scifi"] h2,:root[data-theme="scifi"] h3,:root[data-theme="scifi"] h4,:root[data-theme="scifi"] nav,:root[data-theme="scifi"] .btn-primary,:root[data-theme="scifi"] .btn-secondary,:root[data-theme="scifi"] .btn-ghost,:root[data-theme="scifi"] .command-stats strong,:root[data-theme="scifi"] header a{font-family:"Chakra Petch",var(--font-sans, system-ui),system-ui,sans-serif}
+:root[data-theme="scifi"] h1,:root[data-theme="scifi"] h2,:root[data-theme="scifi"] h3,:root[data-theme="scifi"] h4{font-synthesis:none}
+:root[data-theme="scifi"] .command-copy h1{letter-spacing:-.025em;line-height:1.13;font-weight:500}
+:root[data-theme="scifi"] .command-copy h1 span{color:#a6a6a6}
+:root[data-theme="scifi"] .dashboard-heading h1,:root[data-theme="scifi"] .brief-copy h2{letter-spacing:-.015em}
+:root[data-theme="scifi"] .btn-primary{background:linear-gradient(160deg,#ffffff,#e8e8e8);color:#050505;border-color:#ffffffb3}
+:root[data-theme="scifi"] .command-hero{background:radial-gradient(ellipse at 78% 50%,#ffffff05,transparent 55%),var(--bg)}
+:root[data-theme="scifi"] .signal-field{color:#d4d4d4}
+:root[data-theme="scifi"] .preview-banner{color:#b5b5b5;background:#111111;border-color:#2a2a2a}
+:root[data-theme="scifi"] .preview-banner a{color:#eeeeee}
+
+:root[data-theme="scifi"] .command-rail{width:calc(100% - 48px)}
+
+/* Both variants render on the server, so open tabs can switch without losing state. */
+.theme-original-only{display:none}
+.theme-scifi-only{display:contents}
+:root[data-theme="original"] .theme-original-only{display:contents}
+:root[data-theme="original"] .theme-scifi-only{display:none}
+:root[data-theme="scifi"] .theme-ai-panel,
+:root[data-theme="scifi"] .theme-ai-message{border-radius:8px}
+:root[data-theme="scifi"] .theme-ai-user{background:#ffffff0d;border:1px solid #ffffff20}
+:root[data-theme="scifi"] .theme-ai-composer{border-radius:6px}
+:root[data-theme="scifi"] .theme-ai-composer:focus-within{border-color:#ffffff99}

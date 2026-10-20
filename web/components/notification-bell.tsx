@@ -23,7 +23,8 @@ export function NotificationBell({ active }: { active: boolean }) {
     <Link
       href="/dashboard/notifications"
       title="Notifications"
-      className={`relative hidden rounded-md p-1.5 transition md:flex ${
+      aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+      className={`workspace-notification relative flex rounded-md p-1.5 transition ${
         active ? "text-text" : "text-text-muted hover:bg-white/[0.04] hover:text-text"
       }`}
     >

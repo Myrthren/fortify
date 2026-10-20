@@ -333,7 +333,7 @@ export function FortifyAI() {
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6 pointer-events-none">
           <div
-            className="fortify-panel-in pointer-events-auto flex flex-col w-full max-w-md h-[620px] rounded-2xl border border-bg-border bg-bg shadow-2xl overflow-hidden"
+            className="fortify-panel-in pointer-events-auto flex flex-col w-full max-w-md h-[620px] rounded-2xl theme-ai-panel border border-bg-border bg-bg shadow-2xl overflow-hidden"
             onPaste={handlePaste}
           >
 
@@ -446,9 +446,9 @@ export function FortifyAI() {
               {messages.map((m, i) => (
                 <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div
-                    className={`max-w-[88%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                    className={`max-w-[88%] rounded-2xl theme-ai-message px-4 py-2.5 text-sm leading-relaxed ${
                       m.role === "user"
-                        ? "bg-white/10 text-text"
+                        ? "bg-white/10 theme-ai-user text-text"
                         : "bg-bg-panel border border-bg-border text-text"
                     }`}
                   >
@@ -511,7 +511,7 @@ export function FortifyAI() {
 
               {sending && (
                 <div className="flex justify-start">
-                  <div className="bg-bg-panel border border-bg-border rounded-2xl px-4 py-3 flex items-center gap-2">
+                  <div className="bg-bg-panel border border-bg-border rounded-2xl theme-ai-composer px-4 py-3 flex items-center gap-2">
                     <div className="flex gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: "0ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: "120ms" }} />

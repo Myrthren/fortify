@@ -1,3 +1,5 @@
+import { creationTitle } from "@/lib/recent-creations";
+import { DashboardOverview } from "@/components/dashboard-overview";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -8,7 +10,7 @@ import { OnboardingChecklist } from "@/components/onboarding-checklist";
 import { GettingStarted } from "@/components/getting-started";
 import {
   ArrowRight, Sparkles, Workflow, MessagesSquare, Users, UserCircle,
-  Briefcase, UsersRound, MessageSquare, Network, Gem, Flame, Trophy, CreditCard, Lock,
+  Briefcase, UsersRound, MessageSquare, Network, Lock,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -46,11 +48,11 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
 
   const userId = (session.user as any).id as string;
-  const [user, companyDna, firstGeneration] = await Promise.all([db.user.findUnique({
+  const [user, companyDna, recentGenerations] = await Promise.all([db.user.findUnique({
     where: { id: userId },
     include: { subscription: true, profile: true },
   }), db.companyDna.findUnique({ where: { userId }, select: { totalChars: true } }),
-    db.generation.findFirst({ where: { userId }, select: { id: true } })]);
+    db.generation.findMany({ where: { userId }, orderBy: { createdAt: "desc" }, take: 3, select: { id: true, type: true, input: true, createdAt: true } })]);
   if (!user) redirect("/login");
 
   const tierMeta = TIERS[user.tier];
@@ -64,37 +66,15 @@ export default async function DashboardPage() {
       <DashboardNav user={user} active="dashboard" />
 
       <main className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
-        {/* Header */}
-        <div className="anim-fade-up mb-8">
-          <span className="eyebrow"><Sparkles className="h-3.5 w-3.5" /> Dashboard</span>
-          <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-            Welcome back, {firstName}.
-          </h1>
-          <p className="mt-2 text-text-muted">
-            You're on <span className="font-medium text-text">{tierMeta.name}</span>.{" "}
-            {user.tier === "FREE" && (
-              <Link href="/pricing" className="text-[var(--accent)] underline-offset-4 hover:underline">
-                Upgrade for unlimited →
-              </Link>
-            )}
-          </p>
-        </div>
+        <DashboardOverview firstName={firstName} tier={tierMeta.name} xp={user.xp} streak={user.streak} subscription={subscriptionLabel} recentWork={recentGenerations.map(item => ({ id: item.id, type: item.type, title: creationTitle(item.input, item.type), date: item.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Europe/London" }) }))} />
 
         <OnboardingChecklist steps={[
           { title: "Complete your profile", description: "Get better matches in the member directory.", href: "/dashboard/profile", done: !profileIncomplete },
           { title: "Add Company DNA", description: "Give AI the context it needs to personalise results.", href: "/dashboard/company-dna", done: (companyDna?.totalChars ?? 0) > 0 },
-          { title: "Try your first tool", description: "Create a hook below and see Fortify in action.", href: "/dashboard#hook-generator", done: !!firstGeneration },
+          { title: "Try your first tool", description: "Create a hook below and see Fortify in action.", href: "/dashboard#hook-generator", done: recentGenerations.length > 0 },
         ]} />
 
         <GettingStarted tier={user.tier} />
-
-        {/* Stat tiles */}
-        <div className="anim-fade-up anim-d1 mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <StatTile icon={<Gem className="h-4 w-4" />} label="Tier" value={tierMeta.name} accent="#ffffff" />
-          <StatTile icon={<Trophy className="h-4 w-4" />} label="XP" value={user.xp.toLocaleString()} accent="#ffffff" />
-          <StatTile icon={<Flame className="h-4 w-4" />} label="Streak" value={`${user.streak} days`} accent="#ffffff" />
-          <StatTile icon={<CreditCard className="h-4 w-4" />} label="Subscription" value={subscriptionLabel} accent="#ffffff" />
-        </div>
 
         {/* Hook generator — featured */}
         <div id="hook-generator" className="anim-fade-up anim-d2 mb-10">
@@ -111,7 +91,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Tools grid */}
-        <div className="anim-fade-up anim-d3 mb-6">
+        <div id="toolkit" className="anim-fade-up anim-d3 mb-6 scroll-mt-32">
           <span className="eyebrow"><Workflow className="h-3.5 w-3.5" /> Your arsenal</span>
           <h2 className="mt-1 text-xl font-bold tracking-tight">Every tool, one click away</h2>
         </div>
@@ -119,7 +99,7 @@ export default async function DashboardPage() {
           {[...TOOL_SECTIONS, { heading: "Community", tiles: COMMUNITY_TILES }].map((section) => (
             <section key={section.heading}>
               <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-text-dim">{section.heading}</h3>
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="classic-tool-grid grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {section.tiles.map((t) => (
                   <ToolTile key={t.href} tile={t} tier={user.tier} />
                 ))}
@@ -156,25 +136,5 @@ function ToolTile({ tile, tier }: { tile: Tile; tier: Tier }) {
         <p className="mt-0.5 text-xs leading-snug text-text-muted">{tile.desc}</p>
       </div>
     </Link>
-  );
-}
-
-function StatTile({
-  icon, label, value, accent,
-}: {
-  icon: React.ReactNode; label: string; value: string; accent: string;
-}) {
-  return (
-    <div className="card-elevated relative overflow-hidden p-4">
-      <div
-        className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full opacity-40 blur-2xl"
-        style={{ background: accent }}
-      />
-      <div className="relative flex items-center gap-2 text-text-muted">
-        <span style={{ color: accent }}>{icon}</span>
-        <span className="text-xs uppercase tracking-wide">{label}</span>
-      </div>
-      <p className="relative mt-2 text-xl font-bold tracking-tight tabular-nums">{value}</p>
-    </div>
   );
 }

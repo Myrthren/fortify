@@ -1,6 +1,14 @@
+import { SiteAtmosphere } from "@/components/particle-field";
+import { AmbientMotionControl } from "@/components/ambient-motion-control";
+import { getSiteTheme } from "@/lib/site-appearance";
+import { SiteThemeSync } from "@/components/site-theme-sync";
 import type { Metadata, Viewport } from "next";
 import { CookieBanner } from "@/components/cookie-banner";
 import "./globals.css";
+import "./command-theme.css";
+import "./immersive-theme.css";
+import "./classic-theme.css";
+import "./workspace-navigation.css";
 
 const BASE_URL = "https://fortify-io.com";
 
@@ -49,9 +57,12 @@ export const viewport: Viewport = {
   minimumScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export const dynamic = "force-dynamic";
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const theme = await getSiteTheme();
   return (
-    <html lang="en">
+    <html lang="en" data-theme={theme}>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -66,7 +77,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-screen bg-bg text-text font-sans">
-        {children}
+        <SiteThemeSync />
+        <SiteAtmosphere />
+        <div className="site-content">{children}</div>
+        <AmbientMotionControl />
         <CookieBanner />
       </body>
     </html>

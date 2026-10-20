@@ -290,3 +290,11 @@ model DripMetric {
   @@id([periodStart, key])
 }
 
+
+// One owner-controlled appearance choice shared by the website and all visitors.
+model SiteAppearance {
+  id        String   @id @default("global")
+  theme     String   @default("scifi")
+  updatedBy String?
+  updatedAt DateTime @updatedAt
+}

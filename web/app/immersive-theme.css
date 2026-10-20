@@ -1,0 +1,134 @@
+/* Ambient detail belongs exclusively to the sci-fi theme. */
+.site-atmosphere, .particle-field, .ambient-motion-toggle { display: none; }
+:root[data-theme="scifi"] .site-content { position: relative; z-index: 1; }
+
+:root[data-theme="scifi"] .site-atmosphere {
+  display: block; position: fixed; inset: 0; z-index: 0;
+  overflow: hidden; pointer-events: none; contain: strict;
+  background: radial-gradient(ellipse at 100% 20%, #ffffff06, transparent 48%),
+    radial-gradient(ellipse at 0% 80%, #ffffff05, transparent 40%);
+}
+:root[data-theme="scifi"] .particle-field {
+  display: block; position: absolute; color: #dedede;
+  pointer-events: none; overflow: hidden;
+}
+:root[data-theme="scifi"] .particle-field svg { width: 100%; height: 100%; }
+:root[data-theme="scifi"] .particle-layer { animation: fortify-particle-flow 16s ease-in-out infinite alternate; }
+:root[data-theme="scifi"] .particle-layer-1 { animation-duration: 21s; animation-delay: -8s; }
+:root[data-theme="scifi"] .particle-layer-2 { animation-duration: 26s; animation-delay: -14s; }
+:root[data-theme="scifi"] .particle-trace { animation: fortify-trace 32s linear infinite; }
+:root[data-theme="scifi"] .ambient-field-left {
+  width: 800px; height: 450px; left: -390px; top: 12%; opacity: .22;
+  transform: rotate(64deg); mask-image: linear-gradient(90deg, #000 35%, transparent);
+}
+:root[data-theme="scifi"] .ambient-field-right {
+  width: 840px; height: 580px; right: -440px; bottom: -80px; opacity: .2;
+  transform: rotate(-26deg);
+}
+:root[data-theme="scifi"] .ambient-stars {
+  position: absolute; inset: -60px; opacity: .35;
+  background-image: radial-gradient(circle at 12px 35px, #ffffff70 .8px, transparent 1.3px),
+    radial-gradient(circle at 114px 154px, #ffffff50 .6px, transparent 1.2px),
+    radial-gradient(circle at 245px 75px, #ffffff80 1px, transparent 1.5px);
+  background-size: 297px 263px, 373px 317px, 461px 389px;
+  mask-image: linear-gradient(90deg, #000, transparent 33%, transparent 67%, #000);
+  animation: fortify-star-drift 65s linear infinite alternate;
+}
+:root[data-theme="scifi"] .ambient-stars-far { opacity: .18; transform: scale(1.4); animation-duration: 95s; animation-direction: alternate-reverse; }
+:root[data-theme="scifi"] .ambient-horizon {
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent 0 139px, #ffffff04 139px 140px),
+    repeating-linear-gradient(90deg, transparent 0 179px, #ffffff03 179px 180px);
+  mask-image: linear-gradient(90deg, #000, transparent 24%, transparent 76%, #000);
+}
+:root[data-theme="scifi"] .ambient-reticle { position: absolute; color: #ffffff35; font: 18px ui-monospace,monospace; }
+:root[data-theme="scifi"] .reticle-top { top: 24%; left: 27px; }
+:root[data-theme="scifi"] .reticle-bottom { bottom: 21%; right: 27px; }
+
+/* The hero's dotted sphere, satellites and survey arc move independently. */
+:root[data-theme="scifi"] .signal-orbit-outer,
+:root[data-theme="scifi"] .signal-orbit-inner,
+:root[data-theme="scifi"] .signal-cloud,
+:root[data-theme="scifi"] .signal-scan { transform-origin: 250px 250px; }
+:root[data-theme="scifi"] .signal-orbit-outer { animation: fortify-orbit 90s linear infinite; }
+:root[data-theme="scifi"] .signal-orbit-inner { animation: fortify-orbit 65s linear infinite reverse; }
+:root[data-theme="scifi"] .signal-cloud { animation: fortify-cloud-breathe 12s ease-in-out infinite alternate; }
+:root[data-theme="scifi"] .signal-scan { animation: fortify-orbit 24s linear infinite; }
+:root[data-theme="scifi"] .signal-field::before { inset: 8%; background: radial-gradient(circle,#ffffff08,transparent 65%); }
+:root[data-theme="scifi"] .signal-axis { background: #ffffff16; }
+:root[data-theme="scifi"] .signal-cross { animation: fortify-beacon 6s ease-in-out infinite alternate; }
+:root[data-theme="scifi"] .hero-particle-tide {
+  left: -8%; right: -10%; bottom: -135px; height: 400px; opacity: .32;
+  mask-image: linear-gradient(0deg, #000 30%, transparent 95%);
+}
+:root[data-theme="scifi"] .command-hero::before {
+  background-image: radial-gradient(#ffffff38 .65px,transparent .9px);
+  background-size: 16px 16px;
+  mask-image: radial-gradient(ellipse at 85% 48%, #000, transparent 65%);
+}
+:root[data-theme="scifi"] .command-hero-inner { z-index: 1; }
+:root[data-theme="scifi"] .command-hero .signal-field { max-width: 530px; }
+:root[data-theme="scifi"] .command-copy h1 { text-shadow: 0 0 35px #ffffff0b; }
+:root[data-theme="scifi"] .command-rail { background: #05050575; }
+
+/* Repeated point-cloud motifs carry the atmosphere beyond the hero. */
+:root[data-theme="scifi"] .signal-section { position: relative; isolation: isolate; overflow: hidden; }
+:root[data-theme="scifi"] .signal-section > .particle-field { z-index: -1; }
+:root[data-theme="scifi"] .section-particle-wave { inset: 0 -12% auto; height: 420px; opacity: .27; mask-image: linear-gradient(#000,transparent 95%); }
+:root[data-theme="scifi"] .section-particle-halo { top: -160px; right: -380px; width: 1050px; height: 650px; opacity: .25; transform: rotate(-28deg); }
+:root[data-theme="scifi"] .cta-particle-wave { inset: -30px -12% auto; height: 600px; opacity: .42; mask-image: radial-gradient(ellipse, transparent 12%,#000 85%); }
+:root[data-theme="scifi"] .command-brief {
+  background: radial-gradient(ellipse at 48% 80%, #ffffff07,transparent 60%),linear-gradient(110deg,#141414dc,#0b0b0be8 65%);
+  border-color: #ffffff29;
+}
+:root[data-theme="scifi"] .brief-particle-tide { inset: 15% -12% -50% -8%; opacity: .24; z-index: 0; mask-image: linear-gradient(90deg,transparent,#000 40%,transparent 85%); }
+:root[data-theme="scifi"] .dashboard-heading { position: relative; }
+:root[data-theme="scifi"] .dashboard-heading::after {
+  content: ""; position: absolute; top: -35px; right: 0; width: 260px; height: 150px; z-index: -1;
+  background-image: radial-gradient(#ffffff35 1px,transparent 1.5px); background-size: 13px 13px;
+  mask-image: radial-gradient(ellipse,#000,transparent 70%); pointer-events: none;
+}
+:root[data-theme="scifi"] .bento, :root[data-theme="scifi"] .card-elevated { position: relative; isolation: isolate; }
+:root[data-theme="scifi"] .bento::after, :root[data-theme="scifi"] .card-elevated::after {
+  content: ""; position: absolute; top: -20px; right: -15px; width: 160px; height: 140px; z-index: -1;
+  background-image: radial-gradient(#ffffff44 .8px,transparent 1.2px); background-size: 9px 9px;
+  mask-image: linear-gradient(135deg,transparent 15%,#000 100%); opacity: .28;
+  pointer-events: none; transition: opacity .5s;
+}
+:root[data-theme="scifi"] .bento:nth-child(3n)::after { animation: fortify-panel-drift 22s ease-in-out infinite alternate; }
+:root[data-theme="scifi"] .bento:hover::after { opacity: .65; }
+:root[data-theme="scifi"] .bento:hover { border-color: #ffffff52; box-shadow: 0 0 30px #ffffff06,inset 0 1px 0 #ffffff0a; }
+:root[data-theme="scifi"] .command-stats { background: linear-gradient(110deg,#151515e8,#0c0c0cf5); }
+
+.ambient-motion-toggle { position: fixed; left: 18px; bottom: 18px; z-index: 30; }
+:root[data-theme="scifi"] .ambient-motion-toggle {
+  display: inline-flex; align-items: center; gap: 8px; padding: 9px 11px;
+  border: 1px solid #ffffff20; border-radius: 5px; background: #0b0b0be8; color: #aaa;
+  font: 9px ui-monospace,monospace; letter-spacing: .06em; backdrop-filter: blur(8px);
+}
+:root[data-theme="scifi"] .ambient-motion-toggle:hover { border-color: #ffffff70; color: #fff; }
+
+@keyframes fortify-particle-flow { from { transform: translate(-9px,-12px); opacity: .62; } to { transform: translate(12px,13px); opacity: 1; } }
+@keyframes fortify-orbit { to { transform: rotate(360deg); } }
+@keyframes fortify-cloud-breathe { from { transform: rotate(-4deg) scale(.98); opacity: .76; } to { transform: rotate(4deg) scale(1.025); opacity: 1; } }
+@keyframes fortify-star-drift { from { translate: 0 0; } to { translate: 30px -45px; } }
+@keyframes fortify-panel-drift { from { transform: translate(0,0); } to { transform: translate(-12px,12px); } }
+@keyframes fortify-beacon { from { opacity: .35; } to { opacity: .9; } }
+@keyframes fortify-trace { to { stroke-dashoffset: -340; } }
+
+:root:is([data-motion="paused"],[data-page-hidden="true"]) :is(.particle-layer,.particle-trace,.ambient-stars,.signal-orbit-outer,.signal-orbit-inner,.signal-cloud,.signal-scan,.signal-cross,.aurora,.dot-live,.marquee-track),
+:root:is([data-motion="paused"],[data-page-hidden="true"]) .bento::after { animation-play-state: paused !important; }
+@media (max-width: 767px) {
+  :root[data-theme="scifi"] .ambient-field-left { opacity: .1; left: -520px; }
+  :root[data-theme="scifi"] .ambient-field-right { display: none; }
+  :root[data-theme="scifi"] .particle-layer-2 { display: none; }
+  :root[data-theme="scifi"] .hero-particle-tide { bottom: -90px; height: 280px; opacity: .25; }
+  :root[data-theme="scifi"] .ambient-stars { opacity: .18; }
+  :root[data-theme="scifi"] .section-particle-halo { opacity: .12; }
+  :root[data-theme="scifi"] .cta-particle-wave { opacity: .22; }
+}
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="scifi"] :is(.particle-layer,.particle-trace,.ambient-stars,.signal-orbit-outer,.signal-orbit-inner,.signal-cloud,.signal-scan,.signal-cross,.aurora,.dot-live,.marquee-track),
+  :root[data-theme="scifi"] .bento::after { animation: none !important; }
+  :root[data-theme="scifi"] .ambient-motion-toggle { display: none; }
+}
