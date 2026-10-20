@@ -2,6 +2,10 @@ import { db } from "@/lib/db";
 import { AnnouncementBar } from "@/components/announcement-bar";
 import { FortifyAI } from "@/components/fortify-ai";
 
+// The dashboard reads live announcements and member data. Do not attempt
+// these queries during static generation, when database access may be absent.
+export const dynamic = "force-dynamic";
+
 export default async function DashboardLayout({
   children,
 }: {
