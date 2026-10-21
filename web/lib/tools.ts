@@ -1,7 +1,7 @@
 import {
   Sparkles, Send, ClipboardCheck, Radar, TrendingUp, Search, Lightbulb, BarChart3,
   ShoppingBag, LineChart, Clapperboard, Dna, MapPin, Eye, Workflow, Zap, Activity,
-  Handshake, Palette, AtSign, Target, PackageOpen, Layers, type LucideIcon,
+  Handshake, Palette, AtSign, Target, PackageOpen, Layers, FlaskConical, type LucideIcon,
 } from "lucide-react";
 import type { Tier } from "@prisma/client";
 
@@ -17,7 +17,7 @@ export type ActiveKey =
   | "revenue" | "virality" | "dna" | "logo" | "members" | "deals" | "pods"
   | "forums" | "messages" | "connections" | "notifications" | "profile"
   | "settings" | "support" | "credits" | "recon" | "competitor-watch"
-  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity" | "plans";
+  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity" | "plans" | "research-lab";
 
 export type HubKey = "leads" | "competitors" | "insights";
 
@@ -40,6 +40,7 @@ export type Tool = {
 const OUTBOUND_LIVE = process.env.NEXT_PUBLIC_OUTBOUND_ENABLED === "true";
 
 export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "activity" | "members" | "deals" | "pods" | "forums" | "messages" | "connections" | "notifications" | "profile" | "settings" | "support" | "credits">, Tool> = {
+  "research-lab": { key: "research-lab", href: "/dashboard/research-lab", label: "Simulation Lab", desc: "Run a small research institute with six autonomous agents", icon: FlaskConical },
   plans: { key: "plans", href: "/dashboard/plans", label: "Plans", desc: "Map future goals, decisions and connected procedures", icon: Layers },
   pipeline: { key: "pipeline", href: "/dashboard/pipeline", label: "Lead Pipeline", desc: "Research, drafts and follow-ups for every prospect", icon: Target, hub: "leads" },
   voice:            { key: "voice", href: "/dashboard/voice", label: "Brand Voice Studio", desc: "Train AI on your tone of voice", icon: Sparkles, minTier: "PRO" },
@@ -105,7 +106,7 @@ export type NavEntry = { kind: "tool"; key: ActiveKey } | { kind: "hub"; hub: Hu
 export const NAV_GROUPS: { heading: string; entries: NavEntry[] }[] = [
   { heading: "Content",    entries: [{ kind: "tool", key: "voice" }, { kind: "tool", key: "inspiration" }, { kind: "tool", key: "virality" }, { kind: "tool", key: "logo" }] },
   { heading: "Growth",     entries: [{ kind: "hub", hub: "leads" }, { kind: "tool", key: "audit" }] },
-  { heading: "Research",   entries: [{ kind: "tool", key: "trends" }, { kind: "hub", hub: "competitors" }] },
+  { heading: "Research",   entries: [{ kind: "tool", key: "research-lab" }, { kind: "tool", key: "trends" }, { kind: "hub", hub: "competitors" }] },
   { heading: "Business",   entries: [{ kind: "tool", key: "plans" }, { kind: "hub", hub: "insights" }, { kind: "tool", key: "dna" }] },
   { heading: "Automation", entries: [{ kind: "tool", key: "workflows" }, { kind: "tool", key: "advisor" }] },
 ];

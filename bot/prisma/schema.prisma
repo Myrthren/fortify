@@ -76,6 +76,7 @@ model User {
   leadStatuses       LeadStatus[]
   workspacePreference WorkspacePreference?
   futurePlans        FuturePlan[]
+  researchDecisions ResearchDecisionBatch[]
   profile            Profile?
   notificationPrefs  NotificationPrefs?
   dealPosts          DealPost[]
@@ -363,4 +364,16 @@ model PlanProcedureRun {
   plan        FuturePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   @@unique([planId, nodeId])
+}
+
+model ResearchDecisionBatch {
+  id String @id @default(cuid())
+  userId String
+  input String
+  output String @default("pending") @db.Text
+  createdAt DateTime @default(now())
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, input])
+  @@index([createdAt])
 }
