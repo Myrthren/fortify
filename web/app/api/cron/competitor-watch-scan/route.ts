@@ -1,3 +1,4 @@
+import { chargeForResult, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { createHash } from "crypto";
@@ -71,6 +72,7 @@ export async function POST(req: Request) {
         if (!res.ok) continue;
 
         const text = await res.text();
+        if (!text.trim()) continue;
         const hash = createHash("md5").update(text).digest("hex");
         const hasChange = !!link.lastHash && hash !== link.lastHash;
 
@@ -95,22 +97,16 @@ export async function POST(req: Request) {
 
     if (!newScans.length) continue;
 
-    // Write scans + update links + deduct credits atomically
-    await db.$transaction([
-      ...newScans.map((s) =>
-        db.competitorWatchScan.create({
-          data: { id: randomUUID(), watchId: s.watchId, url: s.url, hasChange: s.hasChange, summary: s.summary },
-        })
-      ),
-      db.competitorWatch.update({
-        where: { id: watch.id },
-        data: { links: updatedLinks },
-      }),
-      db.user.update({
-        where: { id: user.id },
-        data: { credits: { decrement: 10 } },
-      }),
-    ]);
+    try {
+      const charged = await chargeForResult(user.id, 10, "spend_competitor_watch_scan", async tx => {
+        for (const scan of newScans) await tx.competitorWatchScan.create({ data: scan });
+        await tx.competitorWatch.update({ where: { id: watch.id }, data: { links: updatedLinks } });
+      }, `watch-daily:${watch.id}:${new Date().toISOString().slice(0, 10)}`);
+      if (!charged) continue;
+    } catch (e) {
+      if (!(e instanceof InsufficientCredits)) console.error("[competitor-watch] result not saved; no charge", e);
+      continue;
+    }
 
     scanned++;
     if (watchHasChange) {

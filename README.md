@@ -106,6 +106,29 @@ Chrome at desktop and phone width and fails if any card link or checkout button
 is covered. The **Checkout click test** GitHub Action runs it after every web
 push (once `/api/version` reports the new commit) and daily.
 
+## Result-based credit charging
+
+Credit tools settle only after usable output is validated. Failed providers,
+empty searches, malformed reports, failed contact extraction and failed slides
+are not charged. Recon email/context add-ons are charged only if that add-on
+returns a result; contact extraction charges per profile with a public contact.
+An unchanged but successfully fetched watch page is a valid monitoring result.
+Watch setup and username changes remain paid operations, charged atomically
+with the successfully saved watch or username.
+
+The balance debit, credit receipt and result save commit in one transaction.
+Concurrent completions cannot make the balance negative. Asynchronous ad,
+social and SERP scans start free and settle once per owner-bound provider run;
+repeated polling returns the cached report without another charge. Internal job
+records use the existing Generation table and are excluded from activity/usage.
+Scans started before this release must be restarted; their old run IDs are not
+adopted or charged again by the new completion handler. No schema migration is
+required, and historical charges are not changed.
+
+Run `npm run test:result-credits` from `web/`. The regression suite uses isolated
+provider and transaction doubles; it does not prove live provider credentials,
+PostgreSQL connectivity or payment activation.
+
 ## Deploy
 
 ### Web → Netlify

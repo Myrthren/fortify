@@ -14,7 +14,7 @@ export async function canGenerate(userId: string, tier: Tier): Promise<boolean> 
   since.setHours(0, 0, 0, 0);
 
   const count = await db.generation.count({
-    where: { userId, createdAt: { gte: since } },
+    where: { userId, type: { not: "credit-job" }, createdAt: { gte: since } },
   });
   return count < limit;
 }

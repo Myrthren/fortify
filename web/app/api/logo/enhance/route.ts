@@ -1,3 +1,4 @@
+import { chargeForResult, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -30,11 +31,15 @@ export async function POST(req: Request) {
   try {
     const enhanced = await enhanceLogoImage(image, prompt, size);
 
-    await db.user.update({ where: { id: userId }, data: { credits: { decrement: 100 } } });
-    await db.creditTransaction.create({ data: { userId, amount: -100, source: "spend_logo_enhance" } });
+    if (typeof enhanced !== "string" || !/^data:image\/[^;]+;base64,[A-Za-z0-9+/=]+$/.test(enhanced))
+      return NextResponse.json({ error: "No usable image returned. No credits charged." }, { status: 502 });
+    await chargeForResult(userId, 100, "spend_logo_enhance", async tx => tx.generation.create({
+      data: { userId, type: "logo/enhance", input: "", output: JSON.stringify(enhanced) },
+    }));
 
     return NextResponse.json({ image: enhanced, creditsUsed: 100 });
   } catch (e: any) {
+    if (e instanceof InsufficientCredits) return NextResponse.json({ error: e.message }, { status: 402 });
     return NextResponse.json({ error: e.message ?? "Enhancement failed" }, { status: 500 });
   }
 }

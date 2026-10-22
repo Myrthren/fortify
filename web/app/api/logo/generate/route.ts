@@ -1,3 +1,4 @@
+import { chargeForResult, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -38,12 +39,15 @@ export async function POST(req: Request) {
   try {
     const imageUrl = await generateLogoImage(finalPrompt, size);
 
-    // Deduct credits
-    await db.user.update({ where: { id: userId }, data: { credits: { decrement: 150 } } });
-    await db.creditTransaction.create({ data: { userId, amount: -150, source: "spend_logo_generate" } });
+    if (typeof imageUrl !== "string" || !/^data:image\/[^;]+;base64,[A-Za-z0-9+/=]+$/.test(imageUrl))
+      return NextResponse.json({ error: "No usable image returned. No credits charged." }, { status: 502 });
+    await chargeForResult(userId, 150, "spend_logo_generate", async tx => tx.generation.create({
+      data: { userId, type: "logo/generate", input: "", output: JSON.stringify(imageUrl) },
+    }));
 
     return NextResponse.json({ image: imageUrl, creditsUsed: 150 });
   } catch (e: any) {
+    if (e instanceof InsufficientCredits) return NextResponse.json({ error: e.message }, { status: 402 });
     return NextResponse.json({ error: e.message ?? "Generation failed" }, { status: 500 });
   }
 }

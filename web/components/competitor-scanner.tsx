@@ -369,22 +369,24 @@ function CompetitorDetail({
         setAdsScanning(false);
         return;
       }
-      onCreditsSpent(50);
       const { runId } = data as { runId: string };
 
       if (adsPollRef.current) clearInterval(adsPollRef.current);
+      let finished = false;
       adsPollRef.current = setInterval(async () => {
         try {
           const pollRes = await fetch(`/api/competitors/${competitor.id}/scan-ads?runId=${runId}`);
           const pollData = await pollRes.json();
 
-          if (pollData.status === "running") return;
+          if (finished || pollData.status === "running") return;
+          finished = true;
 
           clearInterval(adsPollRef.current!);
           adsPollRef.current = null;
           setAdsScanning(false);
 
           if (pollData.status === "succeeded" && pollData.report) {
+            onCreditsSpent(pollData.creditsUsed ?? 0);
             onPatch({ metaAdReport: pollData.report, metaAdScanAt: new Date().toISOString() });
           } else {
             setAdsError(pollData.error ?? "Scan failed. Try again.");
@@ -427,22 +429,24 @@ function CompetitorDetail({
         setSerpScanning(false);
         return;
       }
-      onCreditsSpent(35);
       const { runId } = data as { runId: string };
 
       if (serpPollRef.current) clearInterval(serpPollRef.current);
+      let finished = false;
       serpPollRef.current = setInterval(async () => {
         try {
           const pollRes = await fetch(`/api/competitors/${competitor.id}/scan-serp?runId=${runId}`);
           const pollData = await pollRes.json();
 
-          if (pollData.status === "running") return;
+          if (finished || pollData.status === "running") return;
+          finished = true;
 
           clearInterval(serpPollRef.current!);
           serpPollRef.current = null;
           setSerpScanning(false);
 
           if (pollData.status === "succeeded" && pollData.report) {
+            onCreditsSpent(pollData.creditsUsed ?? 0);
             onPatch({ serpReport: pollData.report, serpScanAt: new Date().toISOString() });
           } else {
             setSerpError(pollData.error ?? "SERP scan failed. Try again.");
@@ -504,12 +508,12 @@ function CompetitorDetail({
         return;
       }
 
-      onCreditsSpent(50);
       const { runId } = data as { runId: string };
 
       // Clear any previous interval
       if (pollRef.current) clearInterval(pollRef.current);
 
+      let finished = false;
       pollRef.current = setInterval(async () => {
         try {
           const pollRes = await fetch(
@@ -517,13 +521,15 @@ function CompetitorDetail({
           );
           const pollData = await pollRes.json();
 
-          if (pollData.status === "running") return;
+          if (finished || pollData.status === "running") return;
+          finished = true;
 
           clearInterval(pollRef.current!);
           pollRef.current = null;
           setScanningPlatform(null);
 
           if (pollData.status === "succeeded" && pollData.report) {
+            onCreditsSpent(pollData.creditsUsed ?? 0);
             const now = new Date().toISOString();
             if (platform === "youtube") {
               onPatch({ youtubeReport: pollData.report, youtubeScanAt: now, youtubeHandle: handle });

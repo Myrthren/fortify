@@ -1,3 +1,4 @@
+import { chargeForResult, nonemptyText, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -91,7 +92,7 @@ export async function GET(req: Request) {
     }
 
     const items = await getDatasetItems<RedditPost>(runId);
-    const posts = items.slice(0, 15).map((p) => ({
+    const posts = items.filter(p => nonemptyText(p.title) && nonemptyText(p.url)).slice(0, 15).map((p) => ({
       title: p.title,
       url: p.url,
       score: p.score ?? 0,
@@ -99,14 +100,14 @@ export async function GET(req: Request) {
       subreddit: p.subreddit ?? "",
     }));
 
-    // Only charge for a run that returned data
-    await db.$transaction([
-      db.user.update({ where: { id: userId }, data: { credits: { decrement: SCAN_COST } } }),
-      db.creditTransaction.create({ data: { userId, amount: -SCAN_COST, source: "trends-reddit" } }),
-    ]);
+    const creditsUsed = posts.length ? SCAN_COST : 0;
+    if (posts.length) await chargeForResult(userId, creditsUsed, "trends-reddit", async tx => tx.generation.create({
+      data: { userId, type: "trends-reddit", input: term.term, output: JSON.stringify(posts) },
+    }));
 
-    return NextResponse.json({ term: term.term, posts, creditsUsed: SCAN_COST });
+    return NextResponse.json({ term: term.term, posts, creditsUsed });
   } catch (e: any) {
+    if (e instanceof InsufficientCredits) return NextResponse.json({ error: e.message }, { status: 402 });
     console.error("[trends/reddit] failed", e);
     return new NextResponse(`Reddit search failed: ${e.message}`, { status: 500 });
   }

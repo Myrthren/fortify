@@ -1,3 +1,4 @@
+import { chargeForResult, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -663,17 +664,19 @@ export async function POST(req: Request) {
     }
   }
 
-  // ── 7. Deduct credits ─────────────────────────────────────────────────
-  // Only charge for context that was actually generated.
+  // ── 7. Settle usable contact results ─────────────────────────────────────────────────
+  // Only charge for profiles with a contact and context that was actually generated.
   const contextCost = contextLeads * CONTEXT_COST_PER_LEAD;
-  const totalCost = baseCost + contextCost;
-  await db.user.update({
-    where: { id: userId },
-    data: { credits: { decrement: totalCost } },
-  });
-  await db.creditTransaction.create({
-    data: { userId, amount: -totalCost, source: "spend_lead_extractor" },
-  });
+  const validAccounts = allLeads.filter(l => l.emails.length > 0 || l.phones.length > 0).length;
+  const totalCost = validAccounts * CREDITS_PER_ACCOUNT + contextCost;
+  try {
+    await chargeForResult(userId, totalCost, "spend_lead_extractor", async tx => {
+      await tx.generation.create({ data: { userId, type: "lead-extractor", input: JSON.stringify(parsed), output: JSON.stringify(allLeads) } });
+    });
+  } catch (e) {
+    if (e instanceof InsufficientCredits) return NextResponse.json({ error: e.message }, { status: 402 });
+    return NextResponse.json({ error: "Could not save results. No credits were charged." }, { status: 500 });
+  }
 
   return NextResponse.json({
     results: allLeads,

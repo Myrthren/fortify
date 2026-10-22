@@ -1,3 +1,4 @@
+import { chargeForResult } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -206,14 +207,9 @@ async function execUpdateSettings(
           success: false,
           description: `Need 1000 credits to change username (you have ${user.credits})`,
         };
-      await db.user.update({
-        where: { id: userId },
-        data: {
-          username: cleaned,
-          usernameChangesUsed: { increment: 1 },
-          ...(!isFree ? { credits: { decrement: 1000 } } : {}),
-        },
-      });
+      await chargeForResult(userId, isFree ? 0 : 1000, "username_change", async tx => tx.user.update({
+        where: { id: userId }, data: { username: cleaned, usernameChangesUsed: { increment: 1 } },
+      }));
       return {
         success: true,
         description: `Username set to @${cleaned}${isFree ? "" : " (1,000 credits deducted)"}`,

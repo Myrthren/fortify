@@ -1,3 +1,4 @@
+import { chargeForResult, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -68,32 +69,28 @@ export async function POST(req: Request) {
   }));
 
   for (const link of links) {
-    if (!link.url || link.url.length < 4) {
+    let validUrl = false;
+    try {
+      const url = new URL(link.url);
+      validUrl = ["https:", "http:"].includes(url.protocol) && url.hostname.includes(".") && !url.username && !url.password;
+    } catch { /* Invalid watch targets are never billable. */ }
+    if (!validUrl) {
       return new NextResponse("Each link must have a valid URL", { status: 400 });
     }
   }
 
-  const [watch] = await db.$transaction([
-    db.competitorWatch.create({
-      data: {
-        userId,
-        name,
-        links,
-        creditsPaid: COST,
-        active: true,
-      },
-      include: {
-        scans: {
-          orderBy: { scannedAt: "desc" },
-          take: 5,
-        },
-      },
-    }),
-    db.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: COST } },
-    }),
-  ]);
+  let watch;
+  try {
+    await chargeForResult(userId, COST, "spend_competitor_watch_create", async tx => {
+      watch = await tx.competitorWatch.create({
+        data: { userId, name, links, creditsPaid: COST, active: true },
+        include: { scans: { orderBy: { scannedAt: "desc" }, take: 5 } },
+      });
+    });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Could not create watch. No credits charged." },
+      { status: e instanceof InsufficientCredits ? 402 : 500 });
+  }
 
   return NextResponse.json({ watch, creditsUsed: COST });
 }

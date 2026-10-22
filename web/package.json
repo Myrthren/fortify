@@ -17,7 +17,8 @@
     "test:refinements": "node --experimental-strip-types --test scripts/test-refinements.mjs",
     "test:billing": "node --experimental-strip-types --test scripts/test-paypal-access.mjs scripts/test-lead-pack.mjs",
     "test:theme": "node --test scripts/test-site-theme.cjs",
-    "test:workspace": "node --test scripts/test-workspace.cjs"
+    "test:workspace": "node --test scripts/test-workspace.cjs",
+    "test:result-credits": "node --test scripts/test-result-credits.cjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

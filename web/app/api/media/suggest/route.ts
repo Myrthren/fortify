@@ -1,3 +1,4 @@
+import { chargeForResult, validReport, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -78,17 +79,15 @@ Respond ONLY with valid JSON in this exact format, no explanation:
       return NextResponse.json({ error: "Incomplete AI response" }, { status: 500 });
     }
 
-    // Deduct 25 credits
-    await db.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: 25 } },
-    });
-    await db.creditTransaction.create({
-      data: { userId, amount: -25, source: "spend_virality_suggest" },
-    });
+    if (!validReport(result, ["title", "description", "category"]) || !CATEGORIES.includes(result.category))
+      return NextResponse.json({ error: "Invalid AI response. No credits charged." }, { status: 502 });
+    await chargeForResult(userId, 25, "spend_virality_suggest", async tx => tx.generation.create({
+      data: { userId, type: "media/suggest", input: "", output: JSON.stringify(result) },
+    }));
 
     return NextResponse.json(result);
   } catch (e: any) {
+    if (e instanceof InsufficientCredits) return NextResponse.json({ error: e.message }, { status: 402 });
     return NextResponse.json({ error: e.message ?? "AI analysis failed" }, { status: 500 });
   }
 }

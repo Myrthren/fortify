@@ -1,3 +1,4 @@
+import { chargeForResult, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -49,6 +50,7 @@ export async function POST(
   }[] = [];
 
   const updatedLinks = [...links];
+  let validPages = 0;
 
   for (let i = 0; i < updatedLinks.length; i++) {
     const link = updatedLinks[i];
@@ -61,7 +63,10 @@ export async function POST(
         signal: AbortSignal.timeout(10000),
         headers: { "User-Agent": "Mozilla/5.0 (compatible; FortifyBot/1.0)" },
       });
+      if (!res.ok) throw new Error("Fetch failed");
       const text = await res.text();
+      if (!text.trim()) throw new Error("Empty page");
+      validPages++;
       hash = createHash("md5").update(text).digest("hex");
       hasChange = link.lastHash !== undefined && link.lastHash !== null
         ? hash !== link.lastHash
@@ -71,22 +76,7 @@ export async function POST(
       summary = "Fetch failed — site unreachable or timed out";
     }
 
-    const scan = await db.competitorWatchScan.create({
-      data: {
-        watchId: id,
-        url: link.url,
-        hasChange,
-        summary,
-      },
-    });
-
-    scansCreated.push({
-      id: scan.id,
-      url: scan.url,
-      hasChange: scan.hasChange,
-      summary: scan.summary ?? summary,
-      scannedAt: scan.scannedAt.toISOString(),
-    });
+    scansCreated.push({ id: "", url: link.url, hasChange, summary, scannedAt: new Date().toISOString() });
 
     if (hash !== null) {
       updatedLinks[i] = {
@@ -97,16 +87,20 @@ export async function POST(
     }
   }
 
-  await db.$transaction([
-    db.competitorWatch.update({
-      where: { id },
-      data: { links: updatedLinks },
-    }),
-    db.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: COST } },
-    }),
-  ]);
+  const creditsUsed = validPages > 0 ? COST : 0;
+  try {
+    if (validPages) await chargeForResult(userId, creditsUsed, "spend_competitor_watch_scan", async tx => {
+      for (const result of scansCreated) {
+        const saved = await tx.competitorWatchScan.create({ data: { watchId: id, url: result.url, hasChange: result.hasChange, summary: result.summary } });
+        result.id = saved.id;
+        result.scannedAt = saved.scannedAt.toISOString();
+      }
+      await tx.competitorWatch.update({ where: { id }, data: { links: updatedLinks } });
+    });
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Could not save scan. No credits charged." },
+      { status: e instanceof InsufficientCredits ? 402 : 500 });
+  }
 
   // Create in-app notification for any changed pages
   const changed = scansCreated.filter((s) => s.hasChange);
@@ -122,5 +116,5 @@ export async function POST(
     }).catch(() => {});
   }
 
-  return NextResponse.json({ scans: scansCreated, creditsUsed: COST });
+  return NextResponse.json({ scans: scansCreated, creditsUsed });
 }
