@@ -29,7 +29,7 @@ async function reserveAiCall(userId, model, reservedMicros, fx, claude) {
     const start = weekStart();
     return db_1.db.$transaction(async (tx) => {
         // Shared by Netlify and Railway. Serialize all reservations for this member/week.
-        await tx.$queryRawUnsafe('SELECT pg_advisory_xact_lock(hashtext($1), $2)::text', userId, Math.floor(start.getTime() / 86400000));
+        await tx.$queryRawUnsafe('SELECT pg_advisory_xact_lock(hashtext($1), $2::integer)::text', userId, Math.floor(start.getTime() / 86400000));
         const user = await tx.user.findUnique({ where: { id: userId }, select: { tier: true, softwareBanned: true } });
         if (!user || user.softwareBanned)
             throw new Error("AI member access is unavailable");

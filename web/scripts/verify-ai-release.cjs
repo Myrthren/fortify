@@ -24,6 +24,7 @@ async function main() {
       if (Number(packs[0].count) > 0) throw new Error('Unspent legacy AI packs require resolution before replacing daily pack usage');
     }
     console.log('AI release check passed: legacy pack review.');
+    stage = 'allowance configuration';
     const ts = require('typescript'), cache = new Map();
     function load(file) {
       if (cache.has(file)) return cache.get(file).exports;
@@ -47,6 +48,7 @@ async function main() {
       ids.push(id);
       return id;
     }
+    stage = 'shared PostgreSQL locking';
     const lockId = await member('PRO');
     const botBudget = load(path.resolve(__dirname, '../../bot/src/lib/ai-budget.ts'));
     const reservations = await Promise.all(Array.from({ length: 8 }, (_, i) => (i % 2 ? budget : botBudget).reserveAiCall(lockId, web.AI_MODELS.fast, 1_000_000, 1, true)));
