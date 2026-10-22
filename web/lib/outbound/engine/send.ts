@@ -1,3 +1,4 @@
+import { offerFingerprint } from "@/lib/outbound/offer";
 import type { OutboundCampaign, OutboundEmail, OutboundLead } from "@prisma/client";
 import { db } from "@/lib/db";
 import { getSendProvider } from "@/lib/outbound/registry";
@@ -97,6 +98,16 @@ export async function sendEmail(
   lead: OutboundLead,
   campaign: OutboundCampaign
 ): Promise<SendOutcome> {
+  const metadata = email.variation as { offerFingerprint?: string } | null;
+  if (!campaign.offer?.trim() || metadata?.offerFingerprint !== offerFingerprint(campaign.offer)) {
+    const held = await db.outboundEmail.updateMany({ where: { id: email.id, status: { in: ["DRAFT", "QUEUED"] } }, data: {
+      status: "DRAFT", scheduledAt: null, failReason: "Review this draft against your current offer before approving it.",
+    } });
+    if (!held.count) return { sent: false, reason: "already claimed" };
+    await db.outboundLead.update({ where: { id: lead.id }, data: { nextActionAt: null } });
+    return { sent: false, reason: "offer review required" };
+  }
+
   if (!isSendableEmail(lead.email)) {
     await markFailed(email.id, lead.id, "lead has no usable email address");
     return { sent: false, reason: "no usable email" };

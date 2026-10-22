@@ -232,9 +232,13 @@ test('slideshow charges only completed images in a partial batch', async () => {
 for (const [label, fetchResponse] of [['HTTP error', new Response('Server error', { status: 500 })], ['empty page', new Response('  ')], ['unreachable', null]]) {
   test(`Competitor Watch ${label} costs zero and preserves baseline`, async () => {
     const h = harness();
-    h.db.competitorWatch = { findUnique: async () => ({ id: 'c', userId: 'u', links: [{ url: 'https://example.org', lastHash: 'old-baseline' }] }) };
+    h.db.competitorWatch = { findUnique: async () => ({ id: 'c', userId: 'u', active: true, links: [{ url: 'https://example.org', lastHash: 'old-baseline' }] }) };
+    const watchModule = load('lib/competitor-watch.ts', {
+      '@/lib/db': { db: h.db }, '@/lib/result-credits': h.credit,
+      'dns/promises': { lookup: async () => [{ address: '93.184.216.34' }] },
+    }, { fetch: async () => { if (!fetchResponse) throw new Error('offline'); return fetchResponse.clone(); } });
     const route = load('app/api/competitor-watch/[id]/scan/route.ts', {
-      'next/server': next, '@/auth': auth, '@/lib/db': { db: h.db }, '@/lib/result-credits': h.credit,
+      'next/server': next, '@/auth': auth, '@/lib/db': { db: h.db }, '@/lib/result-credits': h.credit, '@/lib/competitor-watch': watchModule,
     }, { fetch: async () => { if (!fetchResponse) throw new Error('offline'); return fetchResponse.clone(); } });
     const response = await route.POST(request('/api/competitor-watch/c/scan', {}), params);
     assert.equal(response.status, 200);

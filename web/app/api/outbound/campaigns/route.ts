@@ -56,7 +56,7 @@ export async function POST(req: Request) {
       industry: str(body.industry, 120),
       location: str(body.location, 120),
       offer: str(body.offer, 2000),
-      senderName: str(body.senderName, 120) ?? user.name ?? "Fortify",
+      senderName: str(body.senderName, 120) ?? user.name ?? null,
       senderEmail,
       senderTitle: str(body.senderTitle, 120),
       brandVoiceId: str(body.brandVoiceId, 60),

@@ -288,7 +288,7 @@ export function OutboundLeadDetail({
                   <span className="ml-auto text-xs tabular-nums text-text-dim">{o.score}</span>
                 </div>
                 <p className="mb-2 text-sm text-text-muted">{o.evidence}</p>
-                <p className="text-xs text-text-dim">Fortify service: {o.fortifyService}</p>
+                <p className="text-xs text-text-dim">Relevant offer: {o.fortifyService}</p>
               </div>
             ))}
           </div>

@@ -1,8 +1,8 @@
-import { chargeForResult, InsufficientCredits } from "@/lib/result-credits";
+import { InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { createHash } from "crypto";
+import { scanWatch, WatchChanged } from "@/lib/competitor-watch";
 
 const COST = 10;
 
@@ -32,75 +32,18 @@ export async function POST(
     );
   }
 
-  const links = (watch.links as {
-    id: string;
-    url: string;
-    label: string;
-    type: string;
-    lastHash?: string;
-    lastScanAt?: string;
-  }[]);
+  if (user.tier !== "ELITE" && user.tier !== "APEX")
+    return NextResponse.json({ error: "Competitor Watch requires Elite+." }, { status: 403 });
+  if (!watch.active) return NextResponse.json({ error: "Resume this watch before scanning." }, { status: 409 });
 
-  const scansCreated: {
-    id: string;
-    url: string;
-    hasChange: boolean;
-    summary: string;
-    scannedAt: string;
-  }[] = [];
-
-  const updatedLinks = [...links];
-  let validPages = 0;
-
-  for (let i = 0; i < updatedLinks.length; i++) {
-    const link = updatedLinks[i];
-    let hash: string | null = null;
-    let hasChange = false;
-    let summary = "No changes detected";
-
-    try {
-      const res = await fetch(link.url, {
-        signal: AbortSignal.timeout(10000),
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; FortifyBot/1.0)" },
-      });
-      if (!res.ok) throw new Error("Fetch failed");
-      const text = await res.text();
-      if (!text.trim()) throw new Error("Empty page");
-      validPages++;
-      hash = createHash("md5").update(text).digest("hex");
-      hasChange = link.lastHash !== undefined && link.lastHash !== null
-        ? hash !== link.lastHash
-        : false;
-      summary = hasChange ? "Content changed" : "No changes detected";
-    } catch {
-      summary = "Fetch failed — site unreachable or timed out";
-    }
-
-    scansCreated.push({ id: "", url: link.url, hasChange, summary, scannedAt: new Date().toISOString() });
-
-    if (hash !== null) {
-      updatedLinks[i] = {
-        ...link,
-        lastHash: hash,
-        lastScanAt: new Date().toISOString(),
-      };
-    }
-  }
-
-  const creditsUsed = validPages > 0 ? COST : 0;
+  let result;
   try {
-    if (validPages) await chargeForResult(userId, creditsUsed, "spend_competitor_watch_scan", async tx => {
-      for (const result of scansCreated) {
-        const saved = await tx.competitorWatchScan.create({ data: { watchId: id, url: result.url, hasChange: result.hasChange, summary: result.summary } });
-        result.id = saved.id;
-        result.scannedAt = saved.scannedAt.toISOString();
-      }
-      await tx.competitorWatch.update({ where: { id }, data: { links: updatedLinks } });
-    });
+    result = await scanWatch(watch);
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Could not save scan. No credits charged." },
-      { status: e instanceof InsufficientCredits ? 402 : 500 });
+      { status: e instanceof InsufficientCredits ? 402 : e instanceof WatchChanged ? 409 : 500 });
   }
+  const { scans: scansCreated, creditsUsed } = result;
 
   // Create in-app notification for any changed pages
   const changed = scansCreated.filter((s) => s.hasChange);

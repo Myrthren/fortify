@@ -89,7 +89,7 @@ export default function HomePage() {
           <BentoCard
             icon={<Radar className="h-5 w-5" />}
             title="Competitor Watch"
-            body="Track rivals' sites and socials, and get told the moment something changes."
+            body="Check rivals’ readable web pages daily and see the wording that changed."
           />
           <BentoCard
             icon={<Bot className="h-5 w-5" />}

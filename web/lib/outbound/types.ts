@@ -141,7 +141,7 @@ export type Opportunity = {
   /** Must quote or reference something actually on the site. Guardrails check this. */
   evidence: string;
   impact: "high" | "medium" | "low";
-  /** Which Fortify capability addresses it. */
+  /** Which product/service from the customer offer addresses it. Legacy key retained for stored reports. */
   fortifyService: string;
   /** 0-100 confidence that this is real and worth raising. */
   score: number;
@@ -150,7 +150,7 @@ export type Opportunity = {
 export type AnalysisResult = {
   analysis: LeadAnalysis;
   opportunities: Opportunity[];
-  /** Why Fortify could help, in plain language. Shown on the lead page. */
+  /** How the customer offer fits, in plain language. Shown on the lead page. */
   summary: string;
   suggestedService: string;
   /** 0-100. Below the campaign's threshold the lead is disqualified. */
