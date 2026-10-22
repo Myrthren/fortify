@@ -18,6 +18,8 @@ The research floor is a real-time Three.js environment, loaded only when the lab
 
 The environment uses authored meshes and procedural materials, including workstation keyboards, monitors, cabinets, instruments, robot arms, chairs, server blades, cables, glass and plants. No external character models or remote image assets are required. Three.js is MIT licensed. Rendering uses physical materials, environment lighting, shadows, ambient occlusion and restrained bloom. Static fittings are batched by material. Balanced graphics disables the expensive effects and caps rendering resolution. Hidden tabs suspend drawing; unmounting disposes graphics resources.
 
+The lab follows Fortify's graphite, black and silver palette. Its controls use the shared site colour variables and Sci-fi display typography. Equipment, flooring, glazing and on-screen diagrams use neutral materials; small health/fault indicators retain their semantic colours. In Sci-fi mode, an animated dotted planet above the meeting table echoes the landing-page motif. Classic hides that ambient display and uses Classic typography. Theme changes do not rebuild the world or modify recorded research states; reduced-motion preferences keep the planet static.
+
 Camera controls include orbit, pan, zoom, room presets, an eye-level Inside view, following the selected person, a cinematic orbit and fullscreen. Fullscreen has its own simulation playback controls. People can be selected directly in 3D, from projected name labels or through the accessible people strip. Reduced-motion preferences disable idle and limb animation, camera easing and cinematic rotation; station changes are shown immediately.
 
 - Run, pause, choose playback speed or advance one round at a time.

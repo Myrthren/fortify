@@ -19,7 +19,7 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
   let world = options.world, selected = options.selected, disposed = false, animation = 0, previous = 0, elapsed = 0, hidden = document.hidden;
   let view: CameraView = "overview", follow = false, cinematic = false, quality = "high", cameraTween = 0;
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const scene = new T.Scene(); scene.background = new T.Color("#10171d"); scene.fog = new T.FogExp2("#10171d", .008);
+  const scene = new T.Scene(); scene.background = new T.Color("#070707"); scene.fog = new T.FogExp2("#070707", .008);
   const renderer = new T.WebGLRenderer({ antialias: true, alpha: false, powerPreference: "high-performance" });
   renderer.outputColorSpace = T.SRGBColorSpace; renderer.toneMapping = T.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = T.PCFSoftShadowMap;
@@ -32,32 +32,32 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
   const geometry = new Map<string, T.BufferGeometry>(), material = new Map<string, T.MeshStandardMaterial>(); const textures: T.Texture[] = [];
   const group = (parent: T.Object3D, x = 0, y = 0, z = 0, rotation = 0) => { const g = new T.Group(); g.position.set(x, y, z); g.rotation.y = rotation; parent.add(g); return g; };
   function mat(color: string, roughness = .6, metalness = 0, glow = 0) { const key = `${color}/${roughness}/${metalness}/${glow}`; if (!material.has(key)) material.set(key, new T.MeshStandardMaterial({ color, roughness, metalness, emissive: color, emissiveIntensity: glow })); return material.get(key)!; }
-  const white = mat("#c5cace", .43, .16), ceramic = mat("#d6dad9", .32, .13), graphite = mat("#273039", .43, .55), black = mat("#12191e", .51, .2), steel = mat("#6b7983", .3, .85), rubber = mat("#151b20", .88), wood = mat("#8d7864", .63), cool = mat("#c2e7ef", .22, .3, 2.5), green = mat("#88c6b5", .3, .15, 2.4), amber = mat("#edba77", .35, .1, 2);
-  const glass = new T.MeshPhysicalMaterial({ color: "#b7d7dc", metalness: .15, roughness: .12, transparent: true, opacity: .13, side: T.DoubleSide, depthWrite: false });
+  const white = mat("#37393c", .43, .32), ceramic = mat("#67696c", .32, .27), graphite = mat("#1c1d1f", .43, .55), black = mat("#101112", .51, .2), steel = mat("#6b6d70", .3, .85), rubber = mat("#101011", .88), wood = mat("#353332", .63), cool = mat("#e3e3e3", .22, .3, 1.8), green = mat("#a3b5aa", .3, .15, 1.6), amber = mat("#d1b288", .35, .1, 1.6);
+  const glass = new T.MeshPhysicalMaterial({ color: "#adadaf", metalness: .15, roughness: .12, transparent: true, opacity: .075, side: T.DoubleSide, depthWrite: false });
   function mesh(parent: T.Object3D, geo: T.BufferGeometry, m: T.Material, x: number, y: number, z: number) { const o = new T.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = m !== glass; o.receiveShadow = true; parent.add(o); return o; }
   function box(parent: T.Object3D, w: number, h: number, d: number, x: number, y: number, z: number, m: T.Material, radius = .025) { const key = `b${w}/${h}/${d}/${radius}`; if (!geometry.has(key)) geometry.set(key, radius ? new RoundedBoxGeometry(w, h, d, 2, Math.min(radius, w / 3, h / 3, d / 3)) : new T.BoxGeometry(w, h, d)); return mesh(parent, geometry.get(key)!, m, x, y, z); }
   function cylinder(parent: T.Object3D, top: number, bottom: number, h: number, x: number, y: number, z: number, m: T.Material, segments = 20) { const key = `c${top}/${bottom}/${h}/${segments}`; if (!geometry.has(key)) geometry.set(key, new T.CylinderGeometry(top, bottom, h, segments)); return mesh(parent, geometry.get(key)!, m, x, y, z); }
   function sphere(parent: T.Object3D, x: number, y: number, z: number, sx: number, sy: number, sz: number, m: T.Material) { if (!geometry.has("sphere")) geometry.set("sphere", new T.SphereGeometry(1, 20, 14)); const o = mesh(parent, geometry.get("sphere")!, m, x, y, z); o.scale.set(sx, sy, sz); return o; }
   function tube(parent: T.Object3D, points: number[][], radius: number, m: T.Material) { const geo = new T.TubeGeometry(new T.CatmullRomCurve3(points.map(p => new T.Vector3(...p as [number, number, number]))), 16, radius, 6, false); const o = mesh(parent, geo, m, 0, 0, 0); geometry.set(`tube${geometry.size}`, geo); return o; }
   function canvasTexture(w: number, h: number, draw: (c: CanvasRenderingContext2D) => void) { const canvas = document.createElement("canvas"); canvas.width = w; canvas.height = h; draw(canvas.getContext("2d")!); const tx = new T.CanvasTexture(canvas); tx.colorSpace = T.SRGBColorSpace; tx.anisotropy = 4; textures.push(tx); return tx; }
-  const floorTexture = canvasTexture(512, 512, c => { c.fillStyle = "#535c63"; c.fillRect(0, 0, 512, 512); let seed = 318; for (let i = 0; i < 20000; i++) { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; const x = seed >>> 23; seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; const y = seed >>> 23; c.fillStyle = i % 2 ? "#ffffff07" : "#00000007"; c.fillRect(x, y, 1, 1); } c.strokeStyle = "#252f36"; c.lineWidth = 2; c.strokeRect(1, 1, 510, 510); }); floorTexture.wrapS = floorTexture.wrapT = T.RepeatWrapping; floorTexture.repeat.set(14, 9);
+  const floorTexture = canvasTexture(512, 512, c => { c.fillStyle = "#27282b"; c.fillRect(0, 0, 512, 512); let seed = 318; for (let i = 0; i < 20000; i++) { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; const x = seed >>> 23; seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; const y = seed >>> 23; c.fillStyle = i % 2 ? "#ffffff07" : "#00000007"; c.fillRect(x, y, 1, 1); } c.strokeStyle = "#121214"; c.lineWidth = 2; c.strokeRect(1, 1, 510, 510); }); floorTexture.wrapS = floorTexture.wrapT = T.RepeatWrapping; floorTexture.repeat.set(14, 9);
   const floorMat = new T.MeshStandardMaterial({ map: floorTexture, roughness: .47, metalness: .2 }); material.set("floor", floorMat);
-  function sign(parent: T.Object3D, text: string, x: number, y: number, z: number, width = 2, color = "#b5c9d0", floor = false) { const tx = canvasTexture(1024, 128, c => { c.clearRect(0, 0, 1024, 128); c.fillStyle = color; c.font = "500 48px monospace"; c.textAlign = "center"; c.fillText(text, 512, 82); }); const m = new T.MeshBasicMaterial({ map: tx, transparent: true, depthWrite: false, side: T.DoubleSide }); const o = mesh(parent, new T.PlaneGeometry(width, width / 8), m, x, y, z); geometry.set(`sign${geometry.size}`, o.geometry); if (floor) o.rotation.x = -Math.PI / 2; return o; }
-  const lighting = new T.HemisphereLight("#d9e7ef", "#39434a", 2.5); scene.add(lighting);
-  const sun = new T.DirectionalLight("#fff0db", 5); sun.position.set(-8, 19, -6); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 18, bottom: -18, near: .5, far: 70 }); sun.shadow.normalBias = .035; sun.shadow.bias = -.00015; scene.add(sun);
-  const fill = new T.DirectionalLight("#c1d7e8", 2); fill.position.set(10, 8, 13); scene.add(fill);
+  function sign(parent: T.Object3D, text: string, x: number, y: number, z: number, width = 2, color = "#b9b9bb", floor = false) { const tx = canvasTexture(1024, 128, c => { c.clearRect(0, 0, 1024, 128); c.fillStyle = color; c.font = '500 48px "Chakra Petch", monospace'; c.textAlign = "center"; c.fillText(text, 512, 82); }); const m = new T.MeshBasicMaterial({ map: tx, transparent: true, depthWrite: false, side: T.DoubleSide }); const o = mesh(parent, new T.PlaneGeometry(width, width / 8), m, x, y, z); geometry.set(`sign${geometry.size}`, o.geometry); if (floor) o.rotation.x = -Math.PI / 2; return o; }
+  const lighting = new T.HemisphereLight("#dedede", "#252527", 1.65); scene.add(lighting);
+  const sun = new T.DirectionalLight("#f1efeb", 3.6); sun.position.set(-8, 19, -6); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -22, right: 22, top: 18, bottom: -18, near: .5, far: 70 }); sun.shadow.normalBias = .035; sun.shadow.bias = -.00015; scene.add(sun);
+  const fill = new T.DirectionalLight("#dadbdf", 1.4); fill.position.set(10, 8, 13); scene.add(fill);
   const pmrem = new T.PMREMGenerator(renderer), roomEnvironment = new RoomEnvironment(), environment = pmrem.fromScene(roomEnvironment, .04); scene.environment = environment.texture; scene.environmentIntensity = .55; roomEnvironment.dispose(); pmrem.dispose();
   const building = group(scene);
-  box(scene, 150, .4, 150, 0, -.9, 0, new T.MeshBasicMaterial({ color: "#10171d" }), 0);
+  box(scene, 150, .4, 150, 0, -.9, 0, new T.MeshBasicMaterial({ color: "#070707" }), 0);
   box(building, 29.5, .65, 19.7, 0, -.38, 0, graphite, .18);
   box(building, 28.6, .12, 18.8, 0, -.01, 0, floorMat, .02);
   box(building, 29.2, .045, .045, 0, -.24, 9.64, cool, .01);
   box(building, .045, .045, 19, 14.57, -.24, 0, cool, .01);
   // Warm office carpet and laboratory flooring have separate material responses.
-  box(building, 9.7, .025, 6.6, -8.1, .065, 5.35, mat("#444e55", .99), 0);
-  box(building, 6.4, .025, 6.5, .2, .065, 5.4, mat("#575c5d", .93), 0);
-  for (let x = -14; x <= 14; x += 2) { box(building, .025, .015, 1.1, x, .07, 1, mat("#a2a99d", .8), 0); }
-  for (const z of [.25, 1.75]) box(building, 28, .018, .026, 0, .08, z, mat("#aebbb9", .7), 0);
+  box(building, 9.7, .025, 6.6, -8.1, .065, 5.35, mat("#1b1c1e", .99), 0);
+  box(building, 6.4, .025, 6.5, .2, .065, 5.4, mat("#262628", .93), 0);
+  for (let x = -14; x <= 14; x += 2) { box(building, .025, .015, 1.1, x, .07, 1, mat("#757578", .8), 0); }
+  for (const z of [.25, 1.75]) box(building, 28, .018, .026, 0, .08, z, mat("#8b8b8e", .7), 0);
   // Back facade: dimensional panels, recessed windows, structural steel and vents.
   box(building, 28.5, .95, .3, 0, .5, -9.35, white);
   box(building, 28.5, .22, .42, 0, 4.3, -9.35, graphite);
@@ -66,11 +66,11 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
     if (x < 13) {
       box(building, 3.28, 3.12, .07, x + 1.75, 2.57, -9.4, glass);
       for (const y of [1.3, 2.7, 4]) box(building, 3.35, .035, .13, x + 1.75, y, -9.3, steel, 0);
-      for (let a = 0; a < 9; a++) box(building, 3.23, .025, .14, x + 1.75, 3.55 + a * .065, -9.27, mat("#97a5ad", .4, .6), 0);
+      for (let a = 0; a < 9; a++) box(building, 3.23, .025, .14, x + 1.75, 3.55 + a * .065, -9.27, mat("#65676a", .4, .6), 0);
     }
   }
   // Silhouettes beyond the glazed facade give the room depth rather than a void.
-  const glazingTexture = canvasTexture(1024, 512, c => { const gradient = c.createLinearGradient(0, 0, 0, 512); gradient.addColorStop(0, "#526c7d"); gradient.addColorStop(.65, "#a1b4bb"); gradient.addColorStop(1, "#d0d6cf"); c.fillStyle = gradient; c.fillRect(0, 0, 1024, 512); for (let i = 0; i < 45; i++) { const x = i * 31 % 1024, h = 35 + i * 17 % 120; c.fillStyle = i % 2 ? "#50667130" : "#6b7c8230"; c.fillRect(x, 512 - h, 22, h); } });
+  const glazingTexture = canvasTexture(1024, 512, c => { const gradient = c.createLinearGradient(0, 0, 0, 512); gradient.addColorStop(0, "#111214"); gradient.addColorStop(.65, "#25272a"); gradient.addColorStop(1, "#3e4043"); c.fillStyle = gradient; c.fillRect(0, 0, 1024, 512); for (let i = 0; i < 45; i++) { const x = i * 31 % 1024, h = 35 + i * 17 % 120; c.fillStyle = i % 2 ? "#73737325" : "#92929225"; c.fillRect(x, 512 - h, 22, h); } });
   box(building, 28, 3.2, .02, 0, 2.65, -9.5, new T.MeshBasicMaterial({ map: glazingTexture }));
   // Server suite enclosure with a real opening onto the aisle.
   for (const x of [3.6, 14.1]) {
@@ -83,8 +83,8 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
   box(building, 2.2, .07, .11, 8.5, 3.5, -.55, cool); sign(building, "COMPUTE / 03", 8.5, 3.16, -.45, 2.1);
   // Low glass partitions leave a readable cutaway from the default camera.
   for (const [x, z, w] of [[-8.2, 2, 9.7], [8.8, 2, 7.5]]) { box(building, w, .4, .13, x, .2, z, graphite); box(building, w, .95, .055, x, .9, z, glass); box(building, w, .04, .08, x, 1.4, z, steel); }
-  for (const [x, z, text] of [[-7, -1.25, "01 / EXPERIMENTAL LAB"], [8.5, -1.3, "03 / COMPUTE"], [-8.3, 8.5, "02 / RESEARCH OFFICE"], [.2, 8.5, "COLLABORATION"], [8.7, 8.5, "04 / EVIDENCE & ANALYSIS"]] as [number, number, string][]) sign(building, text, x, .09, z, 4.1, "#c2caca", true);
-  sign(building, "F O R T I F Y   /   R E S E A R C H   S Y S T E M S", -4.6, 3.85, -9.12, 9.2, "#e0e8e9");
+  for (const [x, z, text] of [[-7, -1.25, "01 / EXPERIMENTAL LAB"], [8.5, -1.3, "03 / COMPUTE"], [-8.3, 8.5, "02 / RESEARCH OFFICE"], [.2, 8.5, "COLLABORATION"], [8.7, 8.5, "04 / EVIDENCE & ANALYSIS"]] as [number, number, string][]) sign(building, text, x, .09, z, 4.1, "#a2a2a5", true);
+  sign(building, "F O R T I F Y   /   R E S E A R C H   S Y S T E M S", -4.6, 3.85, -9.12, 9.2, "#e3e3e3");
   // Suspended services, luminaire housings and cable trays.
   for (const x of [-10, -5.4, 5.4, 11.2]) {
     const light = group(building, x, 4.05, -4.8); box(light, 2.5, .12, .48, 0, 0, 0, graphite); box(light, 2.35, .025, .32, 0, -.075, 0, cool);
@@ -110,7 +110,7 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
   }
   function keyboard(parent: T.Object3D, x: number, y: number, z: number) {
     box(parent, .72, .026, .25, x, y, z, black, .025);
-    for (let r = 0; r < 4; r++) for (let c = 0; c < 13; c++) box(parent, .04, .012, .033, x - .31 + c * .051, y + .018, z - .08 + r * .051, mat("#56616a", .7), .003);
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 13; c++) box(parent, .04, .012, .033, x - .31 + c * .051, y + .018, z - .08 + r * .051, mat("#67686b", .7), .003);
     box(parent, .1, .045, .16, x + .56, y + .006, z, graphite, .035);
   }
   function mug(parent: T.Object3D, x: number, y: number, z: number) { cylinder(parent, .072, .061, .15, x, y + .075, z, ceramic); cylinder(parent, .057, .057, .005, x, y + .153, z, mat("#30251e", .6)); const geo = new T.TorusGeometry(.048, .014, 8, 16); geometry.set(`mug${geometry.size}`, geo); mesh(parent, geo, ceramic, x + .075, y + .09, z); }
@@ -122,7 +122,7 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
     screen(g, -.35, 1.57, -.3, type); screen(g, .76, 1.5, -.27, "code", .83, .58);
     keyboard(g, -.33, .986, .32); mug(g, 1.05, .97, .35);
     box(g, .3, .35, .58, -.97, 1.15, -.22, graphite); for (let i = 0; i < 5; i++) box(g, .2, .008, .01, -.97, 1.1 + i * .04, .078, steel, 0);
-    box(g, .27, .025, .35, -.96, .992, .34, mat("#b9c0b8", .9)); box(g, .25, .005, .32, -.96, 1.008, .34, ceramic); chair(g, .3, 1.3, Math.PI);
+    box(g, .27, .025, .35, -.96, .992, .34, mat("#aaa9a7", .9)); box(g, .25, .005, .32, -.96, 1.008, .34, ceramic); chair(g, .3, 1.3, Math.PI);
     tube(g, [[-.35, 1.1, -.37], [-.35, .55, -.5], [.95, .5, -.5], [1.2, .1, -.55]], .015, rubber);
   }
   desk(-10.6, 3.4, "office"); desk(-6.9, 3.4, "office"); desk(6.7, 3.65, "analysis"); desk(10.5, 3.65, "analysis"); desk(6.4, -4.65, "compute");
@@ -130,7 +130,7 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
   function labBench(x: number) {
     const g = group(building, x, 0, -4.65);
     box(g, 3.65, .13, 1.55, 0, 1.02, 0, ceramic, .05); box(g, 3.6, .83, 1.36, 0, .51, 0, white);
-    for (let i = 0; i < 4; i++) { box(g, .82, .68, .025, -1.36 + i * .91, .54, .7, mat("#a2acb2", .4, .2)); box(g, .24, .024, .045, -1.36 + i * .91, .77, .735, steel); }
+    for (let i = 0; i < 4; i++) { box(g, .82, .68, .025, -1.36 + i * .91, .54, .7, mat("#3b3d40", .4, .2)); box(g, .24, .024, .045, -1.36 + i * .91, .77, .735, steel); }
     box(g, 3.8, .065, .055, 0, 1.09, .76, cool);
     screen(g, -1.1, 1.7, -.35, "instrument", .91, .6); keyboard(g, -1.05, 1.117, .36);
     box(g, .95, .075, .88, .55, 1.13, -.12, graphite, .025); box(g, .95, .085, .88, .55, 1.82, -.12, graphite, .025);
@@ -141,12 +141,12 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
     box(g, .06, .06, .06, .22, 1.11, .36, amber, .012); tube(g, [[.27, 1.63, -.41], [.45, 1.58, -.37], [.55, 1.45, -.14]], .009, rubber);
     cylinder(g, .25, .3, .09, .55, 1.16, .02, steel); cylinder(g, .16, .16, .15, .55, 1.28, .02, ceramic); instrumentLights.push(cylinder(g, .14, .14, .025, .55, 1.38, .02, green));
     const arm = group(g, 1.35, 1.14, -.15); cylinder(arm, .18, .2, .11, 0, .03, 0, steel); const joint = group(arm, 0, .1, 0); sphere(joint, 0, .1, 0, .12, .12, .12, graphite); box(joint, .12, .5, .15, 0, .36, 0, white); const elbow = group(joint, 0, .59, 0); elbow.rotation.z = -1.1; cylinder(elbow, .105, .105, .18, 0, 0, 0, steel).rotation.x = Math.PI / 2; box(elbow, .11, .43, .13, 0, .23, 0, white); box(elbow, .2, .14, .17, 0, .5, 0, graphite); for (const a of [-1, 1]) box(elbow, .025, .12, .04, a * .075, .62, 0, steel); robotArms.push(joint);
-    for (let i = 0; i < 5; i++) { const xx = -1.45 + i * .15; cylinder(g, .035, .035, .23, xx, 1.23, -.65, glass, 12); cylinder(g, .033, .033, .08, xx, 1.17, -.65, mat("#91b3b8", .2, .2), 12); cylinder(g, .041, .041, .025, xx, 1.36, -.65, steel, 12); }
+    for (let i = 0; i < 5; i++) { const xx = -1.45 + i * .15; cylinder(g, .035, .035, .23, xx, 1.23, -.65, glass, 12); cylinder(g, .033, .033, .08, xx, 1.17, -.65, mat("#96999c", .2, .2), 12); cylinder(g, .041, .041, .025, xx, 1.36, -.65, steel, 12); }
   }
   labBench(-9.55); labBench(-4.85);
   // Perimeter storage, gas cylinders and a dimensional inspection instrument.
-  for (let i = 0; i < 5; i++) { const x = -11 + i * 2.2; box(building, 2.06, .95, 1, x, .54, -8.6, white); box(building, 2.15, .08, 1.08, x, 1.05, -8.6, ceramic); for (const a of [-.5, .5]) { box(building, 1, .75, .025, x + a, .55, -8.08, mat("#a6afb5", .5, .2)); box(building, .3, .025, .05, x + a, .83, -8.04, steel); } }
-  for (const x of [-13.4, -12.9]) { cylinder(building, .18, .19, 1.25, x, .74, -7.4, mat("#717c81", .4, .65)); sphere(building, x, 1.37, -7.4, .18, .13, .18, steel); cylinder(building, .035, .035, .17, x, 1.54, -7.4, graphite); tube(building, [[x, 1.62, -7.4], [x + .22, 1.8, -7.3], [x + .4, .9, -7]], .014, rubber); }
+  for (let i = 0; i < 5; i++) { const x = -11 + i * 2.2; box(building, 2.06, .95, 1, x, .54, -8.6, white); box(building, 2.15, .08, 1.08, x, 1.05, -8.6, ceramic); for (const a of [-.5, .5]) { box(building, 1, .75, .025, x + a, .55, -8.08, mat("#3b3c3e", .5, .2)); box(building, .3, .025, .05, x + a, .83, -8.04, steel); } }
+  for (const x of [-13.4, -12.9]) { cylinder(building, .18, .19, 1.25, x, .74, -7.4, mat("#56595d", .4, .65)); sphere(building, x, 1.37, -7.4, .18, .13, .18, steel); cylinder(building, .035, .035, .17, x, 1.54, -7.4, graphite); tube(building, [[x, 1.62, -7.4], [x + .22, 1.8, -7.3], [x + .4, .9, -7]], .014, rubber); }
   const microscope = group(building, -1.4, 1.1, -8.5); box(microscope, .5, .055, .6, 0, 0, 0, graphite); const neck = box(microscope, .15, .42, .17, .1, .24, -.14, white); neck.rotation.x = .2; cylinder(microscope, .05, .075, .35, 0, .48, .04, graphite).rotation.x = -.4; box(microscope, .3, .04, .24, 0, .18, .1, steel);
   // Racks have independent blades, fans, patch leads, handles and status LEDs.
   const rackLEDs: T.Mesh[] = [];
@@ -158,7 +158,7 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
       for (let a = 0; a < 11; a++) box(rack, .025, .11, .025, -.58 + a * .082, y, .85, black, 0);
       for (const side of [-1, 1]) box(rack, .035, .09, .055, side * .63, y, .86, steel, .006);
       rackLEDs.push(box(rack, .025, .025, .015, .47, y, .85, j % 3 ? green : cool, .004));
-      if (j % 3 === 0) tube(rack, [[.3, y, .87], [.6, y - .1, 1], [.72, y - .35, .98], [.5, y - .4, .87]], .012, mat(i % 2 ? "#9aa995" : "#778f9e", .6));
+      if (j % 3 === 0) tube(rack, [[.3, y, .87], [.6, y - .1, 1], [.72, y - .35, .98], [.5, y - .4, .87]], .012, mat(i % 2 ? "#8d928e" : "#898c91", .6));
     }
     for (let j = 0; j < 2; j++) { const fan = group(rack, 0, 2.6 + j * .32, -.81); cylinder(fan, .13, .13, .02, 0, 0, 0, steel).rotation.x = Math.PI / 2; for (let a = 0; a < 6; a++) { const blade = box(fan, .19, .045, .02, 0, 0, -.02, black, .01); blade.rotation.z = a * Math.PI / 3; } fans.push(fan); }
     sign(rack, `NODE / 0${i + 1}`, 0, 3.05, .85, .9);
@@ -167,30 +167,41 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
   const wallDisplay = group(building, 1, 0, -9.05); screen(wallDisplay, 0, 2.3, .03, "wall", 3.7, 2.1);
   // Team table, tablets, notebooks and chairs.
   const table = group(building, 0, 0, 5.5); box(table, 2.65, .09, 2.7, 0, .9, 0, wood, .25); box(table, 1.5, .8, 1.3, 0, .43, 0, graphite, .09);
+  // Fortify's dotted planet becomes a quiet in-world research display.
+  const signal = group(scene, 0, 1.6, 5.5), cloud = new T.BufferGeometry(), dots: number[] = [];
+  for (let i = 0; i < 580; i++) { const y = 1 - i / 579 * 2, r = Math.sqrt(1 - y * y), angle = i * 2.399963; dots.push(Math.cos(angle) * r * .52, y * .52, Math.sin(angle) * r * .52); }
+  cloud.setAttribute("position", new T.Float32BufferAttribute(dots, 3)); geometry.set("signal-cloud", cloud);
+  const dotMaterial = new T.PointsMaterial({ color: "#ededed", size: .019, transparent: true, opacity: .68, depthWrite: false }); signal.add(new T.Points(cloud, dotMaterial));
+  const orbitMaterial = new T.MeshBasicMaterial({ color: "#aaaaaa", transparent: true, opacity: .28 });
+  for (const tilt of [.5, -1]) { const orbit = mesh(signal, new T.TorusGeometry(.66, .003, 4, 100), orbitMaterial, 0, 0, 0); geometry.set(`orbit${tilt}`, orbit.geometry); orbit.rotation.set(tilt, 0, .35); }
+  cylinder(table, .33, .37, .045, 0, .97, 0, black); cylinder(table, .27, .27, .008, 0, .996, 0, cool);
+  let scifi = document.documentElement.dataset.theme === "scifi";
+  function updateTheme() { scifi = document.documentElement.dataset.theme === "scifi"; signal.visible = scifi; }
+  const themeObserver = new MutationObserver(updateTheme); themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); updateTheme();
   for (const x of [-2.1, 2.1]) for (const z of [-.9, .9]) chair(table, x, z, x > 0 ? Math.PI / 2 : -Math.PI / 2);
-  for (const x of [-.6, .6]) { const tablet = box(table, .46, .025, .63, x, .965, .2, black, .035); tablet.rotation.y = x; box(table, .37, .01, .52, x, .984, .2, mat("#4d626b", .4, .2, .3)).rotation.y = x; mug(table, x, .955, -.55); }
+  for (const x of [-.6, .6]) { const tablet = box(table, .46, .025, .63, x, .965, .2, black, .035); tablet.rotation.y = x; box(table, .37, .01, .52, x, .984, .2, mat("#3d4145", .4, .2, .3)).rotation.y = x; mug(table, x, .955, -.55); }
   box(table, .48, .025, .65, .4, .962, .8, ceramic).rotation.y = -.3;
   function plant(x: number, z: number, scale = 1) {
-    const g = group(building, x, 0, z); g.scale.setScalar(scale); cylinder(g, .25, .2, .52, 0, .28, 0, mat("#737b7a", .9)); cylinder(g, .23, .23, .02, 0, .55, 0, mat("#38352d", 1));
+    const g = group(building, x, 0, z); g.scale.setScalar(scale); cylinder(g, .25, .2, .52, 0, .28, 0, mat("#555658", .9)); cylinder(g, .23, .23, .02, 0, .55, 0, mat("#38352d", 1));
     for (let i = 0; i < 9; i++) { const a = i * 2.399, h = 1.1 + (i % 3) * .28, end = [.4 * Math.sin(a), h, .4 * Math.cos(a)]; tube(g, [[0, .5, 0], [end[0] * .4, h * .8, end[2] * .4], end], .012, mat("#3c5143", .95)); const leaf = sphere(g, end[0], h, end[2], .11, .32, .025, mat(i % 2 ? "#6f8972" : "#4c6959", .75)); leaf.rotation.set(.35 * Math.cos(a), a, -.5 * Math.sin(a)); }
   }
   plant(-13.3, 7.8, 1.1); plant(-3.5, 8, .8); plant(13.2, 7.9, 1.15); plant(3.1, -8.5, .8);
   for (let i = 0; i < 3; i++) { const g = group(building, -12.8 + i * .65, 0, 6.9); box(g, .55, 1.1, .7, 0, .57, 0, graphite); for (let j = 0; j < 3; j++) { box(g, .47, .3, .025, 0, .22 + j * .34, .36, steel); box(g, .13, .025, .03, 0, .27 + j * .34, .38, black); } }
   // A trolley, maintenance tools and shipping cases make the space inhabited.
-  const cart = group(building, 12.9, 0, -2.4); for (const y of [.25, .85]) box(cart, .72, .055, .95, 0, y, 0, steel); for (const x of [-.3, .3]) for (const z of [-.4, .4]) { cylinder(cart, .02, .02, .95, x, .56, z, steel, 8); sphere(cart, x, .12, z, .065, .065, .05, rubber); } box(cart, .5, .3, .55, 0, .42, 0, graphite); box(cart, .36, .16, .5, 0, .97, 0, mat("#a18a68", .8));
+  const cart = group(building, 12.9, 0, -2.4); for (const y of [.25, .85]) box(cart, .72, .055, .95, 0, y, 0, steel); for (const x of [-.3, .3]) for (const z of [-.4, .4]) { cylinder(cart, .02, .02, .95, x, .56, z, steel, 8); sphere(cart, x, .12, z, .065, .065, .05, rubber); } box(cart, .5, .3, .55, 0, .42, 0, graphite); box(cart, .36, .16, .5, 0, .97, 0, mat("#7b7975", .8));
   // Researchers use articulated anatomical rigs with tailored clothing and faces.
   const labels = document.createElement("div"); labels.className = "institute-3d-labels"; host.append(labels);
   const rigs: Rig[] = [], pickTargets: T.Object3D[] = [];
   const looks = [
     { skin: "#c79a7e", hair: "#272428", shirt: "#eceeea", female: true, coat: true, glasses: true },
-    { skin: "#78513d", hair: "#231e1b", shirt: "#cbd4d7", female: false, coat: true, glasses: false },
-    { skin: "#c2977e", hair: "#292a2b", shirt: "#637683", female: false, coat: false, glasses: true },
-    { skin: "#bb8867", hair: "#47342b", shirt: "#9bada5", female: true, coat: false, glasses: true },
+    { skin: "#78513d", hair: "#231e1b", shirt: "#c9cacc", female: false, coat: true, glasses: false },
+    { skin: "#c2977e", hair: "#292a2b", shirt: "#55585c", female: false, coat: false, glasses: true },
+    { skin: "#bb8867", hair: "#47342b", shirt: "#777b78", female: true, coat: false, glasses: true },
     { skin: "#e0bba1", hair: "#8e795d", shirt: "#d4dad7", female: false, coat: true, glasses: false },
-    { skin: "#835941", hair: "#252324", shirt: "#52646f", female: true, coat: false, glasses: false },
+    { skin: "#835941", hair: "#252324", shirt: "#484b4f", female: true, coat: false, glasses: false },
   ];
   for (const [index, person] of PEOPLE.entries()) {
-    const look = looks[index], root = group(scene), body = group(root, 0, .91, 0), skin = mat(look.skin, .75), hair = mat(look.hair, .92), cloth = mat(look.shirt, .83), pants = mat(index === 3 ? "#656660" : "#303d47", .91);
+    const look = looks[index], root = group(scene), body = group(root, 0, .91, 0), skin = mat(look.skin, .75), hair = mat(look.hair, .92), cloth = mat(look.shirt, .83), pants = mat(index === 3 ? "#656660" : "#303134", .91);
     root.userData.personId = person.id;
     // Sculpted torso profile, shoulders and coat skirt; front points along +z.
     const torso = new T.LatheGeometry([[.15, 0], [.18, .06], [.175, .22], [.215, .38], [.23, .43], [.16, .5]].map(p => new T.Vector2(p[0], p[1])), 24); geometry.set(`torso${index}`, torso); mesh(body, torso, cloth, 0, 0, 0).scale.z = .62;
@@ -215,7 +226,7 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
     const cap = new T.SphereGeometry(.124, 24, 16, 0, Math.PI * 2, 0, look.female ? 1.8 : 1.5); geometry.set(`hair${index}`, cap); mesh(head, cap, hair, 0, .03, -.01).scale.set(1, .98, 1);
     if (look.female) { sphere(head, 0, -.03, -.11, .09, .13, .07, hair); sphere(head, .02, -.14, -.145, .055, .14, .055, hair); }
     // Name badge and fabric seams stay legible in the closer camera views.
-    box(body, .08, .11, .012, -.105, .24, .15, ceramic, .009); box(body, .06, .026, .014, -.105, .264, .158, mat("#577385", .65), .003); box(body, .047, .006, .014, -.105, .23, .159, steel, .002);
+    box(body, .08, .11, .012, -.105, .24, .15, ceramic, .009); box(body, .06, .026, .014, -.105, .264, .158, mat("#73777c", .65), .003); box(body, .047, .006, .014, -.105, .23, .159, steel, .002);
     const arms: T.Group[] = [], elbows: T.Group[] = [], legs: T.Group[] = [], knees: T.Group[] = [];
     for (const side of [-1, 1]) {
       const arm = group(body, side * .225, .4, 0); arm.rotation.z = side * .1;
@@ -228,7 +239,7 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
       legs.push(leg); knees.push(knee);
     }
     root.scale.setScalar(look.female ? .98 : 1.04);
-    const ringGeo = new T.RingGeometry(.37, .4, 48); geometry.set(`ring${index}`, ringGeo); const ring = mesh(root, ringGeo, new T.MeshBasicMaterial({ color: "#d3eeee", transparent: true, opacity: .75, side: T.DoubleSide }), 0, .09, 0); ring.rotation.x = -Math.PI / 2;
+    const ringGeo = new T.RingGeometry(.37, .4, 48); geometry.set(`ring${index}`, ringGeo); const ring = mesh(root, ringGeo, new T.MeshBasicMaterial({ color: "#eeeeee", transparent: true, opacity: .75, side: T.DoubleSide }), 0, .09, 0); ring.rotation.x = -Math.PI / 2;
     root.traverse(o => { if (o instanceof T.Mesh) { o.userData.personId = person.id; if (o !== ring) pickTargets.push(o); } });
     const a = world.agents.find(a => a.id === person.id)!, p = station(a.location, a.id); root.position.set(p[0], .08, p[1]); root.rotation.y = a.location === "meeting" ? Math.atan2(-p[0], 5.5 - p[1]) : Math.PI;
     const label = document.createElement("button"); label.className = "institute-3d-person"; label.textContent = person.name.split(" ")[0]; label.setAttribute("aria-label", `Inspect ${person.name}, ${person.role}`); label.addEventListener("click", () => options.onSelect(person.id)); labels.append(label);
@@ -253,16 +264,16 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
   function redrawScreens() {
     for (const { texture, canvas, type } of screens) {
       const c = canvas.getContext("2d")!, w = canvas.width, h = canvas.height;
-      c.fillStyle = "#0c171d"; c.fillRect(0, 0, w, h); c.fillStyle = "#233842"; c.fillRect(0, 0, w, 46); c.fillStyle = "#bfd8db"; c.font = "16px monospace"; c.fillText(`FORTIFY / ${type.toUpperCase()}  ·  ${String(world.round).padStart(2, "0")}`, 24, 29);
-      c.strokeStyle = "#26404b"; c.lineWidth = 1; for (let i = 1; i < 8; i++) { c.beginPath(); c.moveTo(28, 72 + i * 40); c.lineTo(740, 72 + i * 40); c.stroke(); }
+      c.fillStyle = "#080909"; c.fillRect(0, 0, w, h); c.fillStyle = "#202123"; c.fillRect(0, 0, w, 46); c.fillStyle = "#d0d0d2"; c.font = "16px monospace"; c.fillText(`FORTIFY / ${type.toUpperCase()}  ·  ${String(world.round).padStart(2, "0")}`, 24, 29);
+      c.strokeStyle = "#292a2d"; c.lineWidth = 1; for (let i = 1; i < 8; i++) { c.beginPath(); c.moveTo(28, 72 + i * 40); c.lineTo(740, 72 + i * 40); c.stroke(); }
       if (type === "code" || type === "office") {
         const lines = ["institute.research / active", "", `dataset_revision = ${world.revision + 1}`, `available_compute = ${availableCompute(world)}`, `instrument_health = ${world.health}`, "", "for hypothesis in approaches:", "  evidence = review(measurement)", "  publish(evidence, shared_memory)", "", `round ${world.round} · ${world.focus}`];
-        c.font = "18px monospace"; lines.forEach((line, i) => { c.fillStyle = i % 3 ? "#8aabb8" : "#c2d6c4"; c.fillText(line, 35, 82 + i * 28); });
+        c.font = "18px monospace"; lines.forEach((line, i) => { c.fillStyle = i % 3 ? "#a0a0a5" : "#ccccce"; c.fillText(line, 35, 82 + i * 28); });
       } else {
-        c.font = "18px monospace"; c.fillStyle = "#b9ccd1"; c.fillText(type === "instrument" ? "SENSOR / CALIBRATION" : type === "compute" ? "COMPUTE CAPACITY" : "RELIABILITY / CURRENT EVIDENCE", 30, 88);
+        c.font = "18px monospace"; c.fillStyle = "#b9b9bd"; c.fillText(type === "instrument" ? "SENSOR / CALIBRATION" : type === "compute" ? "COMPUTE CAPACITY" : "RELIABILITY / CURRENT EVIDENCE", 30, 88);
         c.font = "52px monospace"; const scores = world.projects.map(p => projectScore(world, p)); c.fillText(type === "instrument" ? `${world.health}%` : type === "compute" ? `${availableCompute(world)} NODES` : scores.some(s => s !== null) ? `${Math.round(Math.max(...scores.map(s => s ?? 0)) * 100)}%` : "AWAITING DATA", 30, 160);
-        for (let j = 0; j < 2; j++) { c.beginPath(); c.strokeStyle = j ? "#9dbaaa" : "#9ebbc8"; c.lineWidth = 3; for (let i = 0; i < 75; i++) { const y = 270 + j * 40 + Math.sin(i * .19 + world.round * .7 + j) * (22 + j * 8) + Math.sin(i * .63) * 9; i ? c.lineTo(32 + i * 9.4, y) : c.moveTo(32, y); } c.stroke(); }
-        c.font = "15px monospace"; c.fillStyle = "#8fa9ae"; c.fillText(`GRANT ${world.treasury}   DATASET ${world.revision + 1}   ${world.status.toUpperCase()}`, 30, 408);
+        for (let j = 0; j < 2; j++) { c.beginPath(); c.strokeStyle = j ? "#a6b0aa" : "#d1d1d4"; c.lineWidth = 3; for (let i = 0; i < 75; i++) { const y = 270 + j * 40 + Math.sin(i * .19 + world.round * .7 + j) * (22 + j * 8) + Math.sin(i * .63) * 9; i ? c.lineTo(32 + i * 9.4, y) : c.moveTo(32, y); } c.stroke(); }
+        c.font = "15px monospace"; c.fillStyle = "#929297"; c.fillText(`GRANT ${world.treasury}   DATASET ${world.revision + 1}   ${world.status.toUpperCase()}`, 30, 408);
       }
       texture.needsUpdate = true;
     }
@@ -295,6 +306,7 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
   function animate(now: number) {
     if (disposed) return; animation = requestAnimationFrame(animate); if (hidden) return;
     const cameraDt = Math.min(previous ? (now - previous) / 1000 : 0, .5), dt = Math.min(cameraDt, .05); previous = now; elapsed += dt;
+    if (scifi && !reduced) { signal.rotation.y += dt * .11; signal.position.y = 1.6 + Math.sin(elapsed * .55) * .025; }
     for (const rig of rigs) {
       const a = world.agents.find(a => a.id === rig.id)!, p = rig.root.position, walking = rig.path.length > 0;
       if (walking) {
@@ -335,7 +347,7 @@ export function createInstituteScene(host: HTMLElement, options: Options) {
     setCinematic(value: boolean) { cinematic = value; follow = false; cameraTween = 0; },
     setQuality(value: string) { quality = value; ao.enabled = value === "high"; bloom.enabled = value === "high"; renderer.shadowMap.enabled = value === "high"; resize(); },
     dispose() {
-      disposed = true; cancelAnimationFrame(animation); observer.disconnect(); controls.dispose(); document.removeEventListener("visibilitychange", visibility); renderer.domElement.removeEventListener("pointerdown", onPointerDown); renderer.domElement.removeEventListener("pointerup", onPointerUp); renderer.domElement.removeEventListener("webglcontextlost", onContextLost);
+      disposed = true; cancelAnimationFrame(animation); observer.disconnect(); themeObserver.disconnect(); dotMaterial.dispose(); orbitMaterial.dispose(); controls.dispose(); document.removeEventListener("visibilitychange", visibility); renderer.domElement.removeEventListener("pointerdown", onPointerDown); renderer.domElement.removeEventListener("pointerup", onPointerUp); renderer.domElement.removeEventListener("webglcontextlost", onContextLost);
       scene.traverse(o => { if (o instanceof T.Mesh) { o.geometry.dispose(); const ms = Array.isArray(o.material) ? o.material : [o.material]; ms.forEach(m => m.dispose()); } }); geometry.forEach(g => g.dispose()); material.forEach(m => m.dispose()); textures.forEach(t => t.dispose()); glass.dispose(); environment.dispose(); composer.passes.forEach(p => p.dispose()); composer.dispose(); renderer.dispose(); renderer.domElement.remove(); labels.remove();
     },
   };
