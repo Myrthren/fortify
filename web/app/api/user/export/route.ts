@@ -20,6 +20,7 @@ export async function GET() {
     creditTransactions,
     generations,
     watchTerms,
+    aiUsageLedger,
   ] = await Promise.all([
     db.user.findUnique({
       where: { id: userId },
@@ -58,6 +59,7 @@ export async function GET() {
       where: { userId },
       select: { id: true, term: true, createdAt: true },
     }),
+    db.$queryRawUnsafe('SELECT * FROM "AiUsageLedger" WHERE "userId" = $1 ORDER BY "createdAt" DESC', userId),
   ]);
 
   const payload = {
@@ -70,6 +72,7 @@ export async function GET() {
     creditTransactions,
     generations,
     watchTerms,
+    aiUsageLedger,
   };
 
   return new NextResponse(JSON.stringify(payload, null, 2), {

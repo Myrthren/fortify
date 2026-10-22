@@ -52,6 +52,7 @@ enum Tier {
 }
 
 model User {
+  aiUsageLedger AiUsageLedger[]
   id                  String    @id @default(cuid())
   name                String?
   email               String?   @unique
@@ -1081,4 +1082,23 @@ model SiteAppearance {
   theme     String   @default("scifi")
   updatedBy String?
   updatedAt DateTime @updatedAt
+}
+
+model AiUsageLedger {
+  id             String   @id
+  userId         String
+  weekStart      DateTime @db.Timestamptz
+  model          String
+  isClaude       Boolean
+  reservedMicros Int
+  chargedMicros  Int?
+  fx             Float
+  costUsd        Float?
+  providerRunId  String?  @unique
+  estimated      Boolean  @default(false)
+  state          String   @default("reserved")
+  createdAt      DateTime @default(now()) @db.Timestamptz
+  updatedAt      DateTime @default(now()) @db.Timestamptz
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, weekStart])
 }

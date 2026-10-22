@@ -49,7 +49,7 @@ export async function POST(req: Request) {
         const existing = (competitor.lastReport as any)?.recentMoves as string[] | undefined;
         const existingStr = existing?.join("\n") ?? "(no prior moves on record)";
 
-        const msg = await claude().messages.create({
+        const msg = await claude(user.id).messages.create({
           model: CLAUDE_MODELS.fast,
           max_tokens: 500,
           messages: [

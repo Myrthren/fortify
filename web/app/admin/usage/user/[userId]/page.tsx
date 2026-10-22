@@ -45,6 +45,10 @@ export default async function AdminUserLogPage({
 
   if (!targetUser) redirect("/admin/usage");
 
+  const ledger = await db.$queryRawUnsafe<{ id: string; model: string; state: string; chargedMicros: number | null; reservedMicros: number; estimated: boolean; createdAt: Date }[]>(
+    `SELECT "id", "model", "state", "chargedMicros", "reservedMicros", "estimated", "createdAt" FROM "AiUsageLedger" WHERE "userId" = $1 ORDER BY "createdAt" DESC LIMIT 30`, userId,
+  );
+
   const identity = targetUser.username ?? targetUser.email ?? userId;
 
   return (
@@ -101,9 +105,16 @@ export default async function AdminUserLogPage({
           </section>
         )}
 
+        <section>
+          <h2 className="mb-3 text-base font-semibold">Recent model requests</h2>
+          <p className="mb-3 text-xs text-text-muted">OpenRouter spend is converted at the recorded reference rate. Pending or uncertain requests retain their reservation.</p>
+          <div className="space-y-2">{ledger.map(row => <div key={row.id} className="rounded-lg border border-bg-border p-3 text-sm">
+            <p>{row.model}</p><p className="text-xs text-text-muted">{row.state} · £{((row.chargedMicros ?? row.reservedMicros) / 1_000_000).toFixed(4)}{row.estimated || row.chargedMicros === null ? " reserved/estimated" : " reported spend"} · {row.createdAt.toLocaleString("en-GB", { timeZone: "Europe/London" })}</p>
+          </div>)}</div>
+        </section>
         {/* AI sessions */}
         <section>
-          <h2 className="mb-3 text-base font-semibold">AI Sessions</h2>
+          <h2 className="mb-3 text-base font-semibold">Legacy AI Sessions</h2>
           {aiSessions.length === 0 ? (
             <p className="text-sm text-text-muted">No AI sessions.</p>
           ) : (

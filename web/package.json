@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && node scripts/ensure-site-appearance.cjs && node scripts/ensure-workspace.cjs && next build",
+    "build": "prisma generate && node scripts/ensure-site-appearance.cjs && node scripts/ensure-workspace.cjs && node scripts/ensure-ai-routing.cjs && next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "prisma db push",
@@ -12,7 +12,8 @@
     "db:studio": "prisma studio",
     "test:whop": "node --test scripts/test-whop.cjs",
     "test:workflows": "node --experimental-strip-types --test scripts/test-workflow-starters.mjs",
-    "test:fallback": "node --test scripts/test-ai-fallback.cjs scripts/test-response-error.cjs scripts/test-facts.cjs",
+    "test:fallback": "node --test scripts/test-ai-fallback.cjs scripts/test-openrouter.cjs scripts/test-response-error.cjs scripts/test-facts.cjs",
+    "test:ai-routing": "node --test scripts/test-ai-routing.cjs",
     "test:advisor": "node --test scripts/test-advisor.cjs",
     "test:refinements": "node --experimental-strip-types --test scripts/test-refinements.mjs",
     "test:billing": "node --experimental-strip-types --test scripts/test-paypal-access.mjs scripts/test-lead-pack.mjs",
