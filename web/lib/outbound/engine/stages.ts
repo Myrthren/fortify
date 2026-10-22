@@ -106,6 +106,7 @@ export async function analyseLead(
     location: lead.location,
     site,
     offer: campaign.offer ?? DEFAULT_OFFER,
+    competitorContext: await getCompetitorContext(lead.userId),
   });
 
   await db.outboundLead.update({
@@ -159,6 +160,15 @@ export async function analyseLead(
 
 const DEFAULT_OFFER =
   "Fortify — AI automation and business systems: lead sourcing, automated personalised outreach, multi-step workflow automation, competitor tracking and analytics, built and run for the client.";
+
+async function getCompetitorContext(userId: string): Promise<string | null> {
+  const competitors = await db.competitor.findMany({ where: { userId, lastReport: { not: null } }, select: { name: true, lastReport: true }, take: 5, orderBy: { lastScanned: "desc" } });
+  const lines = competitors.flatMap((c) => {
+    const r = c.lastReport as { positioning?: string; opportunities?: string[]; actions?: { action?: string }[] } | null;
+    return r ? [`${c.name}: ${r.positioning ?? ""}`, ...(r.opportunities ?? []).slice(0, 2).map((x) => `Opening: ${x}`), ...(r.actions ?? []).slice(0, 2).map((x) => `Action: ${x.action ?? ""}`)] : [];
+  });
+  return lines.length ? lines.join("\n") : null;
+}
 
 // ─── Draft ────────────────────────────────────────────────
 
@@ -229,7 +239,7 @@ export async function draftEmail(
   let attemptInput = input;
 
   for (let attempt = 1; attempt <= MAX_COMPOSE_ATTEMPTS; attempt++) {
-    const draft = await provider.compose(attemptInput);
+    const draft = await provider.compose({ ...attemptInput, competitorContext: await getCompetitorContext(lead.userId) });
     const check = checkEmail(draft, {
       opportunities,
       recentBodies: recent.bodies,

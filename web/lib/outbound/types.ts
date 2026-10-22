@@ -170,6 +170,7 @@ export type AnalysisInput = {
   site: ScrapedSite | null;
   /** What the sender is offering — steers which gaps count as opportunities. */
   offer: string;
+  competitorContext?: string | null;
 };
 
 export interface AnalysisProvider {
@@ -216,6 +217,7 @@ export type ComposeInput = {
   voiceSystemPrompt?: string | null;
   /** Subjects/openers already used for this user recently — avoid repeating. */
   avoidPhrases?: string[];
+  competitorContext?: string | null;
 };
 
 export type ComposedEmail = {
