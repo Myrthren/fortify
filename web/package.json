@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && node scripts/ensure-site-appearance.cjs && node scripts/ensure-workspace.cjs && node scripts/ensure-ai-routing.cjs && next build",
+    "build": "prisma generate && node scripts/ensure-site-appearance.cjs && node scripts/ensure-workspace.cjs && node scripts/ensure-ai-routing.cjs && node scripts/verify-ai-release.cjs && next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "prisma db push",

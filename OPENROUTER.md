@@ -70,6 +70,8 @@ The reservation reduces concurrent overspend, but changing upstream prices and u
 
 Offline tests do not prove live keys, provider quality/availability, PostgreSQL locking behavior or the current hosting configuration. No live model requests or production database updates were used while preparing this implementation.
 
+For an opt-in hosted release check, set `FORTIFY_VERIFY_AI_RELEASE=true` in the production build environment for one deployment, then remove it. `scripts/verify-ai-release.cjs` validates the private key, blocks unresolved legacy pack balances, verifies the 2/4/10 limits and real cross-web/bot PostgreSQL reservations, and makes small synthetic Claude, premium, alternative, tool-round and image-understanding requests. It uses temporary test members and removes those members and their test ledger records afterward. It prints only check labels/model IDs; provider/database errors and secrets are not logged. Publication stops if a check fails. The normal build skips this check when the flag is absent.
+
 ## Checks
 
 From `web/`, run `npm run test:ai-routing` and `npm run test:fallback`, plus the workspace, result-credit, buyer-fix, Advisor and affected workflow checks. Run separate web/bot TypeScript checks and validate both Prisma schemas. The monetary/concurrency unit tests use isolated storage/provider doubles; production validation is a separate step.
