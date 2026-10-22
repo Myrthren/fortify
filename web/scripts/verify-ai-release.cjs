@@ -18,8 +18,12 @@ async function main() {
   const ids = [];
   try {
     stage = 'legacy pack review';
-    const packs = await db.$queryRawUnsafe('SELECT COUNT(*)::int AS count FROM "AiCreditPack" WHERE "exhaustedAt" IS NULL AND "budgetGbp" > "usedCostGbp"');
-    if (Number(packs[0].count) > 0) throw new Error('Unspent legacy AI packs require resolution before replacing daily pack usage');
+    const packTable = await db.$queryRawUnsafe('SELECT to_regclass(\'"AiCreditPack"\')::text AS name');
+    if (packTable[0].name) {
+      const packs = await db.$queryRawUnsafe('SELECT COUNT(*)::int AS count FROM "AiCreditPack" WHERE "exhaustedAt" IS NULL AND "budgetGbp" > "usedCostGbp"');
+      if (Number(packs[0].count) > 0) throw new Error('Unspent legacy AI packs require resolution before replacing daily pack usage');
+    }
+    console.log('AI release check passed: legacy pack review.');
     const ts = require('typescript'), cache = new Map();
     function load(file) {
       if (cache.has(file)) return cache.get(file).exports;
@@ -80,6 +84,6 @@ async function main() {
 }
 main().catch(error => {
   // Provider/database errors may contain sensitive request details. Never print them.
-  console.error(`AI release verification failed during ${stage}: ${error?.code || error?.status || error?.name || 'unknown error'}. Production publication stopped.`);
+  console.error(`AI release verification failed during ${stage}: ${error?.code || error?.status || error?.name || 'unknown error'}; SQL state=${error?.meta?.code || 'none'}. Production publication stopped.`);
   process.exitCode = 1;
 });
