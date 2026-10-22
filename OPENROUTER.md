@@ -7,9 +7,9 @@ The web app and Discord bot use one OpenRouter integration for AI text and image
 | Plan | Included Claude allowance per week |
 | --- | ---: |
 | Free | £0; alternative models |
-| Pro | £5 |
-| Elite | £20 |
-| Apex | £50 |
+| Pro | £2 |
+| Elite | £4 |
+| Apex | £10 |
 
 Weeks start Monday at 00:00 UTC. A member's website, Discord, text tools, image understanding, scheduled reports, lead packs, outbound analysis/drafts/reply classification and workflow AI all share the same ledger. Existing tool access, tool-credit charges, capacity limits and anti-abuse request limits still apply.
 
@@ -30,14 +30,24 @@ OPENROUTER_CLAUDE_MODEL=anthropic/claude-sonnet-5.5
 OPENROUTER_CLAUDE_PREMIUM_MODEL=anthropic/claude-opus-5.5
 OPENROUTER_FALLBACK_MODELS=minimax/minimax-m2.5,moonshotai/kimi-k2.5,qwen/qwen3.5-397b-a17b
 AI_WEEKLY_CLAUDE_GBP_FREE=0
-AI_WEEKLY_CLAUDE_GBP_PRO=5
-AI_WEEKLY_CLAUDE_GBP_ELITE=20
-AI_WEEKLY_CLAUDE_GBP_APEX=50
+AI_WEEKLY_CLAUDE_GBP_PRO=2
+AI_WEEKLY_CLAUDE_GBP_ELITE=4
+AI_WEEKLY_CLAUDE_GBP_APEX=10
 ```
 
-Keep model/budget configuration aligned on both hosts. The optional `AI_USD_TO_GBP` sets GBP per USD; if omitted, the router fetches current ECB reference rates with a six-hour cache and rejects rates older than seven days. Each request records the rate used. This is a policy conversion of reported OpenRouter costs, not a claim about the user's bank/card exchange rate or fees.
+Keep model/budget configuration aligned on both hosts. Existing `AI_WEEKLY_CLAUDE_GBP_*` variables override these defaults: replace any older 5/20/50 values with 2/4/10 before release. The optional `AI_USD_TO_GBP` sets GBP per USD; if omitted, the router fetches current ECB reference rates with a six-hour cache and rejects rates older than seven days. Each request records the rate used. This is a policy conversion of reported OpenRouter costs, not a claim about the user's bank/card exchange rate or fees.
 
-The requested included budgets average approximately £21.67, £86.67 and £216.67 per month. Elite and Apex included Claude costs can exceed their £79 and £199 subscription prices before alternate models, infrastructure, taxes and payment fees. The defaults intentionally preserve the owner's requested amounts.
+### Allowance economics
+
+These owner-approved allowances allocate about 22% of Elite/Apex subscription revenue to included Claude usage at full utilisation. Monthly equivalents use 52 weeks / 12 months; individual months can contain five weekly resets.
+
+| Plan | Monthly subscription | Weekly Claude allowance | Average monthly Claude budget | Revenue left after Claude only |
+| --- | ---: | ---: | ---: | ---: |
+| Pro | £29 | £2 | £8.67 | £20.33 (70.1%) |
+| Elite | £79 | £4 | £17.33 | £61.67 (78.1%) |
+| Apex | £199 | £10 | £43.33 | £155.67 (78.2%) |
+
+The remainder must cover alternate models, image generation, hosting, other APIs, payment/platform fees, affiliate commissions, taxes where applicable, support and profit. It is not net profit or a guaranteed margin. For example, a 30% affiliate commission on the listed subscription price would leave approximately £37.97 for Elite and £95.97 for Apex after Claude and that commission, before other costs. In a five-reset month, Claude alone would cost up to £20 for Elite or £50 for Apex. All members still share one allowance across every AI text/vision surface, and paid chat still continues on an alternative model after Claude runs out. Alternative model spend is metered but not capped by these Claude budgets, so review total per-member provider spend against collected revenue before increasing allowances.
 
 ## Accounting and failure behavior
 

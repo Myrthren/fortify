@@ -32,12 +32,12 @@ function ledger() {
   return { api: load('lib/ai-budget.ts', { './db': { db } }), rows, users, locks: () => locks };
 }
 
-test('requested weekly amounts and Monday UTC resets are exact', () => {
+test('approved weekly amounts and Monday UTC resets are exact', () => {
   const { api } = ledger();
   assert.equal(api.weeklyLimitMicros('FREE'), 0);
-  assert.equal(api.weeklyLimitMicros('PRO'), 5_000_000);
-  assert.equal(api.weeklyLimitMicros('ELITE'), 20_000_000);
-  assert.equal(api.weeklyLimitMicros('APEX'), 50_000_000);
+  assert.equal(api.weeklyLimitMicros('PRO'), 2_000_000);
+  assert.equal(api.weeklyLimitMicros('ELITE'), 4_000_000);
+  assert.equal(api.weeklyLimitMicros('APEX'), 10_000_000);
   assert.equal(api.weekStart(new Date('2026-10-25T23:59:59Z')).toISOString(), '2026-10-19T00:00:00.000Z');
   assert.equal(api.weekStart(new Date('2026-10-26T00:00:00Z')).toISOString(), '2026-10-26T00:00:00.000Z');
 });
@@ -45,11 +45,11 @@ test('requested weekly amounts and Monday UTC resets are exact', () => {
 test('simultaneous web/bot reservations cannot share the last allowance; members remain isolated', async () => {
   const { api, locks } = ledger();
   const results = await Promise.all(Array.from({ length: 30 }, () => api.reserveAiCall('a', 'anthropic/claude', 1_000_000, .8, true)));
-  assert.equal(results.filter(Boolean).length, 5);
+  assert.equal(results.filter(Boolean).length, 2);
   assert.equal(locks(), 30);
   assert.ok(await api.reserveAiCall('b', 'anthropic/claude', 1_000_000, .8, true));
   assert.equal((await api.weeklyAiUsage('a')).remainingGbp, 0);
-  assert.equal((await api.weeklyAiUsage('b')).remainingGbp, 19);
+  assert.equal((await api.weeklyAiUsage('b')).remainingGbp, 3);
 });
 
 test('actual reported cost replaces a reservation exactly once; fallback spend does not consume Claude allowance', async () => {
@@ -213,7 +213,7 @@ test('a paid member with exhausted Claude allowance can still send chat and sees
     } },
     '@/lib/ai-usage': { getOrCreateSession: async () => { throw new Error('Old paid daily gate must not run'); }, deductCost: async () => { throw new Error('Old paid packs must not be debited'); } },
   };
-  const usage = load('app/api/ai/chat/usage/route.ts', { ...common, '@/lib/ai-budget': { weeklyAiUsage: async () => ({ usedGbp: 5, limitGbp: 5, remainingGbp: 0, fallback: true, resetsAt: '2026-10-26T00:00:00Z' }) } });
+  const usage = load('app/api/ai/chat/usage/route.ts', { ...common, '@/lib/ai-budget': { weeklyAiUsage: async () => ({ usedGbp: 2, limitGbp: 2, remainingGbp: 0, fallback: true, resetsAt: '2026-10-26T00:00:00Z' }) } });
   const state = await (await usage.GET()).json();
   assert.equal(state.canUse, true);
   assert.equal(state.sessionExhausted, false);

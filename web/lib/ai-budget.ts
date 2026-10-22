@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { db } from "./db";
 
-export const WEEKLY_CLAUDE_GBP: Record<string, number> = { FREE: 0, PRO: 5, ELITE: 20, APEX: 50 };
+export const WEEKLY_CLAUDE_GBP: Record<string, number> = { FREE: 0, PRO: 2, ELITE: 4, APEX: 10 };
 export function weeklyLimitMicros(tier: string): number {
   const configured = process.env[`AI_WEEKLY_CLAUDE_GBP_${tier}`];
   const amount = configured === undefined ? WEEKLY_CLAUDE_GBP[tier] : Number(configured);

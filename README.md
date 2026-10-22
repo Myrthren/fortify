@@ -37,7 +37,7 @@ Billed through **PayPal or Whop** — both grant the same tiers and Discord role
 
 ## AI routing
 
-Website and Discord share weekly included Claude spend: Pro £5, Elite £20 and Apex £50. Free uses alternative models. Once a request cannot fit the remaining allowance, AI continues on a compatible model randomly selected from the configured pool. Every text/vision tool, workflow and background job uses the same member-bound ledger. See [OPENROUTER.md](OPENROUTER.md) for configuration, accounting and release order.
+Website and Discord share weekly included Claude spend: Pro £2, Elite £4 and Apex £10. Free uses alternative models. Once a request cannot fit the remaining allowance, AI continues on a compatible model randomly selected from the configured pool. Every text/vision tool, workflow and background job uses the same member-bound ledger. See [OPENROUTER.md](OPENROUTER.md) for configuration, accounting and release order.
 
 ## Setup
 

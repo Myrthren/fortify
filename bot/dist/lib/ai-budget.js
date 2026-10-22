@@ -9,7 +9,7 @@ exports.failAiCall = failAiCall;
 exports.weeklyAiUsage = weeklyAiUsage;
 const node_crypto_1 = require("node:crypto");
 const db_1 = require("./db");
-exports.WEEKLY_CLAUDE_GBP = { FREE: 0, PRO: 5, ELITE: 20, APEX: 50 };
+exports.WEEKLY_CLAUDE_GBP = { FREE: 0, PRO: 2, ELITE: 4, APEX: 10 };
 function weeklyLimitMicros(tier) {
     const configured = process.env[`AI_WEEKLY_CLAUDE_GBP_${tier}`];
     const amount = configured === undefined ? exports.WEEKLY_CLAUDE_GBP[tier] : Number(configured);

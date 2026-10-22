@@ -19,7 +19,7 @@ export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 
 AI MODEL ALLOWANCES
 - AI text and image understanding run through OpenRouter. Standard Claude requests use Sonnet 5.5 and premium requests use Opus 5.5, subject to availability.
-- Included Claude allowance is shared across website, Discord, text tools and background/workflow AI: Pro £5/week, Elite £20/week, Apex £50/week. Weeks reset Monday at 00:00 UTC.
+- Included Claude allowance is shared across website, Discord, text tools and background/workflow AI: Pro £2/week, Elite £4/week, Apex £10/week. Weeks reset Monday at 00:00 UTC.
 - Once a request cannot fit the remaining Claude allowance, Fortify continues using a configured alternative model. Free uses alternative models. Existing tool access, credits and anti-abuse limits still apply.
 - Alternative models also have API costs; do not call them free. Never claim that an alternative model is Claude. Image generation uses a separate image provider.
 
