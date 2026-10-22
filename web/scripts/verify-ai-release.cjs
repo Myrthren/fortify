@@ -68,12 +68,14 @@ async function main() {
     await check('Discord premium Claude', apex, bot, { ...base, model: bot.AI_MODELS.premium }, false);
     await check('exhausted shared allowance uses alternative', lockId, bot, { ...base, max_tokens: 1024 }, true);
     const tools = [{ name: 'deployment_check', description: 'Return a deployment check result.', input_schema: { type: 'object', properties: { value: { type: 'string' } }, required: ['value'] } }];
-    const toolPrompt = { ...base, tools, tool_choice: { type: 'tool', name: 'deployment_check' }, messages: [{ role: 'user', content: 'Call deployment_check with value OK.' }] };
+    // Match Fortify chat's automatic tool selection. The current Claude endpoint
+    // rejects a forced named tool even though its catalogue advertises tool_choice.
+    const toolPrompt = { ...base, tools, messages: [{ role: 'user', content: 'Call deployment_check with value OK.' }] };
     const toolResult = await check('tool call', pro, web, toolPrompt, false);
     const tool = toolResult.content.find(b => b.type === 'tool_use');
     assert.equal(tool?.name, 'deployment_check');
     await check('tool continuation', pro, web, { ...base, tools, messages: [...toolPrompt.messages, { role: 'assistant', content: toolResult.content }, { role: 'user', content: [{ type: 'tool_result', tool_use_id: tool.id, content: 'OK' }] }] }, false);
-    const pixel = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aL1sAAAAASUVORK5CYII=';
+    const pixel = 'iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAKklEQVR4nGNQSDhAU8QwasGoBaMWjFowasGoBaMWjFowasGoBaMWDBULAFLBAEwMJH4XAAAAAElFTkSuQmCC';
     await check('image understanding', pro, web, { ...base, messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/png', data: pixel } }, { type: 'text', text: 'Describe this simple image briefly.' }] }] }, false);
     const rows = await db.$queryRawUnsafe('SELECT COUNT(*)::int AS count FROM "AiUsageLedger" WHERE "userId" IN ($1, $2) AND "state" = \'settled\'', pro, apex);
     assert.ok(Number(rows[0].count) >= 5);
