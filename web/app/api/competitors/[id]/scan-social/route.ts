@@ -1,3 +1,4 @@
+import { registerCreditRun, readCreditRun, completeCreditRun, validReport, nonemptyText, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -8,7 +9,7 @@ const SCAN_COST = 50; // credits per social scan
 
 // ── POST /api/competitors/[id]/scan-social ──────────────────────────────────
 // Body: { platform: "youtube" | "tiktok", handle: string }
-// Starts an Apify run, deducts 50 credits, returns { runId }
+// Starts an Apify run for free; a valid saved report costs 50 credits.
 
 export async function POST(
   req: Request,
@@ -86,27 +87,16 @@ export async function POST(
     return NextResponse.json({ error: e.message ?? "Failed to start scan." }, { status: 502 });
   }
 
-  // Deduct credits atomically and save handle
-  await db.$transaction([
-    db.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: SCAN_COST } },
-    }),
-    db.creditTransaction.create({
-      data: { userId, amount: -SCAN_COST, source: `scan-social-${platform}` },
-    }),
-    db.competitor.update({
-      where: { id },
-      data: {
-        ...(platform === "youtube"   && { youtubeHandle:   handle }),
-        ...(platform === "tiktok"    && { tiktokHandle:    handle }),
-        ...(platform === "instagram" && { instagramHandle: handle }),
-        ...(platform === "twitter"   && { twitterHandle:   handle }),
-      },
-    }),
-  ]);
+  // Saving the chosen handle is free; only a completed report is billable.
+  await db.competitor.update({ where: { id }, data: {
+    ...(platform === "youtube" && { youtubeHandle: handle }),
+    ...(platform === "tiktok" && { tiktokHandle: handle }),
+    ...(platform === "instagram" && { instagramHandle: handle }),
+    ...(platform === "twitter" && { twitterHandle: handle }),
+  } });
+  await registerCreditRun(userId, runId, `scan-social:${id}:${platform}`);
 
-  return NextResponse.json({ runId, platform });
+  return NextResponse.json({ runId, platform, creditsUsed: 0 });
 }
 
 // ── GET /api/competitors/[id]/scan-social?runId=xxx&platform=youtube ────────
@@ -137,6 +127,15 @@ export async function GET(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  if (!["youtube", "tiktok", "instagram", "twitter"].includes(platform))
+    return NextResponse.json({ error: "Invalid platform" }, { status: 400 });
+  try {
+    const cached = await readCreditRun(userId, runId, `scan-social:${id}:${platform}`);
+    if (cached) return NextResponse.json(cached);
+  } catch {
+    return NextResponse.json({ error: "Scan not found. Start a new scan from this account." }, { status: 404 });
+  }
+
   // Poll Apify
   let status: string;
   try {
@@ -159,6 +158,8 @@ export async function GET(
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 502 });
   }
+
+  items = items.filter(item => { const r = item as any; return r && !r.error && [r.title, r.text, r.caption, r.desc, r.description, r.channelName, r.username, r.uniqueId, r.authorMeta?.name, r.ownerUsername].some(nonemptyText); });
 
   if (!items.length) {
     return NextResponse.json({ status: "failed", error: "No data returned. Check the handle is correct." });
@@ -211,7 +212,15 @@ Data:\n${dataStr}`,
     platform === "tiktok"    ? { tiktokReport:    report as any, tiktokScanAt:    now } :
     platform === "instagram" ? { instagramReport: report as any, instagramScanAt: now } :
                                { twitterReport:   report as any, twitterScanAt:   now };
-  await db.competitor.update({ where: { id }, data: persistData });
-
-  return NextResponse.json({ status: "succeeded", report });
+  if (!(validReport(report, ["summary", "contentStyle", "postingFrequency"], ["topTopics", "viralFormats", "opportunities", platform === "youtube" ? "topVideos" : platform === "twitter" ? "topTweets" : "topPosts"]))) {
+    return NextResponse.json({ status: "failed", error: "Incomplete report. No credits charged.", creditsUsed: 0 }, { status: 502 });
+  }
+  try {
+    const result = await completeCreditRun(userId, runId, `scan-social:${id}:${platform}`, SCAN_COST, `scan-social-${platform}`,
+      { status: "succeeded", report }, async tx => tx.competitor.update({ where: { id }, data: persistData }));
+    return NextResponse.json(result);
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Could not save result. No credits charged." },
+      { status: e instanceof InsufficientCredits ? 402 : 500 });
+  }
 }

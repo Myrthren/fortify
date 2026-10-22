@@ -1,7 +1,7 @@
+import { InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { createHash } from "crypto";
-import { randomUUID } from "crypto";
+import { scanWatch } from "@/lib/competitor-watch";
 import { sendDMConditional } from "@/lib/notifications";
 import { runWorkflow } from "@/lib/workflow-runner";
 
@@ -27,7 +27,7 @@ async function fireCompetitorWorkflows(userId: string, watchName: string) {
 /**
  * POST /api/cron/competitor-watch-scan
  * Runs daily. For every active CompetitorWatch, fetches each tracked URL,
- * computes an MD5 hash, and records a scan. If content changed, sends the
+ * compares readable wording, and records before/after excerpts. If wording changed, sends the
  * user a Discord DM.
  *
  * Triggered by Netlify scheduled function (see netlify.toml).
@@ -54,63 +54,16 @@ export async function POST(req: Request) {
     // Need at least 10 credits
     if (user.credits < 10) continue;
 
-    const links = (watch.links as { id: string; url: string; label: string; type: string; lastHash?: string; lastScanAt?: string }[]);
-    if (!links.length) continue;
-
-    const newScans: { watchId: string; url: string; hasChange: boolean; summary: string }[] = [];
-    const updatedLinks = [...links];
-    let watchHasChange = false;
-
-    for (let i = 0; i < updatedLinks.length; i++) {
-      const link = updatedLinks[i];
-      try {
-        const res = await fetch(link.url, {
-          signal: AbortSignal.timeout(12_000),
-          headers: { "User-Agent": "Mozilla/5.0 (compatible; FortifyBot/1.0)" },
-        });
-        if (!res.ok) continue;
-
-        const text = await res.text();
-        const hash = createHash("md5").update(text).digest("hex");
-        const hasChange = !!link.lastHash && hash !== link.lastHash;
-
-        newScans.push({
-          watchId: watch.id,
-          url: link.url,
-          hasChange,
-          summary: hasChange ? `Content changed on ${link.label || link.url}` : "No changes detected",
-        });
-
-        updatedLinks[i] = {
-          ...link,
-          lastHash: hash,
-          lastScanAt: new Date().toISOString(),
-        };
-
-        if (hasChange) watchHasChange = true;
-      } catch {
-        // Skip unreachable URLs silently
-      }
+    let result;
+    try {
+      result = await scanWatch(watch, `watch-daily:${watch.id}:${new Date().toISOString().slice(0, 10)}`);
+    } catch (e) {
+      if (!(e instanceof InsufficientCredits)) console.error("[competitor-watch] result not saved; no charge", e);
+      continue;
     }
-
-    if (!newScans.length) continue;
-
-    // Write scans + update links + deduct credits atomically
-    await db.$transaction([
-      ...newScans.map((s) =>
-        db.competitorWatchScan.create({
-          data: { id: randomUUID(), watchId: s.watchId, url: s.url, hasChange: s.hasChange, summary: s.summary },
-        })
-      ),
-      db.competitorWatch.update({
-        where: { id: watch.id },
-        data: { links: updatedLinks },
-      }),
-      db.user.update({
-        where: { id: user.id },
-        data: { credits: { decrement: 10 } },
-      }),
-    ]);
+    if (result.skipped || !result.creditsUsed) continue;
+    const newScans = result.scans;
+    const watchHasChange = newScans.some(s => s.hasChange);
 
     scanned++;
     if (watchHasChange) {
@@ -134,7 +87,7 @@ export async function POST(req: Request) {
           user.discordId,
           user.id,
           "dmCompetitorDone",
-          `🔍 **Competitor Watch** — Changes detected for **${watch.name}**:\n${changedLinks}\n\nView: https://fortify-io.com/dashboard/competitor-tracking`
+          `🔍 **Competitor Watch** — Changes detected for **${watch.name}**:\n${changedLinks.slice(0, 1500)}\n\nView: https://fortify-io.com/dashboard/competitor-tracking`
         ).catch(() => {});
       }
 

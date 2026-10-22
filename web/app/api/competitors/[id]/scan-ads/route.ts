@@ -1,3 +1,4 @@
+import { registerCreditRun, readCreditRun, completeCreditRun, validReport, nonemptyText, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -84,13 +85,9 @@ export async function POST(
     return NextResponse.json({ error: e.message ?? "Failed to start scan." }, { status: 502 });
   }
 
-  // Only charge once the Apify run actually started
-  await db.$transaction([
-    db.user.update({ where: { id: userId }, data: { credits: { decrement: SCAN_COST } } }),
-    db.creditTransaction.create({ data: { userId, amount: -SCAN_COST, source: "scan-ads" } }),
-  ]);
+  await registerCreditRun(userId, runId, `competitors/${id}/scan-ads`);
 
-  return NextResponse.json({ runId, creditsUsed: SCAN_COST });
+  return NextResponse.json({ runId, creditsUsed: 0 });
 }
 
 // ── GET — poll Apify status, process report when done ────────────────────────
@@ -112,6 +109,13 @@ export async function GET(
   const { searchParams } = new URL(req.url);
   const runId = searchParams.get("runId");
   if (!runId) return NextResponse.json({ error: "runId required" }, { status: 400 });
+
+  try {
+    const cached = await readCreditRun(userId, runId, `competitors/${id}/scan-ads`);
+    if (cached) return NextResponse.json(cached);
+  } catch {
+    return NextResponse.json({ error: "Scan not found. Start a new scan from this account." }, { status: 404 });
+  }
 
   // Poll Apify
   let status: string;
@@ -135,6 +139,8 @@ export async function GET(
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 502 });
   }
+
+  items = items.filter(ad => nonemptyText(ad.snapshot?.body?.text) || nonemptyText(ad.snapshot?.body?.markup?.__html?.replace(/<[^>]+>/g, "")) || ad.snapshot?.cards?.some(c => nonemptyText(c.body)));
 
   if (!items.length) {
     return NextResponse.json({
@@ -198,10 +204,15 @@ ${adSummaries}`,
     }
   }
 
-  await db.competitor.update({
-    where: { id },
-    data: { metaAdReport: report as any, metaAdScanAt: new Date() },
-  });
-
-  return NextResponse.json({ status: "succeeded", report });
+  if (!(validReport(report, ["summary", "spendLevel"], ["adAngles", "topCtaPatterns", "offerFrameworks", "platforms", "topAds"]))) {
+    return NextResponse.json({ status: "failed", error: "Incomplete report. No credits charged.", creditsUsed: 0 }, { status: 502 });
+  }
+  try {
+    const result = await completeCreditRun(userId, runId, `competitors/${id}/scan-ads`, SCAN_COST, "scan-ads",
+      { status: "succeeded", report }, async tx => tx.competitor.update({ where: { id }, data: { metaAdReport: report as any, metaAdScanAt: new Date() } }));
+    return NextResponse.json(result);
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Could not save result. No credits charged." },
+      { status: e instanceof InsufficientCredits ? 402 : 500 });
+  }
 }

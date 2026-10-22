@@ -1,3 +1,4 @@
+import { chargeForResult, validSourcedLeads } from "@/lib/result-credits";
 /**
  * Fortify Workflow Execution Engine
  * -----------------------------------
@@ -717,11 +718,6 @@ async function execNode(
       if (!freshUser) throw new Error("Lead Search: user not found");
       if (freshUser.credits < 50) throw new Error(`Lead Search: insufficient credits (need 50, have ${freshUser.credits})`);
 
-      await db.user.update({ where: { id: ctx.userId }, data: { credits: { decrement: 50 } } });
-      await db.creditTransaction.create({
-        data: { userId: ctx.userId, amount: -50, source: "spend_leads" },
-      });
-
       const location = c.location?.trim() ?? "";
       const signal   = c.signal?.trim()   ?? "";
       const maxCount = Math.min(parseInt(c.count || "8", 10), 15);
@@ -756,7 +752,7 @@ Return ONLY a JSON array of up to ${maxCount} lead objects with this exact shape
 
       let leads: unknown[] = [];
       if (jsonMatch) {
-        try { leads = JSON.parse(jsonMatch[0]); } catch { /* malformed — return empty */ }
+        try { leads = validSourcedLeads(JSON.parse(jsonMatch[0]), results); } catch { /* malformed — return empty */ }
       }
 
       const leadsJson = JSON.stringify(leads);
@@ -764,9 +760,9 @@ Return ONLY a JSON array of up to ${maxCount} lead objects with this exact shape
       ctx.vars.previous_output = leadsJson;
       ctx.vars.lead_count      = String(leads.length);
 
-      await db.generation.create({
+      if (leads.length) await chargeForResult(ctx.userId, 50, "spend_leads", async tx => tx.generation.create({
         data: { userId: ctx.userId, type: "lead-sourcing", input: query, output: leadsJson },
-      });
+      }));
 
       return { firedPort: "out", output: `Found ${leads.length} lead(s) for "${icp.slice(0, 40)}"` };
     }

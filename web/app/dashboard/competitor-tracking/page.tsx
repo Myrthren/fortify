@@ -24,9 +24,9 @@ export default async function CompetitorTrackingPage() {
         description="Monitor competitor pages for content changes. Get notified via Discord DM and dashboard when their pricing, offers, or messaging shifts."
         icon={<Eye />}
         features={[
-          { icon: <RefreshCw />, title: "Automatic Scanning", desc: "Daily automated scans detect page changes using MD5 hashing." },
-          { icon: <Bell />, title: "Instant Alerts", desc: "Dashboard notifications + Discord DM the moment a change is detected." },
-          { icon: <History />, title: "Change History", desc: "Full scan history so you can see when and what changed over time." },
+          { icon: <RefreshCw />, title: "Automatic Scanning", desc: "Daily scans compare readable page wording and show added and removed text." },
+          { icon: <Bell />, title: "Daily Change Alerts", desc: "Dashboard notifications and Discord DMs after a daily scan detects changed wording." },
+          { icon: <History />, title: "Change History", desc: "Recent scans show when wording changed and excerpts of what was added or removed." },
         ]}
       />
     );

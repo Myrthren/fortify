@@ -28,7 +28,7 @@ async function recentActivity(userId: string, since: Date): Promise<string> {
   const [searches, runs, generations] = await Promise.all([
     db.reconSearch.findMany({ where: { userId, createdAt: { gte: since } }, select: { totalLeads: true, filters: true, category: true, location: true } }),
     db.workflowRun.findMany({ where: { workflow: { userId }, startedAt: { gte: since } }, select: { status: true } }),
-    db.generation.groupBy({ by: ["type"], where: { userId, createdAt: { gte: since } }, _count: { _all: true } }),
+    db.generation.groupBy({ by: ["type"], where: { userId, type: { not: "credit-job" }, createdAt: { gte: since } }, _count: { _all: true } }),
   ]);
 
   const lines = ["\n## Activity in the last 30 days (counts from Fortify's records)"];

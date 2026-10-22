@@ -1,3 +1,4 @@
+import { requireCampaignOffer, offerFingerprint, supportedExcerpt } from "@/lib/outbound/offer";
 import type { OutboundCampaign, OutboundLead } from "@prisma/client";
 import { db } from "@/lib/db";
 import {
@@ -105,7 +106,7 @@ export async function analyseLead(
     industry: lead.industry,
     location: lead.location,
     site,
-    offer: campaign.offer ?? DEFAULT_OFFER,
+    offer: requireCampaignOffer(campaign.offer),
   });
 
   await db.outboundLead.update({
@@ -157,9 +158,6 @@ export async function analyseLead(
   }
 }
 
-const DEFAULT_OFFER =
-  "Fortify — AI automation and business systems: lead sourcing, automated personalised outreach, multi-step workflow automation, competitor tracking and analytics, built and run for the client.";
-
 // ─── Draft ────────────────────────────────────────────────
 
 /** How many rewrites the guardrails get before we accept the best attempt. */
@@ -173,13 +171,16 @@ export async function draftEmail(
   const provider = getComposeProvider();
   const variation = rollVariation(lead.id, step);
 
-  const opportunities = (lead.opportunities as unknown as Opportunity[] | null) ?? [];
-  const analysis: AnalysisResult | null = lead.analysedAt
+  const customerOffer = requireCampaignOffer(campaign.offer);
+  const opportunities = ((lead.opportunities as unknown as Opportunity[] | null) ?? []).filter(o =>
+    o && typeof o.evidence === "string" && typeof o.fortifyService === "string" &&
+    supportedExcerpt(lead.scrapedText ?? "", o.evidence) && supportedExcerpt(customerOffer, o.fortifyService));
+  const analysis: AnalysisResult | null = lead.analysedAt && opportunities.length
     ? {
         analysis: lead.analysis as never,
         opportunities,
-        summary: lead.summary ?? "",
-        suggestedService: lead.suggestedService ?? "",
+        summary: opportunities.map(o => `${o.title}: ${o.evidence}`).join("\n"),
+        suggestedService: opportunities[0]?.fortifyService ?? "",
         opportunityScore: lead.opportunityScore ?? 0,
       }
     : null;
@@ -210,9 +211,9 @@ export async function draftEmail(
       location: lead.location,
     },
     analysis,
-    offer: campaign.offer ?? DEFAULT_OFFER,
+    offer: requireCampaignOffer(campaign.offer),
     sender: {
-      name: campaign.senderName ?? "Kene",
+      name: campaign.senderName?.trim() ?? "",
       title: campaign.senderTitle,
       email: campaign.senderEmail ?? process.env.OUTBOUND_FROM_EMAIL ?? "",
     },
@@ -276,7 +277,7 @@ export async function draftEmail(
       status: "DRAFT",
       subject: best.subject || `${lead.company}`,
       body: best.body,
-      variation: variation as never,
+      variation: { ...variation, offerFingerprint: offerFingerprint(customerOffer) } as never,
       model: best.model,
       wordCount: best.body.trim().split(/\s+/).filter(Boolean).length,
       fromEmail: campaign.senderEmail,

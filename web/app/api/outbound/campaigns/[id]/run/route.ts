@@ -1,3 +1,4 @@
+import { requireCampaignOffer } from "@/lib/outbound/offer";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -29,6 +30,10 @@ export async function POST(
   if (!campaign) return new NextResponse("Not found", { status: 404 });
   if (campaign.status === "ARCHIVED") {
     return NextResponse.json({ error: "Campaign is archived" }, { status: 400 });
+  }
+
+  try { requireCampaignOffer(campaign.offer); } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Describe your campaign offer." }, { status: 400 });
   }
 
   try {

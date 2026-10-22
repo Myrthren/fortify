@@ -1,3 +1,4 @@
+import { chargeForResult, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -117,7 +118,7 @@ export async function POST(req: Request) {
 
     // Map Google Maps results to lead shape — skip permanently closed places
     let leads: Lead[] = rawResults
-      .filter((r) => !r.permanentlyClosed && !r.temporarilyClosed && r.title)
+      .filter((r) => !r.permanentlyClosed && !r.temporarilyClosed && typeof r.title === "string" && r.title.trim())
       .slice(0, count)
       .map((r) => ({
         title: r.title ?? "",
@@ -153,34 +154,25 @@ export async function POST(req: Request) {
       context: contextAll ? contextAll[i] : undefined,
     }));
 
-    // Deduct credits
-    await db.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: totalCost } },
-    });
-    await db.creditTransaction.create({
-      data: { userId, amount: -totalCost, source: "spend_recon" },
-    });
-
-    // Persist
-    const reconSearch = await db.reconSearch.create({
-      data: {
-        userId,
-        location,
-        category,
-        filters: filters ?? undefined,
-        leads,
-        totalLeads: leads.length,
-      },
+    const actualCost = leads.length ? baseCost
+      + (extractEmails && leads.some(l => l.emails?.length) ? emailCost : 0)
+      + (applyContext && leads.some(l => l.context?.trim()) ? contextCost : 0) : 0;
+    let searchId: string | undefined;
+    if (leads.length) await chargeForResult(userId, actualCost, "spend_recon", async tx => {
+      const saved = await tx.reconSearch.create({ data: {
+        userId, location, category, filters: filters ?? undefined, leads, totalLeads: leads.length,
+      } });
+      searchId = saved.id;
     });
 
     return NextResponse.json({
-      searchId: reconSearch.id,
+      searchId,
       leads,
-      creditsUsed: totalCost,
+      creditsUsed: actualCost,
       rawCount: rawResults.length,
     });
   } catch (e: any) {
+    if (e instanceof InsufficientCredits) return NextResponse.json({ error: e.message }, { status: 402 });
     console.error("[recon] POST failed", e);
     return new NextResponse(`Recon search failed: ${e.message}`, { status: 500 });
   }

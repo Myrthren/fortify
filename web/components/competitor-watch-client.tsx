@@ -30,6 +30,7 @@ type Scan = {
   hasChange: boolean;
   summary: string | null;
   scannedAt: string;
+  failed?: boolean;
 };
 
 type Watch = {
@@ -223,7 +224,7 @@ export function CompetitorWatchClient({
           <span
             key={s.id}
             className={`h-2.5 w-2.5 rounded-full ${
-              s.hasChange ? "bg-white/70" : "bg-green-500"
+              s.failed || s.summary?.startsWith("Scan failed:") ? "bg-amber-500" : s.hasChange ? "bg-white/70" : "bg-green-500"
             }`}
             title={`${new Date(s.scannedAt).toLocaleString()} — ${s.summary ?? (s.hasChange ? "Changed" : "No change")}`}
           />
@@ -242,7 +243,7 @@ export function CompetitorWatchClient({
             <TierBadge tier="ELITE" />
           </div>
           <p className="text-text-muted">
-            Monitor competitor pages for content changes. Scan manually or let cron check them for you.
+            Compare readable web pages daily at 07:00 UTC, or scan now. Alerts show added and removed wording. Pages that require login or JavaScript may be unreadable.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -333,7 +334,9 @@ export function CompetitorWatchClient({
                     {lastScan ? (
                       <span className="text-xs text-text-dim">
                         Last scan {new Date(lastScan.scannedAt).toLocaleDateString()} —{" "}
-                        {lastScan.hasChange ? (
+                        {lastScan.failed || lastScan.summary?.startsWith("Scan failed:") ? (
+                          <span className="text-amber-400">Scan failed</span>
+                        ) : lastScan.hasChange ? (
                           <span className="text-text-muted font-medium">Changed</span>
                         ) : (
                           <span className="text-green-400">No change</span>
@@ -349,12 +352,14 @@ export function CompetitorWatchClient({
                     <div className="mt-3 space-y-1">
                       {watch.scans.slice(0, 3).map((s) => (
                         <div key={s.id} className="flex items-start gap-2 text-xs text-text-dim">
-                          {s.hasChange ? (
+                          {s.failed || s.summary?.startsWith("Scan failed:") ? (
+                            <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-400 mt-0.5" />
+                          ) : s.hasChange ? (
                             <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-text-muted mt-0.5" />
                           ) : (
                             <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-green-400 mt-0.5" />
                           )}
-                          <span>
+                          <span className="whitespace-pre-line break-words">
                             <span className="text-text-muted">{s.url.replace(/^https?:\/\//, "").slice(0, 50)}</span>
                             {" — "}
                             {s.summary ?? (s.hasChange ? "Content changed" : "No changes detected")}

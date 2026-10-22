@@ -5,6 +5,10 @@ import { Plus } from "lucide-react";
 // cancellation keeps the tier until the paid month ends (cron/paypal-expire).
 export const FAQ: { q: string; a: string }[] = [
   {
+    q: "How often does Competitor Watch check pages?",
+    a: "Active watches check readable public web pages daily at 07:00 UTC while you have enough credits. You can also scan manually. Alerts include added and removed wording; they are not real-time social-feed monitoring. Pages that require login or JavaScript may be unreadable. A scan that produces no usable page result does not spend credits.",
+  },
+  {
     q: "What do I get on the free plan?",
     a: "100 starter credits, 10 outreach messages a month, 5 Trend Radar topics, the Hook Generator and the community — forums, member directory and deal board. No card needed. The Free plan is how you try Fortify; there is no separate free trial of paid plans.",
   },

@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
     for (const sub of subs) {
       if (!sub.user.discordId) continue;
-      const firstGeneration = await db.generation.findFirst({ where: { userId: sub.userId }, select: { id: true } });
+      const firstGeneration = await db.generation.findFirst({ where: { userId: sub.userId, type: { not: "credit-job" } }, select: { id: true } });
       const profile = sub.user.profile;
       const message = nextStep(day, {
         profile: !!profile && (!!profile.niche || profile.skills.length > 0 || profile.canOffer.length > 0),

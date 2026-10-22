@@ -1,3 +1,4 @@
+import { chargeForResult, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -28,17 +29,13 @@ export async function PUT(req: Request) {
     if (user.credits < 1000) {
       return NextResponse.json({ error: "Username changes after the first cost 1000 credits. You don't have enough." }, { status: 402 });
     }
-    await db.user.update({
-      where: { id: userId },
-      data: {
-        username: clean,
-        usernameChangesUsed: { increment: 1 },
-        credits: { decrement: 1000 },
-      },
-    });
-    await db.creditTransaction.create({
-      data: { userId, amount: -1000, source: "username_change" },
-    });
+    try {
+      await chargeForResult(userId, 1000, "username_change", async tx => tx.user.update({
+        where: { id: userId }, data: { username: clean, usernameChangesUsed: { increment: 1 } },
+      }));
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : "Username not changed. No credits charged." }, { status: e instanceof InsufficientCredits ? 402 : 500 });
+    }
   } else {
     await db.user.update({
       where: { id: userId },

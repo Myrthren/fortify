@@ -106,6 +106,57 @@ Chrome at desktop and phone width and fails if any card link or checkout button
 is covered. The **Checkout click test** GitHub Action runs it after every web
 push (once `/api/version` reports the new commit) and daily.
 
+## Result-based credit charging
+
+Credit tools settle only after usable output is validated. Failed providers,
+empty searches, malformed reports, failed contact extraction and failed slides
+are not charged. Recon email/context add-ons are charged only if that add-on
+returns a result; contact extraction charges per profile with a public contact.
+An unchanged but successfully fetched watch page is a valid monitoring result.
+Watch setup and username changes remain paid operations, charged atomically
+with the successfully saved watch or username.
+
+The balance debit, credit receipt and result save commit in one transaction.
+Concurrent completions cannot make the balance negative. Asynchronous ad,
+social and SERP scans start free and settle once per owner-bound provider run;
+repeated polling returns the cached report without another charge. Internal job
+records use the existing Generation table and are excluded from activity/usage.
+Scans started before this release must be restarted; their old run IDs are not
+adopted or charged again by the new completion handler. No schema migration is
+required, and historical charges are not changed.
+
+Run `npm run test:result-credits` from `web/`. The regression suite uses isolated
+provider and transaction doubles; it does not prove live provider credentials,
+PostgreSQL connectivity or payment activation.
+
+## Customer offers and competitor evidence
+
+Outbound analysis and drafting require the campaign's explicit customer offer.
+There is no Fortify agency fallback. Activation/manual runs reject missing offers;
+the scheduled engine pauses legacy active campaigns with no offer before any
+pipeline work. Opportunity evidence must match scraped text and its service must
+match wording in the customer offer. Missing website evidence cannot qualify a
+lead. Missing HTML signatures mean not detected, not proof of a missing tool.
+Previously saved reports and drafts are not retroactively rewritten. Legacy drafts
+and drafts for a changed offer are held before delivery until a human reviews and
+approves them; new drafts record a fingerprint of the offer used. Campaigns with
+no saved offer can add one from the dashboard and remain paused until activated.
+
+Competitor Watch checks readable public page wording daily at 07:00 UTC, with
+manual scans available. It compares bounded text snapshots rather than raw HTML,
+ignoring script/style/navigation/footer/time blocks and whitespace changes.
+Change summaries show exact added/removed excerpts, capped at 260 characters per
+side. Up to 40,000 readable characters are stored per page; HTML fetches are
+limited to 2 MB and three redirects. Login/JavaScript-only or blocked pages may
+be unreadable and never replace a good baseline. Resolved private destinations
+and redirects to them are rejected. Concurrent scans use the watch revision so
+a stale scan cannot overwrite evidence or spend credits.
+
+Older raw-HTML hashes establish a new readable baseline on the first successful
+scan without emitting a change alert. Snapshots live in existing watch link JSON;
+no database migration is required. Run `npm run test:buyer-fixes` from `web/`.
+These tests use provider/transaction doubles, not live prospect outreach.
+
 ## Deploy
 
 ### Web → Netlify

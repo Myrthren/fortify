@@ -79,7 +79,7 @@ function buildPrompt(input: ComposeInput): string {
   if (input.lead.location) parts.push(`Location: ${input.lead.location}`);
 
   parts.push("", "YOU");
-  parts.push(`Name: ${input.sender.name}`);
+  parts.push(input.sender.name ? `Name: ${input.sender.name}` : "No sender name supplied. Omit the named sign-off; do not invent a name.");
   if (input.sender.title) parts.push(`Role: ${input.sender.title}`);
   parts.push(`What you offer: ${input.offer}`);
 
