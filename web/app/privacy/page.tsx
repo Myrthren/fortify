@@ -101,7 +101,7 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong className="text-text">OpenAI</strong> &mdash; AI image generation and some text features,
-              such as logo generation.
+              such as image creation in chat and slideshows.
             </li>
             <li>
               <strong className="text-text">Resend</strong> &mdash; sending account, workflow and notification emails.

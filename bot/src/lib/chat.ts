@@ -25,7 +25,7 @@ const FALLBACK_KNOWLEDGE = `ABOUT FORTIFY
 
 SUBSCRIPTION TIERS
 - Free (£0/mo): limited access, Hook Generator only
-- Pro (£29/mo): Core AI tools, Brand Voice, Outreach, Lead Sourcing, Lead Extractor, Inspiration, Meta Ads, Shopify, Revenue, Company DNA, Analytics, Matchmaking, Logo Intelligence
+- Pro (£29/mo): Core AI tools, Brand Voice, Outreach, Lead Sourcing, Lead Extractor, Inspiration, Meta Ads, Shopify, Revenue, Company DNA, Analytics, Matchmaking
 - Elite (£79/mo): Everything in Pro plus Trend Radar, Virality Engine, Fortify Recon, Competitor Watch, Workflows, larger Lead Extractor batches, and live web search in Discord chat
 - Apex (£199/mo): Everything unlimited, Mastermind Pods, deep-scan Lead Extractor, and live web search in Discord chat
 

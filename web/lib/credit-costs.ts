@@ -7,7 +7,6 @@ export const CREDIT_COSTS: { action: string; cost: string }[] = [
   { action: "Competitor social or Meta Ads scan", cost: "50" },                               // api/competitors/[id]/scan-*
   { action: "Competitor search-ranking scan", cost: "35" },                                   // api/competitors/[id]/scan-serp
   { action: "Competitor Watch: add a page, then each check", cost: "25, then 10" },          // api/competitor-watch
-  { action: "Logo generation / enhancement", cost: "150 / 100" },                             // api/logo/*
 ];
 
 export const CREDITS_FREE_START = 100;

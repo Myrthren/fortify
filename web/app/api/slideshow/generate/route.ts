@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
-import { generateLogoImage } from "@/lib/openai";
+import { generateImage } from "@/lib/openai";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 const FONT_STYLES: Record<string, string> = {
@@ -203,7 +203,7 @@ Return ONLY a valid JSON array with no explanation or markdown:
     const prompt = `${slideRole} ${slide.backgroundDesc}. ${fontStyle}. No text, no words, no letters, no numbers visible anywhere in the image. Abstract or photographic background only. Clean minimal design, high contrast, widescreen 16:9 format, suitable for a professional business presentation.`;
 
     try {
-      const img = await generateLogoImage(prompt, "1536x1024");
+      const img = await generateImage(prompt, "1536x1024");
       generatedImages.push(img);
     } catch {
       generatedImages.push("");

@@ -6,7 +6,7 @@ import { getOrCreateSession, deductCost, estimateCost } from "@/lib/ai-usage";
 import { flagAbuse } from "@/lib/abuse";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { randomUUID } from "crypto";
-import { generateLogoImage } from "@/lib/openai";
+import { generateImage } from "@/lib/openai";
 
 // Cost of one gpt-image-1 generation at 1024×1024 high quality (in GBP)
 const IMAGE_GEN_COST_GBP = 0.04;
@@ -302,7 +302,7 @@ async function execGenerateImage(
   prompt: string
 ): Promise<{ success: boolean; description: string; imageUrl?: string }> {
   try {
-    const imageUrl = await generateLogoImage(prompt, "1024x1024");
+    const imageUrl = await generateImage(prompt, "1024x1024");
     return { success: true, description: "Image generated successfully", imageUrl };
   } catch (e: any) {
     return { success: false, description: e.message ?? "Image generation failed" };

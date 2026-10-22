@@ -48,7 +48,6 @@ const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, 
     rows: [
       { label: "Brand voices", cells: [false, "1", "3", "Unlimited"] },
       { label: "Content Inspiration", cells: [false, true, true, true] },
-      { label: "Logo Intelligence", cells: [false, true, true, true] },
       { label: "Virality Engine", cells: [false, false, true, true] },
       { label: "Auto-publish to YouTube and Facebook", cells: [false, false, false, true] },
       { label: "Auto-publish to TikTok", cells: [false, false, false, SOON()] },

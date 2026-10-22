@@ -1,7 +1,7 @@
 import {
   Sparkles, Send, ClipboardCheck, Radar, TrendingUp, Search, Lightbulb, BarChart3,
   ShoppingBag, LineChart, Clapperboard, Dna, MapPin, Eye, Workflow, Zap, Activity,
-  Handshake, Palette, AtSign, Target, PackageOpen, Layers, FlaskConical, type LucideIcon,
+  Handshake, AtSign, Target, PackageOpen, Layers, FlaskConical, type LucideIcon,
 } from "lucide-react";
 import type { Tier } from "@prisma/client";
 
@@ -14,7 +14,7 @@ export type MinTier = "PRO" | "ELITE" | "APEX";
 export type ActiveKey =
   | "dashboard" | "voice" | "outreach" | "audit" | "trends" | "competitors"
   | "matchmaking" | "inspiration" | "leads" | "ads" | "analytics" | "shopify"
-  | "revenue" | "virality" | "dna" | "logo" | "members" | "deals" | "pods"
+  | "revenue" | "virality" | "dna" | "members" | "deals" | "pods"
   | "forums" | "messages" | "connections" | "notifications" | "profile"
   | "settings" | "support" | "credits" | "recon" | "competitor-watch"
   | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity" | "plans" | "research-lab";
@@ -46,7 +46,6 @@ export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "activity" | "member
   voice:            { key: "voice", href: "/dashboard/voice", label: "Brand Voice Studio", desc: "Train AI on your tone of voice", icon: Sparkles, minTier: "PRO" },
   inspiration:      { key: "inspiration", href: "/dashboard/inspiration", label: "Content Inspiration", desc: "Mine Reddit and YouTube for angles", icon: Lightbulb, minTier: "PRO" },
   virality:         { key: "virality", href: "/dashboard/virality", label: "Virality Engine", desc: "Score and publish short-form video", icon: Clapperboard, minTier: "ELITE" },
-  logo:             { key: "logo", href: "/dashboard/logo", label: "Logo Intelligence", desc: "Critique and refine your brand mark", icon: Palette, minTier: "PRO" },
 
   "lead-extractor": { key: "lead-extractor", href: "/dashboard/lead-extractor", label: "Lead Extractor", tabLabel: "Social leads", desc: "Contacts from TikTok and Instagram profiles", icon: AtSign, minTier: "PRO", hub: "leads" },
   "lead-pack":      { key: "lead-pack", href: "/dashboard/lead-pack", label: "Weekly Lead Pack", tabLabel: "Weekly pack", desc: "New local leads with drafts, every Monday", icon: PackageOpen, minTier: "ELITE", hub: "leads" },
@@ -104,7 +103,7 @@ export function hubHref(hub: HubKey, tier: Tier): string {
 export type NavEntry = { kind: "tool"; key: ActiveKey } | { kind: "hub"; hub: HubKey };
 
 export const NAV_GROUPS: { heading: string; entries: NavEntry[] }[] = [
-  { heading: "Content",    entries: [{ kind: "tool", key: "voice" }, { kind: "tool", key: "inspiration" }, { kind: "tool", key: "virality" }, { kind: "tool", key: "logo" }] },
+  { heading: "Content",    entries: [{ kind: "tool", key: "voice" }, { kind: "tool", key: "inspiration" }, { kind: "tool", key: "virality" }] },
   { heading: "Growth",     entries: [{ kind: "hub", hub: "leads" }, { kind: "tool", key: "audit" }] },
   { heading: "Research",   entries: [{ kind: "tool", key: "research-lab" }, { kind: "tool", key: "trends" }, { kind: "hub", hub: "competitors" }] },
   { heading: "Business",   entries: [{ kind: "tool", key: "plans" }, { kind: "hub", hub: "insights" }, { kind: "tool", key: "dna" }] },

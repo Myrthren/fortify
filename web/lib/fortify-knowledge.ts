@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-20-plan-accuracy";
+export const KNOWLEDGE_VERSION = "2026-10-22-logo-retired";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -19,7 +19,7 @@ export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 
 SUBSCRIPTION TIERS
 - Free (£0/mo): 100 starter credits, Hook Generator, 10 cold outreach messages/mo, Trend Radar (5 watch terms), community forums, read-only member directory and deal board
-- Pro (£29/mo): Core AI tools, 500 credits/mo, Brand Voice Studio (1 voice), Funnel Auditor (5/mo), Cold Outreach (50/mo), Competitor Scanner (3 tracked), Lead Sourcing, Inspiration Engine, Meta Ads dashboard, Shopify dashboard, Revenue/Stripe dashboard, Company DNA, Matchmaking, Logo Intelligence, Lead Extractor (10 accounts/batch)
+- Pro (£29/mo): Core AI tools, 500 credits/mo, Brand Voice Studio (1 voice), Funnel Auditor (5/mo), Cold Outreach (50/mo), Competitor Scanner (3 tracked), Lead Sourcing, Inspiration Engine, Meta Ads dashboard, Shopify dashboard, Revenue/Stripe dashboard, Company DNA, Matchmaking, Lead Extractor (10 accounts/batch)
 - Elite (£79/mo): Everything in Pro, 1500 credits/mo, 3 brand voices, unlimited audits & outreach, unlimited Trend Radar watch terms, 10 competitors tracked, Virality Engine, Fortify Recon, Weekly Lead Pack (15 new local leads with drafted outreach every Monday, no credits), Competitor Watch, Workflows (automation builder), Lead Extractor (25 accounts/batch + web search fallback + AI approach strategy), live web search in Discord chat
 - Apex (£199/mo): Everything unlimited — unlimited brand voices, watch terms, competitors, workflows, 5000 credits/mo, monthly Growth Brief (the AI Advisor writes a plan from the member's own data on the 1st of each month, saved in AI Advisor), Weekly Lead Pack of 25, AI Advisor (in-depth strategy briefs on demand), Mastermind Pods (not live yet; they launch once there are enough Apex members), auto-publish to YouTube and Facebook, Lead Extractor (50 accounts/batch + optional deep scan), live web search in Discord chat
 
@@ -32,7 +32,6 @@ Content:
 - Brand Voice Studio — train Claude on your exact tone; use it in all AI tools (Pro+)
 - Inspiration Engine — mine Reddit, YouTube, and the web for content angles (Pro+)
 - Virality Engine — AI video scoring, trend analysis, competitor content intel (Elite+; auto-publish to YouTube and Facebook is Apex only; TikTok publishing is coming soon)
-- Logo Intelligence — AI analysis and improvement suggestions for brand logos (Pro+)
 
 Growth:
 - Cold Outreach Generator — personalised email, LinkedIn, Twitter, and DM copy (Free: 10/mo, Pro: 50/mo, Elite+: unlimited)
@@ -90,6 +89,6 @@ PRICING
 - No free trial of paid plans (the Free plan is the trial). Payments are non-refundable
 - Cancel with the provider you paid through. Cancelling PayPal keeps the plan until the end of the paid month, then moves the account to Free; Whop access follows the Whop membership
 - PayPal activates instantly (must be signed in). Whop needs Connect Whop in Settings afterwards (guide: https://fortify-io.com/whop)
-- Credits: paid plans add credits on the 1st of each month; unused credits roll over and never expire. Typical costs: lead search 50, Lead Extractor 20 per profile, Recon from 50, competitor scans 35-50, logo generation 150
+- Credits: paid plans add credits on the 1st of each month; unused credits roll over and never expire. Typical costs: lead search 50, Lead Extractor 20 per profile, Recon from 50, competitor scans 35-50
 - Affiliates: 30% commission for the first 12 months of each referred customer, Whop referral links only (PayPal purchases earn nothing). Details: https://fortify-io.com/affiliates
 - Support email: support@fortify-io.com`;

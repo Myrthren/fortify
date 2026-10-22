@@ -18,7 +18,7 @@ export const FAQ: { q: string; a: string }[] = [
   },
   {
     q: "What are credits for?",
-    a: "Credits pay for the heavier jobs that call outside data sources — lead searches (50), Lead Extractor profiles (20 each), Recon searches (from 50), competitor scans (35–50) and logo generation (150). Everyday writing tools such as hooks, outreach and audits use their own monthly allowances instead. Paid plans add credits on the 1st of each month and unused credits roll over; they never expire. Top-up packs start at 800 credits for £8.99.",
+    a: "Credits pay for the heavier jobs that call outside data sources — lead searches (50), Lead Extractor profiles (20 each), Recon searches (from 50), and competitor scans (35–50). Everyday writing tools such as hooks, outreach and audits use their own monthly allowances instead. Paid plans add credits on the 1st of each month and unused credits roll over; they never expire. Top-up packs start at 800 credits for £8.99.",
   },
   {
     q: "Do PayPal and Whop purchases work the same way?",
