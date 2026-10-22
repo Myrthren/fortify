@@ -1,5 +1,7 @@
 "use client";
 
+import { responseError } from "@/lib/response-error";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -122,7 +124,7 @@ export function OutboundClient({
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        setError((await res.text()) || "Update failed.");
+        setError(await responseError(res));
         return;
       }
       const data = await res.json();
