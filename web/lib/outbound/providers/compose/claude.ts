@@ -17,10 +17,10 @@ import type {
  */
 export const claudeComposer: ComposeProvider = {
   key: "claude",
-  label: "Claude",
+  label: "Fortify AI",
 
   isAvailable() {
-    return Boolean(process.env.ANTHROPIC_API_KEY);
+    return Boolean(process.env.OPENROUTER_API_KEY?.trim());
   },
 
   async compose(input: ComposeInput): Promise<ComposedEmail> {
@@ -43,7 +43,7 @@ export const claudeComposer: ComposeProvider = {
       .map((b) => (b as { type: "text"; text: string }).text)
       .join("\n");
 
-    return { ...splitSubjectAndBody(text), model };
+    return { ...splitSubjectAndBody(text), model: res.model || model };
   },
 };
 

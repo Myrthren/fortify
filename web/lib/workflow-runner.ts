@@ -123,10 +123,10 @@ function evalFilter(expr: string, vars: Record<string, string>): boolean {
 }
 
 // ── AI helper ─────────────────────────────────────────────────────────────────
-// Shared client: falls back to Groq when Anthropic is unavailable or out of credit.
-async function callClaude(prompt: string, model: string, maxTokens: number): Promise<string> {
+// Shared router: every AI node uses this member's weekly Claude allowance.
+async function callClaude(prompt: string, model: string, maxTokens: number, userId: string): Promise<string> {
   const modelId = model === "sonnet" ? "claude-sonnet-4-5" : "claude-haiku-4-5";
-  const msg = await claude().messages.create({
+  const msg = await claude(userId).messages.create({
     model: modelId,
     max_tokens: Math.min(maxTokens, 2000),
     messages: [{ role: "user", content: prompt }],
@@ -293,7 +293,7 @@ async function execNode(
       const text = await callClaude(
         c.prompt || "Hello",
         c.model || "haiku",
-        parseInt(c.maxTokens || "500", 10),
+        parseInt(c.maxTokens || "500", 10), ctx.userId,
       );
       const outVar = c.outputVar || "generated_text";
       ctx.vars[outVar] = text;
@@ -306,7 +306,7 @@ async function execNode(
       const input = c.input || ctx.vars.previous_output || "";
       const maxLen = c.maxLength || "150 words";
       const prompt = `Summarise the following text in ${maxLen}:\n\n${input}`;
-      const text = await callClaude(prompt, "haiku", 600);
+      const text = await callClaude(prompt, "haiku", 600, ctx.userId);
       const outVar = c.outputVar || "summary";
       ctx.vars[outVar] = text;
       ctx.vars.previous_output = text;
@@ -318,7 +318,7 @@ async function execNode(
       const input = c.input || ctx.vars.previous_output || "";
       const criteria = c.criteria || "tone, clarity, key themes";
       const prompt = `Analyse the following text for ${criteria}:\n\n${input}`;
-      const text = await callClaude(prompt, "haiku", 800);
+      const text = await callClaude(prompt, "haiku", 800, ctx.userId);
       const outVar = c.outputVar || "analysis";
       ctx.vars[outVar] = text;
       ctx.vars.previous_output = text;
@@ -330,7 +330,7 @@ async function execNode(
       const input = c.input || ctx.vars.previous_output || "";
       const categories = c.categories || "positive, negative, neutral";
       const prompt = `Classify the following text into exactly one of these categories: ${categories}.\nRespond with only the category name.\n\nText: ${input}`;
-      const text = await callClaude(prompt, "haiku", 50);
+      const text = await callClaude(prompt, "haiku", 50, ctx.userId);
       const outVar = c.outputVar || "category";
       // Clean to just the category
       const cleanedCategory = text.split("\n")[0].trim();
@@ -747,7 +747,7 @@ ${resultList}
 Return ONLY a JSON array of up to ${maxCount} lead objects with this exact shape:
 [{"company":"name","website":"url","fitScore":7,"fitReason":"one sentence","hook":"personalised opening line for cold outreach"}]`;
 
-      const raw = await callClaude(prompt, "sonnet", 2000);
+      const raw = await callClaude(prompt, "sonnet", 2000, ctx.userId);
       const jsonMatch = raw.match(/\[[\s\S]*\]/);
 
       let leads: unknown[] = [];

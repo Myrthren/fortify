@@ -1,3 +1,4 @@
+import { withAiUser } from "@/lib/ai-context";
 import { requireCampaignOffer, offerFingerprint } from "@/lib/outbound/offer";
 import type { OutboundCampaign } from "@prisma/client";
 import { db } from "@/lib/db";
@@ -68,7 +69,11 @@ export async function tickAllCampaigns(
   return results;
 }
 
-export async function tickCampaign(
+export async function tickCampaign(campaign: OutboundCampaign, budget: Budget): Promise<CampaignTickResult> {
+  return withAiUser(campaign.userId, () => tickCampaignOwned(campaign, budget));
+}
+
+async function tickCampaignOwned(
   campaign: OutboundCampaign,
   budget: Budget
 ): Promise<CampaignTickResult> {

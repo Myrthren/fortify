@@ -44,7 +44,7 @@ export default function TermsPage() {
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
             The Service integrates with third-party platforms including Meta (Facebook, Instagram), Google, Shopify,
-            Stripe, TikTok, YouTube, Discord, Apify, and AI model providers including Anthropic, Groq and OpenAI. Data sourced from these
+            Stripe, TikTok, YouTube, Discord, Apify, and AI model providers including Anthropic, OpenRouter, its selected model providers and OpenAI. Data sourced from these
             third-party APIs is provided for informational and automation purposes. We do not guarantee the accuracy,
             completeness, or timeliness of data obtained from third-party sources.
           </p>

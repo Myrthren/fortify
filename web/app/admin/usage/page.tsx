@@ -19,12 +19,9 @@ export default async function AdminUsagePage() {
 
   // ── Top AI spenders ───────────────────────────────────────────────────────────
   // Aggregate total AI spend per user across all their sessions
-  const aiSessions = await db.aiSession.groupBy({
-    by: ["userId"],
-    _sum: { usedCostGbp: true },
-    orderBy: { _sum: { usedCostGbp: "desc" } },
-    take: 30,
-  });
+  const aiSessions = await db.$queryRawUnsafe<{ userId: string; total: bigint }[]>(
+    `SELECT "userId", SUM(COALESCE("chargedMicros", "reservedMicros"))::bigint AS total FROM "AiUsageLedger" WHERE "state" <> 'released' GROUP BY "userId" ORDER BY total DESC LIMIT 30`,
+  );
 
   const aiUserIds = aiSessions.map((s) => s.userId);
   const aiUsers = await db.user.findMany({
@@ -36,7 +33,7 @@ export default async function AdminUsagePage() {
   const topAiSpenders = aiSessions.map((s) => ({
     userId: s.userId,
     user: aiUserMap[s.userId] ?? null,
-    totalCostGbp: s._sum.usedCostGbp ?? 0,
+    totalCostGbp: Number(s.total) / 1_000_000,
   }));
 
   // ── Revenue in (subscriptions paid this month) ────────────────────────────────
@@ -52,8 +49,10 @@ export default async function AdminUsagePage() {
   const monthlyRevenue = activeSubs.reduce((sum, s) => sum + (tierPrices[s.tier] ?? 0), 0);
 
   // ── Total AI cost (all time) ──────────────────────────────────────────────────
-  const totalAiCostRow = await db.aiSession.aggregate({ _sum: { usedCostGbp: true } });
-  const totalAiCost = totalAiCostRow._sum.usedCostGbp ?? 0;
+  const totalAiCostRow = await db.$queryRawUnsafe<{ total: bigint }[]>(
+    `SELECT COALESCE(SUM(COALESCE("chargedMicros", "reservedMicros")), 0)::bigint AS total FROM "AiUsageLedger" WHERE "state" <> 'released'`,
+  );
+  const totalAiCost = Number(totalAiCostRow[0]?.total ?? 0) / 1_000_000;
 
   // ── Total credit purchases (all time) ─────────────────────────────────────────
   const creditRevRow = await db.creditTransaction.aggregate({
@@ -112,7 +111,7 @@ export default async function AdminUsagePage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
             { label: "Monthly Revenue", value: `£${monthlyRevenue.toLocaleString()}`, sub: "active subs" },
-            { label: "All-time AI Cost", value: `£${totalAiCost.toFixed(2)}`, sub: "across all users" },
+            { label: "Language-model spend", value: `£${totalAiCost.toFixed(2)}`, sub: "OpenRouter spend + held reservations" },
             { label: "Open Abuse Alerts", value: abuseAlerts.length, sub: "not dismissed" },
             { label: "Total Users", value: Object.values(tierMap).reduce((a, b) => a + b, 0), sub: `${tierMap.FREE ?? 0} free · ${(tierMap.PRO ?? 0) + (tierMap.ELITE ?? 0) + (tierMap.APEX ?? 0)} paid` },
           ].map((kpi) => (
@@ -200,7 +199,7 @@ export default async function AdminUsagePage() {
 
         {/* ── Top AI Spenders ── */}
         <section>
-          <h2 className="mb-4 text-base font-semibold">Top AI Spenders (All Time)</h2>
+          <h2 className="mb-4 text-base font-semibold">Top Model Users (OpenRouter)</h2>
           {topAiSpenders.length === 0 ? (
             <p className="text-sm text-text-muted">No AI usage yet.</p>
           ) : (
@@ -214,7 +213,7 @@ export default async function AdminUsagePage() {
                     <th className="px-4 py-3">#</th>
                     <th className="px-4 py-3">User</th>
                     <th className="px-4 py-3">Tier</th>
-                    <th className="px-4 py-3 text-right">Total AI Cost</th>
+                    <th className="px-4 py-3 text-right">Spend + reservations</th>
                     <th className="px-4 py-3 text-right">History</th>
                   </tr>
                 </thead>

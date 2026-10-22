@@ -96,11 +96,11 @@ export default function PrivacyPage() {
               include contextual data you provide to the relevant features.
             </li>
             <li>
-              <strong className="text-text">Groq</strong> &mdash; AI language model processing, used for the same
-              features when Anthropic is unavailable. The same contextual data may be sent.
+              <strong className="text-text">OpenRouter and its selected model providers</strong> &mdash; AI language model processing, used for the same
+              features, including Claude requests and alternative models used after the weekly Claude allowance or during a provider outage. The same contextual data may be sent.
             </li>
             <li>
-              <strong className="text-text">OpenAI</strong> &mdash; AI image generation and some text features,
+              <strong className="text-text">OpenAI</strong> &mdash; AI image generation and editing,
               such as logo generation.
             </li>
             <li>

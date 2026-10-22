@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
-import { getOrCreateSession, deductCost, estimateCost } from "@/lib/ai-usage";
+import { getOrCreateSession, deductCost } from "@/lib/ai-usage";
 import { flagAbuse } from "@/lib/abuse";
 import { rateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { randomUUID } from "crypto";
@@ -393,7 +393,7 @@ export async function POST(req: Request) {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return new NextResponse("Not found", { status: 404 });
 
-  const { session: aiSession, overLimit, freeTrialExhausted } = await getOrCreateSession(userId, user.tier);
+  const { session: aiSession, overLimit, freeTrialExhausted } = user.tier === "FREE" ? await getOrCreateSession(userId, user.tier) : { session: null, overLimit: false, freeTrialExhausted: false };
   if (overLimit) {
     // Flag repeated limit-hitting as potential abuse
     void flagAbuse(
@@ -499,6 +499,8 @@ export async function POST(req: Request) {
     messages,
   } as any);
 
+  let routedCost = (resp1 as any).fortify?.costGbp ?? 0;
+  let lastRouting = (resp1 as any).fortify;
   let totalIn  = resp1.usage.input_tokens;
   let totalOut = resp1.usage.output_tokens;
   const actionResults: { description: string; success: boolean }[] = [];
@@ -551,7 +553,7 @@ export async function POST(req: Request) {
 
     // ── Second Claude call with tool results ──
     const resp2 = await claude().messages.create({
-      model: aiModel,
+      model: (resp1 as any).fortify?.routedModel ?? aiModel,
       max_tokens: maxTok2,
       system: systemPrompt,
       tools: FORTIFY_TOOLS,
@@ -562,6 +564,8 @@ export async function POST(req: Request) {
       ],
     } as any);
 
+    routedCost += (resp2 as any).fortify?.costGbp ?? 0;
+    lastRouting = (resp2 as any).fortify;
     totalIn  += resp2.usage.input_tokens;
     totalOut += resp2.usage.output_tokens;
 
@@ -576,13 +580,15 @@ export async function POST(req: Request) {
       .join("\n");
   }
 
-  const cost = estimateCost(totalIn, totalOut, hasImage) + imageGenCost;
+  const cost = routedCost + imageGenCost;
   if (aiSession) await deductCost(userId, user.tier, cost);
 
   return NextResponse.json({
     message: finalText,
     actions: actionResults,
     costGbp: cost,
+    model: lastRouting?.model,
+    fallback: lastRouting?.fallback ?? false,
     ...(generatedImageUrl ? { imageUrl: generatedImageUrl } : {}),
   });
 }

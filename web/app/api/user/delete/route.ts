@@ -17,6 +17,7 @@ export async function DELETE() {
 
   try {
     await db.$transaction(async (tx) => {
+      await tx.$executeRawUnsafe('DELETE FROM "AiUsageLedger" WHERE "userId" = $1', userId);
       // Delete user-owned content in dependency order
       await tx.chatSession.deleteMany({ where: { userId } });
       await tx.aiSession.deleteMany({ where: { userId } });

@@ -74,7 +74,7 @@ export async function composeGrowthBrief(userId: string, now: Date) {
   const request = BRIEF_REQUEST(month);
   const system = advisorSystemPrompt(context + "\n" + activity);
   const write = async (extra = "") => {
-    const res = await claude().messages.create({
+    const res = await claude(userId).messages.create({
       model: CLAUDE_MODELS.fast,
       max_tokens: 2500,
       system,

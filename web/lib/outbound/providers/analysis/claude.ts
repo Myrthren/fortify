@@ -24,10 +24,10 @@ import {
  */
 export const claudeAnalysis: AnalysisProvider = {
   key: "claude",
-  label: "Claude",
+  label: "Fortify AI",
 
   isAvailable() {
-    return Boolean(process.env.ANTHROPIC_API_KEY);
+    return Boolean(process.env.OPENROUTER_API_KEY?.trim());
   },
 
   async analyse(input: AnalysisInput): Promise<AnalysisResult> {

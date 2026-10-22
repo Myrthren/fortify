@@ -1,28 +1,10 @@
-import OpenAI from "openai";
-
-let _client: OpenAI | null = null;
-function client(): OpenAI {
-  if (!_client) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error("OPENAI_API_KEY is not set");
-    _client = new OpenAI({ apiKey });
-  }
-  return _client;
-}
+import { claude, CLAUDE_MODELS } from "./claude";
 
 export async function generateHooks(topic: string, count = 5): Promise<string[]> {
-  const res = await client().chat.completions.create({
-    model: "gpt-4o-mini",
-    temperature: 0.9,
-    messages: [
-      {
-        role: "system",
-        content:
-          "You write scroll-stopping short-form video hooks. Punchy, curious, under 12 words. No hashtags. No emojis. Return one hook per line, no numbering.",
-      },
-      { role: "user", content: `Topic: ${topic}\n\nWrite ${count} hooks.` },
-    ],
+  const result = await claude().messages.create({
+    model: CLAUDE_MODELS.fast, max_tokens: 600,
+    system: "You write scroll-stopping short-form video hooks. Punchy, curious, under 12 words. No hashtags. No emojis. Never invent statistics, percentages or results. Return one hook per line, no numbering.",
+    messages: [{ role: "user", content: `Topic: ${topic}\n\nWrite ${count} hooks.` }],
   });
-  const text = res.choices[0]?.message?.content ?? "";
-  return text.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, count);
+  return result.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n").split("\n").map((line: string) => line.trim()).filter(Boolean).slice(0, count);
 }

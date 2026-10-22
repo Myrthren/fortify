@@ -20,7 +20,7 @@ export type ClassifiedReply = {
   summary: string;
 };
 
-export async function classifyReply(body: string): Promise<ClassifiedReply> {
+export async function classifyReply(body: string, userId?: string): Promise<ClassifiedReply> {
   const trimmed = body.slice(0, 6000);
 
   // Auto-responders and opt-outs are recognisable without an AI call, and both
@@ -29,7 +29,7 @@ export async function classifyReply(body: string): Promise<ClassifiedReply> {
   if (quick) return quick;
 
   try {
-    const res = await claude().messages.create({
+    const res = await claude(userId).messages.create({
       model: CLAUDE_MODELS.fast,
       max_tokens: 300,
       system: CLASSIFIER_SYSTEM,
@@ -138,7 +138,7 @@ export async function applyReply(
   });
   if (!lead) throw new Error("lead not found");
 
-  const classification = await classifyReply(body);
+  const classification = await classifyReply(body, lead.userId);
   const at = opts.receivedAt ?? new Date();
 
   if (classification.sentiment === "AUTO_REPLY") {

@@ -1,3 +1,4 @@
+import { withAiUser } from "@/lib/ai-context";
 import type { LeadPackSetting, Tier } from "@prisma/client";
 import { PACK_SIZE, PACK_TIERS, leadKey, packDue, pickNewLeads, type PackLead } from "@/lib/lead-pack-core";
 import { db } from "@/lib/db";
@@ -92,12 +93,12 @@ async function deliverPack(setting: LeadPackSetting & { user: { tier: Tier; disc
     await mapLimit(leads, 6, async (lead) => {
       if (Date.now() > deadline) return;
       try {
-        lead.draft = await generateOutreach({
+        lead.draft = await withAiUser(setting.userId, () => generateOutreach({
           prospect: describeLead(lead, setting.location),
           offer,
           channel: "cold-email",
           voiceSystemPrompt: voice?.systemPrompt,
-        });
+        }));
       } catch (err: any) {
         console.error(`[lead-pack] draft failed for ${setting.userId}:`, err?.message ?? err);
       }

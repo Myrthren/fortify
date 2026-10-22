@@ -9,13 +9,19 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-20-plan-accuracy";
+export const KNOWLEDGE_VERSION = "2026-10-22-weekly-claude-routing";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
 - Community: the Fortify Discord server, for online business owners, resellers, and creators
 - Tagline: "AI co-pilot for online business and networking"
 - Owner: Kene (owner of the Fortify Discord server)
+
+AI MODEL ALLOWANCES
+- AI text and image understanding run through OpenRouter. Standard Claude requests use Sonnet 5.5 and premium requests use Opus 5.5, subject to availability.
+- Included Claude allowance is shared across website, Discord, text tools and background/workflow AI: Pro £2/week, Elite £4/week, Apex £10/week. Weeks reset Monday at 00:00 UTC.
+- Once a request cannot fit the remaining Claude allowance, Fortify continues using a configured alternative model. Free uses alternative models. Existing tool access, credits and anti-abuse limits still apply.
+- Alternative models also have API costs; do not call them free. Never claim that an alternative model is Claude. Image generation uses a separate image provider.
 
 SUBSCRIPTION TIERS
 - Free (£0/mo): 100 starter credits, Hook Generator, 10 cold outreach messages/mo, Trend Radar (5 watch terms), community forums, read-only member directory and deal board

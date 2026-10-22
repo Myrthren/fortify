@@ -45,12 +45,12 @@ test('zero confidence stays zero', async () => {
 });
 test('active campaign with no offer pauses before any pipeline activity', async () => {
   let updated; const fail = async () => { throw new Error('pipeline must not run'); };
-  const mod = load('lib/outbound/engine/tick.ts', {
+  const mod = load('lib/outbound/engine/tick.ts', { '@/lib/ai-context': load('lib/ai-context.ts'),
     '@/lib/outbound/offer': offer, '@/lib/db': { db: { outboundCampaign: { update: async ({ data }) => { updated = data; } } } },
     './discover': { runDiscovery: fail }, './send': { sendEmail: fail },
     './stages': { analyseLead: fail, draftEmail: fail, scrapeLead: fail }, './shared': {},
   });
-  const result = await mod.tickCampaign({ id: 'c', name: 'Campaign', status: 'ACTIVE', offer: null }, { expired: false });
+  const result = await mod.tickCampaign({ id: 'c', userId: 'u', name: 'Campaign', status: 'ACTIVE', offer: null }, { expired: false });
   assert.equal(updated.status, 'PAUSED'); assert.equal(result.sent, 0); assert.match(result.skippedSend, /offer/);
 });
 
@@ -167,7 +167,7 @@ for (const [label, campaignOffer, metadata] of [
 });
 test('explicit human approval records the current offer for the reviewed draft', async () => {
   let saved;
-  const mod = load('lib/outbound/engine/tick.ts', {
+  const mod = load('lib/outbound/engine/tick.ts', { '@/lib/ai-context': load('lib/ai-context.ts'),
     '@/lib/outbound/offer': offer,
     '@/lib/db': { db: {
       outboundEmail: { findUnique: async () => ({ id: 'e', leadId: 'l', subject: 'Reviewed', campaign: { offer: input.offer }, variation: {} }), update: async ({ data }) => { saved = data; } },
