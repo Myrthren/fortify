@@ -17,7 +17,7 @@ export type ActiveKey =
   | "revenue" | "virality" | "dna" | "members" | "deals" | "pods"
   | "forums" | "messages" | "connections" | "notifications" | "profile"
   | "settings" | "support" | "credits" | "recon" | "competitor-watch"
-  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity" | "plans" | "research-lab";
+  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity" | "plans" | "research-lab" | "story";
 
 export type HubKey = "leads" | "competitors" | "insights";
 
@@ -44,8 +44,9 @@ export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "activity" | "member
   plans: { key: "plans", href: "/dashboard/plans", label: "Plans", desc: "Map future goals, decisions and connected procedures", icon: Layers },
   pipeline: { key: "pipeline", href: "/dashboard/pipeline", label: "Lead Pipeline", desc: "Research, drafts and follow-ups for every prospect", icon: Target, hub: "leads" },
   voice:            { key: "voice", href: "/dashboard/voice", label: "Brand Voice Studio", desc: "Train AI on your tone of voice", icon: Sparkles, minTier: "PRO" },
-  inspiration:      { key: "inspiration", href: "/dashboard/inspiration", label: "Content Inspiration", desc: "Mine Reddit and YouTube for angles", icon: Lightbulb, minTier: "PRO" },
-  virality:         { key: "virality", href: "/dashboard/virality", label: "Virality Engine", desc: "Score and publish short-form video", icon: Clapperboard, minTier: "ELITE" },
+  inspiration:      { key: "inspiration", href: "/dashboard/content?view=research", label: "Find a content idea", desc: "Signal Atlas: collect evidence and build a brief", icon: Lightbulb, minTier: "PRO" },
+  story:            { key: "story", href: "/dashboard/content?view=story", label: "Build a video or post", desc: "Story Forge: write, compare and approve a script", icon: Clapperboard },
+  virality:         { key: "virality", href: "/dashboard/content?view=test", label: "Review my content", desc: "Test Track: inspect videos and record real outcomes", icon: Clapperboard, minTier: "ELITE" },
 
   "lead-extractor": { key: "lead-extractor", href: "/dashboard/lead-extractor", label: "Lead Extractor", tabLabel: "Social leads", desc: "Contacts from TikTok and Instagram profiles", icon: AtSign, minTier: "PRO", hub: "leads" },
   "lead-pack":      { key: "lead-pack", href: "/dashboard/lead-pack", label: "Weekly Lead Pack", tabLabel: "Weekly pack", desc: "New local leads with drafts, every Monday", icon: PackageOpen, minTier: "ELITE", hub: "leads" },
@@ -66,7 +67,7 @@ export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "activity" | "member
   dna:              { key: "dna", href: "/dashboard/company-dna", label: "Company DNA", desc: "The context every tool works from", icon: Dna, minTier: "PRO" },
 
   workflows:        { key: "workflows", href: "/dashboard/workflows", label: "Workflows", desc: "Multi-step AI automations", icon: Workflow, minTier: "ELITE" },
-  advisor:          { key: "advisor", href: "/dashboard/advisor", label: "AI Advisor", desc: "In-depth strategy briefings", icon: Zap, minTier: "APEX" },
+  advisor:          { key: "advisor", href: "/dashboard/decisions", label: "Choose my next move", desc: "Decision Room: compare options and create a plan", icon: Zap, minTier: "APEX" },
   matchmaking:      { key: "matchmaking", href: "/dashboard/matchmaking", label: "AI Matchmaking", desc: "Members worth talking to", icon: Handshake, minTier: "PRO" },
 };
 
@@ -103,11 +104,11 @@ export function hubHref(hub: HubKey, tier: Tier): string {
 export type NavEntry = { kind: "tool"; key: ActiveKey } | { kind: "hub"; hub: HubKey };
 
 export const NAV_GROUPS: { heading: string; entries: NavEntry[] }[] = [
-  { heading: "Content",    entries: [{ kind: "tool", key: "voice" }, { kind: "tool", key: "inspiration" }, { kind: "tool", key: "virality" }] },
+  { heading: "Content",    entries: [{ kind: "tool", key: "inspiration" }, { kind: "tool", key: "story" }, { kind: "tool", key: "virality" }, { kind: "tool", key: "voice" }] },
   { heading: "Growth",     entries: [{ kind: "hub", hub: "leads" }, { kind: "tool", key: "audit" }] },
   { heading: "Research",   entries: [{ kind: "tool", key: "research-lab" }, { kind: "tool", key: "trends" }, { kind: "hub", hub: "competitors" }] },
-  { heading: "Business",   entries: [{ kind: "tool", key: "plans" }, { kind: "hub", hub: "insights" }, { kind: "tool", key: "dna" }] },
-  { heading: "Automation", entries: [{ kind: "tool", key: "workflows" }, { kind: "tool", key: "advisor" }] },
+  { heading: "Business",   entries: [{ kind: "tool", key: "plans" }, { kind: "tool", key: "advisor" }, { kind: "hub", hub: "insights" }, { kind: "tool", key: "dna" }] },
+  { heading: "Automation", entries: [{ kind: "tool", key: "workflows" }] },
 ];
 
 export function entryKeys(e: NavEntry): ActiveKey[] {

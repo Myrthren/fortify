@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 export const FAQ: { q: string; a: string }[] = [
   {
     q: "What do I get on the free plan?",
-    a: "100 starter credits, 10 outreach messages a month, 5 Trend Radar topics, the Hook Generator and the community — forums, member directory and deal board. No card needed. The Free plan is how you try Fortify; there is no separate free trial of paid plans.",
+    a: "100 starter credits, 10 outreach messages a month, 5 Trend Radar topics, the Story Forge (script editor) and the community — forums, member directory and deal board. No card needed. The Free plan is how you try Fortify; there is no separate free trial of paid plans.",
   },
   {
     q: "How do I pay, and can I cancel?",

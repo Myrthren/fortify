@@ -5,7 +5,7 @@ import type { Tier } from "@prisma/client";
 const PLANS = [
   { name: "Pro", price: "£29/mo", line: "500 credits, Brand Voice, lead extraction" },
   { name: "Elite", price: "£79/mo", line: "Unlimited outreach, Recon, Workflows" },
-  { name: "Apex", price: "£199/mo", line: "No limits, AI Advisor, Mastermind Pods" },
+  { name: "Apex", price: "£199/mo", line: "No limits, Decision Room, Mastermind Pods" },
 ];
 
 const COMMANDS = ["/hook", "/outreach", "/audit", "/trends", "/competitors", "/profile", "/upgrade"];

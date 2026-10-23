@@ -1,6 +1,22 @@
-# Proposed Fortify replacements
+# Fortify content and decision workspaces
 
-These are product concepts for review, not implemented features. Logo Intelligence is retired separately. The first three concepts belong in one Content workspace, with Research, Build and Test views. Decision Room belongs alongside Plans. They share Company DNA, approved voice profiles, evidence and persistent records.
+The first functional release is implemented in this checkout. Signal Atlas, Story Forge and Content Test Track live in `/dashboard/content`; Decision Room lives alongside Plans at `/dashboard/decisions`. Logo Intelligence is retired separately. Production deployment is a separate step.
+
+## Implemented release
+
+- Clear task names, a three-step guide in each workspace, empty states and explicit save/reload controls.
+- Account-owned PostgreSQL records with version checks, a bounded change history and dashboard activity links. Failed or stale saves retain edits on screen.
+- Signal Atlas: attributed manual observations, optional configured Brave search snippets, topic groups, pin/coverage switches, editing/regrouping, list view and source-linked story creation. Search dates are collection dates, and snippets are not represented as full-page quotations.
+- Story Forge: five editable beats, wording locks, saved alternative openings, full-text feed preview, evidence checks, approval, text export and linked tests. Optional single-beat writing suggestions use the existing voice/provider stack and Company DNA. Suggestions need explicit acceptance.
+- Test Track: saved media or hosted video playback, local device previews, timed observations/suggestions, up to four versions, publication/audience context and manually entered results. Unknown measurements remain unknown. Device videos are not uploaded or persisted. Automated video analysis and connected analytics are future work.
+- Decision Room: question, options, cost/time assumptions, requirements, tradeoffs, evidence, review date and outcome review. Commitment atomically creates one real FuturePlan with task cards and a review milestone. Linked plans are snapshots, and no procedure executes automatically.
+- Existing generation results remain in Activity. Earlier strategy sessions and monthly Growth Briefs remain in `/dashboard/decisions/archive`. Existing bookmarks redirect to the replacement workspaces.
+- The existing slideshow creator remains accessible through Test Track at `/dashboard/content?view=test&assets=slideshow`.
+- Access remains Free for Story Forge, Pro for Signal Atlas, Elite for Test Track, and Apex for Decision Room.
+
+Storage is additive: `prisma/content-workspace.sql` and the `ensure-content.cjs` production Netlify build hook create the table before deployment. Other environments should apply that SQL to their intended database and regenerate Prisma before running the app. This implementation task does not mutate the production database or publish a deployment.
+
+Validation: `npm run test:content`, existing workspace/Plans/Advisor/theme suites, TypeScript, a production build and isolated browser checks of the actual components. Browser rendering fixtures are kept outside the web app; they are not production data. The concept sections below preserve the larger direction and explicitly identify later-stage functionality.
 
 ## Content Inspiration → Signal Atlas
 

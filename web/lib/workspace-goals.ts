@@ -13,8 +13,8 @@ export function goalSteps(goal: WorkspaceGoal, signals: GoalSignals, tier: strin
     { title: "Save your first prospect", description: "Add a contact or save a result from a lead tool.", href: "/dashboard/pipeline", done: signals.leads > 0 },
     { title: "Prepare a first message", description: "Open a saved lead and draft outreach with its research.", href: "/dashboard/pipeline", done: signals.drafts > 0 }];
   if (goal === "content") return [chosen,
-    { title: "Create your first piece", description: "Start with a topic and generate a set of hooks.", href: "/dashboard#hook-generator", done: signals.content > 0 },
-    { title: "Build on your first result", description: "Try another angle. Both results stay in your activity history.", href: "/dashboard#hook-generator", done: signals.content > 1 }];
+    { title: "Create your first piece", description: "Write an idea, develop the story beats and save your draft.", href: "/dashboard/content?view=story", done: signals.content > 0 },
+    { title: "Build on your first result", description: "Compare another opening and keep a second story in your saved work.", href: "/dashboard/content?view=story", done: signals.content > 1 }];
   const elite = ["ELITE", "APEX"].includes(tier);
   return [chosen,
     { title: "Explore your first topic", description: tier === "FREE" ? "Use Trend Radar to explore your market." : "Run a competitor scan or explore Trend Radar.", href: tier === "FREE" ? "/dashboard/trends" : "/dashboard/competitors", done: signals.research > 0 },

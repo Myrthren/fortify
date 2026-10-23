@@ -58,7 +58,7 @@ export const PLANS: Plan[] = [
     highlights: [
       "5,000 credits a month",
       "Monthly Growth Brief, written from your own data",
-      "Weekly lead pack of 25, plus AI Advisor on demand",
+      "Weekly lead pack of 25, plus Decision Room with linked plans",
       "Unlimited voices, competitors and workflows",
     ],
   },

@@ -24,16 +24,16 @@ const FALLBACK_KNOWLEDGE = `ABOUT FORTIFY
 - Tagline: "AI co-pilot for online business and networking"
 
 SUBSCRIPTION TIERS
-- Free (£0/mo): limited access, Hook Generator only
+- Free (£0/mo): limited access, Story Forge script editor
 - Pro (£29/mo): Core AI tools, Brand Voice, Outreach, Lead Sourcing, Lead Extractor, Inspiration, Meta Ads, Shopify, Revenue, Company DNA, Analytics, Matchmaking
-- Elite (£79/mo): Everything in Pro plus Trend Radar, Virality Engine, Fortify Recon, Competitor Watch, Workflows, larger Lead Extractor batches, and live web search in Discord chat
+- Elite (£79/mo): Everything in Pro plus Trend Radar, Content Test Track, Fortify Recon, Competitor Watch, Workflows, larger Lead Extractor batches, and live web search in Discord chat
 - Apex (£199/mo): Everything unlimited, Mastermind Pods, deep-scan Lead Extractor, and live web search in Discord chat
 
 KEY FEATURES
 - Lead Extractor — bulk-research TikTok/Instagram business accounts and extract their email and phone (Pro+)
 - Fortify Recon — find local businesses via Google Maps with address, phone, website (Elite+)
 - Workflows — multi-step AI automation builder (Elite+)
-- Plus Hook Generator, Brand Voice, Outreach, Funnel Auditor, Trend Radar, Competitor tools, and more.
+- Plus Signal Atlas, Story Forge, Decision Room, Brand Voice, Outreach, Funnel Auditor, Trend Radar, Competitor tools, and more.
 
 PRICING
 - Upgrade or subscribe: https://fortify-io.com/pricing`;

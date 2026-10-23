@@ -4,7 +4,6 @@ import { OperationalDashboardHeader } from "@/components/operational-dashboard-h
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { HookGenerator } from "@/components/hook-generator";
 import { TIERS } from "@/lib/tiers";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { GettingStarted } from "@/components/getting-started";
@@ -63,17 +62,17 @@ export default async function DashboardPage() {
 
         <GettingStarted tier={user.tier} />
 
-        {/* Hook generator — featured */}
+        {/* Old anchor retained for existing bookmarks and onboarding messages. */}
         <div id="hook-generator" className="anim-fade-up anim-d2 mb-10">
           <div className="bento p-5 sm:p-6">
             <div className="mb-5 flex items-center gap-3">
               <span className="icon-tile h-10 w-10 text-[var(--accent)]"><Sparkles className="h-5 w-5" /></span>
               <div>
-                <h2 className="text-base font-semibold tracking-tight">Hook Generator</h2>
-                <p className="text-sm text-text-muted">Type a topic. Get 5 viral hooks.</p>
+                <h2 className="text-base font-semibold tracking-tight">What would you like to work on?</h2>
+                <p className="text-sm text-text-muted">Start with a clear task. Keep the evidence, draft and outcome together.</p>
               </div>
             </div>
-            <HookGenerator />
+            <div className="grid gap-3 sm:grid-cols-2">{[TOOLS.inspiration,TOOLS.story,TOOLS.virality,TOOLS.advisor].map(t=><Link key={t.key} href={t.href} className="rounded-lg border border-bg-border bg-bg-subtle p-4 hover:border-white/30"><div className="flex items-center justify-between gap-3"><h3 className="text-sm font-medium">{t.label}</h3><ArrowRight size={15}/></div><p className="mt-2 text-xs text-text-muted">{t.desc}</p>{t.minTier&&isLocked(t.minTier,user.tier)&&<span className="mt-2 block text-xs text-text-muted">{t.minTier} plan</span>}</Link>)}</div>
           </div>
         </div>
 

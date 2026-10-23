@@ -129,14 +129,14 @@ export async function writeGrowthBrief(userId: string, now: Date) {
   });
 
   await db.notification.create({
-    data: { userId, type: "system", title: `Your ${month} Growth Brief is ready`, body: "Your Advisor's plan for this month, from your own data.", link: "/dashboard/advisor" },
+    data: { userId, type: "system", title: `Your ${month} Growth Brief is ready`, body: "Your Advisor's plan for this month, from your own data.", link: "/dashboard/decisions/archive" },
   });
   if (user?.discordId) {
     await sendDMConditional(
       user.discordId,
       userId,
       "dmWeeklyReport",
-      `Your ${month} Growth Brief is ready: where things stand, three priorities and this week's actions.\nhttps://fortify-io.com/dashboard/advisor`,
+      `Your ${month} Growth Brief is ready: where things stand, three priorities and this week's actions.\nhttps://fortify-io.com/dashboard/decisions/archive`,
     );
   }
   return session.id;

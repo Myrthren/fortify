@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-22-logo-retired";
+export const KNOWLEDGE_VERSION = "2026-10-23-content-workspaces";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -18,20 +18,20 @@ export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Owner: Kene (owner of the Fortify Discord server)
 
 SUBSCRIPTION TIERS
-- Free (£0/mo): 100 starter credits, Hook Generator, 10 cold outreach messages/mo, Trend Radar (5 watch terms), community forums, read-only member directory and deal board
-- Pro (£29/mo): Core AI tools, 500 credits/mo, Brand Voice Studio (1 voice), Funnel Auditor (5/mo), Cold Outreach (50/mo), Competitor Scanner (3 tracked), Lead Sourcing, Inspiration Engine, Meta Ads dashboard, Shopify dashboard, Revenue/Stripe dashboard, Company DNA, Matchmaking, Lead Extractor (10 accounts/batch)
-- Elite (£79/mo): Everything in Pro, 1500 credits/mo, 3 brand voices, unlimited audits & outreach, unlimited Trend Radar watch terms, 10 competitors tracked, Virality Engine, Fortify Recon, Weekly Lead Pack (15 new local leads with drafted outreach every Monday, no credits), Competitor Watch, Workflows (automation builder), Lead Extractor (25 accounts/batch + web search fallback + AI approach strategy), live web search in Discord chat
-- Apex (£199/mo): Everything unlimited — unlimited brand voices, watch terms, competitors, workflows, 5000 credits/mo, monthly Growth Brief (the AI Advisor writes a plan from the member's own data on the 1st of each month, saved in AI Advisor), Weekly Lead Pack of 25, AI Advisor (in-depth strategy briefs on demand), Mastermind Pods (not live yet; they launch once there are enough Apex members), auto-publish to YouTube and Facebook, Lead Extractor (50 accounts/batch + optional deep scan), live web search in Discord chat
+- Free (£0/mo): 100 starter credits, Story Forge script editor, 10 cold outreach messages/mo, Trend Radar (5 watch terms), community forums, read-only member directory and deal board
+- Pro (£29/mo): Core AI tools, 500 credits/mo, Brand Voice Studio (1 voice), Funnel Auditor (5/mo), Cold Outreach (50/mo), Competitor Scanner (3 tracked), Lead Sourcing, Signal Atlas source research, Meta Ads dashboard, Shopify dashboard, Revenue/Stripe dashboard, Company DNA, Matchmaking, Lead Extractor (10 accounts/batch)
+- Elite (£79/mo): Everything in Pro, 1500 credits/mo, 3 brand voices, unlimited audits & outreach, unlimited Trend Radar watch terms, 10 competitors tracked, Content Test Track, Fortify Recon, Weekly Lead Pack (15 new local leads with drafted outreach every Monday, no credits), Competitor Watch, Workflows (automation builder), Lead Extractor (25 accounts/batch + web search fallback + AI approach strategy), live web search in Discord chat
+- Apex (£199/mo): Everything unlimited — unlimited brand voices, watch terms, competitors, workflows, 5000 credits/mo, monthly Growth Brief (saved in the strategy archive on the 1st of each month), Weekly Lead Pack of 25, Decision Room (decisions and linked Plans tasks), Mastermind Pods (not live yet; they launch once there are enough Apex members), auto-publish to YouTube and Facebook, Lead Extractor (50 accounts/batch + optional deep scan), live web search in Discord chat
 
 PLATFORM FEATURES
 - Weekly AI strategy report — a weekly activity summary and suggested next action sent by Discord DM, for Elite and Apex only. Requires a linked Discord account and the Weekly strategy report notification enabled in Settings. This preference also controls lead-pack DMs and Apex Growth Brief DMs.
 - Apex does not include early access to new features; there is no early-access mechanism.
-- AI Advisor — Apex-only strategy sessions at /dashboard/advisor. Writes diagnosis, recommended strategy and a prioritised action plan in three sections, saving each as it finishes. If interrupted, open the saved session and choose Continue session. Older sessions and monthly Growth Briefs remain available.
+- Decision Room — Apex decision workspace at /dashboard/decisions. Compare user-supplied options, costs, requirements and tradeoffs, commit a choice into linked Plans tasks, and record an outcome review. Earlier strategy sessions and monthly Growth Briefs remain readable at /dashboard/decisions/archive.
 Content:
-- Hook Generator — 5 viral hooks on any topic (Free+)
+- Story Forge — guided script editor at /dashboard/content?view=story (Free+). Save five editable story beats, compare alternative openings, attach supporting evidence, lock wording, request a suggestion for one beat, approve and export. Suggestions use the active brand voice where available.
 - Brand Voice Studio — train Claude on your exact tone; use it in all AI tools (Pro+)
-- Inspiration Engine — mine Reddit, YouTube, and the web for content angles (Pro+)
-- Virality Engine — AI video scoring, trend analysis, competitor content intel (Elite+; auto-publish to YouTube and Facebook is Apex only; TikTok publishing is coming soon)
+- Signal Atlas — source research at /dashboard/content?view=research (Pro+). Add real interviews, comments and observations or keep attributed web-search snippets. Group topics, inspect the original source and create a linked Story Forge draft. Search requires the configured Brave service; manual research still works without it. Counts describe collected observations, not market demand.
+- Content Test Track — /dashboard/content?view=test (Elite+). Play saved media or a hosted video, preview a device file, add timed review notes, compare up to four versions, and enter real results manually. Device files are not uploaded or saved. No viral score, automated media analysis or connected analytics is supplied by this workspace.
 
 Growth:
 - Cold Outreach Generator — personalised email, LinkedIn, Twitter, and DM copy (Free: 10/mo, Pro: 50/mo, Elite+: unlimited)

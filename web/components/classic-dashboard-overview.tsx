@@ -17,12 +17,12 @@ export function ClassicDashboardOverview({ firstName, tier, xp, streak, subscrip
         <span className="classic-overline"><Sparkles size={13}/> YOUR NEXT MOVE</span>
         <h2>Put your toolkit<br/>to work.</h2>
         <p>Source leads, shape your message and build<br className="hidden sm:inline"/> a repeatable way to move work forward.</p>
-        <div className="classic-next-actions"><Link href="#toolkit" className="btn-primary">Explore your toolkit <ArrowRight size={15}/></Link><Link href="#hook-generator" className="classic-secondary-action"><Sparkles size={12}/> Create a hook</Link></div>
+        <div className="classic-next-actions"><Link href="#toolkit" className="btn-primary">Explore your toolkit <ArrowRight size={15}/></Link><Link href="/dashboard/content?view=story" className="classic-secondary-action"><Sparkles size={12}/> Build a story</Link></div>
         <div className="classic-brand-orb" aria-hidden="true"><i/><i/><span><Image src="/fortify-mark.png" alt="" width={48} height={48}/></span></div>
       </section>
       <section className="classic-recent-work" aria-label="Recent creations">
         <div className="classic-recent-heading"><h2>Recent creations</h2><Clock3 size={15}/></div>
-        {recentWork.length ? <div>{recentWork.map(item=><div className="classic-recent-row" key={item.id}><span className="classic-recent-icon"><FileText size={15}/></span><div><strong>{item.title || "Untitled creation"}</strong><span>{item.type.replace(/[_-]/g," ")} <i>·</i> {item.date}</span></div></div>)}</div> : <div className="classic-recent-empty"><span className="classic-recent-icon"><FileText size={19}/></span><p>Your next idea belongs here.</p><span>Create your first hook to start building your collection.</span></div>}
+        {recentWork.length ? <div>{recentWork.map(item=><div className="classic-recent-row" key={item.id}><span className="classic-recent-icon"><FileText size={15}/></span><div><strong>{item.title || "Untitled creation"}</strong><span>{item.type.replace(/[_-]/g," ")} <i>·</i> {item.date}</span></div></div>)}</div> : <div className="classic-recent-empty"><span className="classic-recent-icon"><FileText size={19}/></span><p>Your next idea belongs here.</p><span>Save your first story to start building your collection.</span></div>}
         <Link href="/dashboard/workflows" className="classic-workflow-link">Build a repeatable workflow <ArrowUpRight size={13}/></Link>
       </section>
     </div>

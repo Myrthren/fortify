@@ -151,7 +151,7 @@ export async function buildAdvisorContext(userId: string): Promise<string> {
 // Real, available tools only (from the same registry as the nav), so the
 // Advisor can't recommend things that don't exist.
 const EXTRA_PLACES = [
-  "Hook Generator (dashboard home): 5 hooks on any topic",
+  "Content workspace: Find a content idea, Build a video or post, Review my content; saved, evidence-linked work",
   "Member Directory, Deal Board and Forums (Community menu)",
   "Fortify Discord bot: slash commands such as /hook, /outreach, /audit, /trends; alerts and reports by DM",
 ];

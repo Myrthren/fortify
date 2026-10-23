@@ -7,7 +7,7 @@ const DAYS = [1, 3, 7];
 function nextStep(day: number, progress: { profile: boolean; dna: boolean; firstTool: boolean }) {
   if (!progress.profile) return "Complete your profile to get better member matches: https://fortify-io.com/dashboard/profile";
   if (!progress.dna) return "Add Company DNA so your AI results reflect your business: https://fortify-io.com/dashboard/company-dna";
-  if (!progress.firstTool) return "Try your first tool on the dashboard. Start with a topic in Hook Generator: https://fortify-io.com/dashboard#hook-generator";
+  if (!progress.firstTool) return "Try your first tool on the dashboard. Write your first draft in Story Forge: https://fortify-io.com/dashboard/content?view=story";
   return day === 7
     ? "You have your foundations in place. Explore the tools included in your tier: https://fortify-io.com/dashboard"
     : "Your first steps are done. Try Brand Voice or a Funnel Audit next: https://fortify-io.com/dashboard";

@@ -114,6 +114,7 @@ model User {
   leadStatuses          LeadStatus[]
   workspacePreference   WorkspacePreference?
   futurePlans           FuturePlan[]
+  contentRecords        ContentRecord[]
   researchDecisions ResearchDecisionBatch[]
   revenueEvents         RevenueEvent[]
   milestoneAwards       MilestoneAward[]
@@ -1128,4 +1129,22 @@ model ResearchDecisionBatch {
 
   @@unique([userId, input])
   @@index([createdAt])
+}
+
+// Versioned research, stories, media tests and decisions. Plan links are written
+// only by the transactional commit endpoint, never by document updates.
+model ContentRecord {
+  id        String   @id @default(cuid())
+  userId    String
+  kind      String
+  title     String
+  document  Json
+  history   Json     @default("[]")
+  version   Int      @default(1)
+  planId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind, updatedAt])
 }

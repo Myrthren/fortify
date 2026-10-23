@@ -41,7 +41,7 @@ export default function PrivacyPage() {
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
             <strong className="text-text">User-submitted content.</strong> This includes any text, URLs, video files, or
-            other materials you upload or submit through the Service, such as media files for the Virality Engine or
+            other materials you upload or submit through the Service, such as media files for the Content Test Track or
             ICP descriptions for Lead Sourcing.
           </p>
           <p className="text-text-muted text-sm leading-relaxed mb-3">
