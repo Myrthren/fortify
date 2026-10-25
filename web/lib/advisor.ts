@@ -6,10 +6,11 @@ import { TOOLS } from "@/lib/tools";
 
 /** Everything Fortify knows about the member, as a markdown context document. */
 export async function buildAdvisorContext(userId: string): Promise<string> {
-  const user = await db.user.findUnique({ where: { id: userId }, select: { name: true } });
+  const user = await db.user.findUnique({ where: { id: userId }, select: { name: true, tier: true } });
 
   // ── Gather all context in parallel ──────────────────────────────────────────
   const [
+    activeBusiness,
     dna,
     competitors,
     watchTerms,
@@ -22,6 +23,7 @@ export async function buildAdvisorContext(userId: string): Promise<string> {
     metaConn,
     profile,
   ] = await Promise.all([
+    user?.tier === "FREE" ? Promise.resolve(null) : db.businessProfile.findFirst({ where: { userId, active: true }, select: { name: true, website: true, industry: true, stage: true, businessModel: true, offer: true, audience: true, objective: true, bottleneck: true, teamSize: true, channels: true } }),
     db.companyDna.findUnique({ where: { userId } }),
     db.competitor.findMany({
       where: { userId },
@@ -70,6 +72,18 @@ export async function buildAdvisorContext(userId: string): Promise<string> {
   if (profile?.skills?.length) lines.push(`Skills: ${profile.skills.join(", ")}`);
   if (profile?.canOffer?.length) lines.push(`What they offer: ${profile.canOffer.join(", ")}`);
   if (profile?.lookingFor?.length) lines.push(`What they're looking for: ${profile.lookingFor.join(", ")}`);
+
+  if (activeBusiness) {
+    const channels = Array.isArray(activeBusiness.channels) ? (activeBusiness.channels as string[]).join(", ") : "not recorded";
+    lines.push("\n## Active business context:");
+    lines.push(`- **Business**: ${activeBusiness.name} (${activeBusiness.industry}; ${activeBusiness.businessModel}; ${activeBusiness.stage})`);
+    if (activeBusiness.website) lines.push(`- **Website**: ${activeBusiness.website}`);
+    lines.push(`- **Offer**: ${activeBusiness.offer}`);
+    lines.push(`- **Audience**: ${activeBusiness.audience}`);
+    lines.push(`- **Primary 90-day outcome**: ${activeBusiness.objective}`);
+    lines.push(`- **Current constraint**: ${activeBusiness.bottleneck}`);
+    lines.push(`- **Team**: ${activeBusiness.teamSize}; **Demand channels**: ${channels}`);
+  }
 
   // Company DNA
   if (dna && Array.isArray(dna.entries) && (dna.entries as any[]).length > 0) {

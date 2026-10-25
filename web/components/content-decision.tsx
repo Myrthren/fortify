@@ -62,13 +62,15 @@ export function DecisionWorkspace({
   return (
     <fieldset className="cw-module" disabled={committing}>
       <Guide
+        targets={["decision-question", "decision-options", "decision-commit"]}
+        complete={[!!value.question.trim() && value.options.filter(o => o.title.trim()).length >= 2, !!chosen?.tasks.filter(t => t.trim()).length && !!value.reviewDate, !!record?.planId]}
         steps={[
           "Write your decision and at least two alternatives",
           "Add evidence, costs, tradeoffs and tasks",
           "Choose one, create a plan and schedule a review",
         ]}
       />
-      <section className="cw-decision-question">
+      <section className="cw-decision-question" id="decision-question" tabIndex={-1}>
         <GitFork size={26} />
         <Field label="What decision are you making?">
           <textarea
@@ -146,16 +148,16 @@ export function DecisionWorkspace({
           <Plus size={14} /> Add option
         </button>
       </div>
-      <div className="cw-decision-options">
+      <div className="cw-decision-options" id="decision-options" tabIndex={-1}>
         {value.options.map((o, i) => (
           <section
             key={o.id}
             className={`cw-panel cw-option ${value.selected === o.id ? "cw-option-selected" : ""}`}
           >
             <div className="cw-row">
-              <span className="eyebrow">
+              <h3>
                 Option {String.fromCharCode(65 + i)}
-              </span>
+              </h3>
               <button
                 type="button"
                 className="cw-option-select"
@@ -277,7 +279,7 @@ export function DecisionWorkspace({
         they do not predict revenue or business performance.
       </p>
       {record?.planId ? (
-        <div className="cw-commit-panel">
+        <div className="cw-commit-panel" id="decision-commit" tabIndex={-1}>
           <div>
             <h2>Decision committed</h2>
             <p>
@@ -293,7 +295,7 @@ export function DecisionWorkspace({
           </Link>
         </div>
       ) : (
-        <div className="cw-commit-panel">
+        <div className="cw-commit-panel" id="decision-commit" tabIndex={-1}>
           <div>
             <h2>{chosen?.title || "Choose an option to continue"}</h2>
             <p>

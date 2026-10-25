@@ -6,7 +6,7 @@ export function SignalField({ compact = false }: { compact?: boolean }) {
     const angle = i * Math.PI * (3 - Math.sqrt(5));
     const x = Math.cos(angle) * radius;
     const z = Math.sin(angle) * radius;
-    return <circle key={i} cx={250 + x * 174} cy={250 + y * 174} r={z > 0 ? 1.65 : 1.1} opacity={0.14 + (z + 1) * 0.35} />;
+    return <circle key={i} cx={(250 + x * 174).toFixed(3)} cy={(250 + y * 174).toFixed(3)} r={z > 0 ? 1.65 : 1.1} opacity={(0.14 + (z + 1) * 0.35).toFixed(3)} />;
   });
   return (
     <div className={`signal-field ${compact ? "signal-compact" : ""}`} aria-hidden="true">

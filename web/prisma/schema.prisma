@@ -97,14 +97,15 @@ model User {
   socialConnections     SocialConnection[]
   mediaItems            MediaItem[]
   companyDna            CompanyDna?
+  businesses            BusinessProfile[]
   aiSessions            AiSession[]
   aiCreditPacks         AiCreditPack[]
   forumPosts            ForumPost[]
   forumComments         ForumComment[]
-  sentMessages          UserMessage[]          @relation("SentMessages")
-  receivedMessages      UserMessage[]          @relation("ReceivedMessages")
-  sentConnections       UserConnection[]       @relation("SentConnections")
-  receivedConnections   UserConnection[]       @relation("ReceivedConnections")
+  sentMessages          UserMessage[]           @relation("SentMessages")
+  receivedMessages      UserMessage[]           @relation("ReceivedMessages")
+  sentConnections       UserConnection[]        @relation("SentConnections")
+  receivedConnections   UserConnection[]        @relation("ReceivedConnections")
   bans                  BanRecord[]
   paypalConnections     PaypalConnection[]
   chatSessions          ChatSession[]
@@ -115,7 +116,7 @@ model User {
   workspacePreference   WorkspacePreference?
   futurePlans           FuturePlan[]
   contentRecords        ContentRecord[]
-  researchDecisions ResearchDecisionBatch[]
+  researchDecisions     ResearchDecisionBatch[]
   revenueEvents         RevenueEvent[]
   milestoneAwards       MilestoneAward[]
   matchNotifications    MatchNotification[]
@@ -403,6 +404,32 @@ model CompanyDna {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
+// ─── Guided business setup ───────────────────────────────
+model BusinessProfile {
+  id              String   @id @default(cuid())
+  userId          String
+  name            String
+  website         String?
+  industry        String
+  stage           String
+  businessModel   String
+  offer           String   @db.Text
+  audience        String   @db.Text
+  objective       String   @db.Text
+  bottleneck      String   @db.Text
+  teamSize        String
+  channels        Json     @default("[]")
+  recommendations Json     @default("[]")
+  active          Boolean  @default(false)
+  setupComplete   Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, active])
+  @@index([userId, updatedAt])
+}
+
 // ─── Fortify AI sessions ──────────────────────────────────
 model AiSession {
   id          String   @id @default(cuid())
@@ -530,15 +557,15 @@ model BanRecord {
 
 // ─── PayPal connection (for Revenue feature) ─────────────
 model PaypalConnection {
-  id          String   @id @default(cuid())
-  userId      String   @unique
-  merchantId  String
-  clientId    String
-  clientSecret String? @db.Text // null on legacy rows; reconnect once to enable automatic refresh
-  accessToken String   @db.Text
-  expiresAt   DateTime
-  connectedAt DateTime @default(now())
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  merchantId   String
+  clientId     String
+  clientSecret String?  @db.Text // null on legacy rows; reconnect once to enable automatic refresh
+  accessToken  String   @db.Text
+  expiresAt    DateTime
+  connectedAt  DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Generation {
@@ -589,21 +616,21 @@ model ReconSearch {
 
 // ─── Recon lead status (persists across searches, keyed by business URL) ──────
 model LeadStatus {
-  id        String   @id @default(cuid())
-  userId    String
-  url       String
-  status    String
-  company   String?
-  source    String   @default("recon")
-  context   String?  @db.Text
-  email     String?
-  draft     String?  @db.Text
+  id           String    @id @default(cuid())
+  userId       String
+  url          String
+  status       String
+  company      String?
+  source       String    @default("recon")
+  context      String?   @db.Text
+  email        String?
+  draft        String?   @db.Text
   draftChannel String?
-  notes     String   @default("") @db.Text
-  followUpAt DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notes        String    @default("") @db.Text
+  followUpAt   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, url])
   @@index([userId])
@@ -990,16 +1017,16 @@ model OutboundEvent {
 // in it. UIDs only mean anything within one uidValidity generation, so that is
 // stored alongside and a change resets the cursor.
 model OutboundInbox {
-  id          String    @id @default(cuid())
-  host        String
-  username    String
-  mailbox     String    @default("INBOX")
-  uidValidity String?
-  lastUid     Int       @default(0)
+  id           String    @id @default(cuid())
+  host         String
+  username     String
+  mailbox      String    @default("INBOX")
+  uidValidity  String?
+  lastUid      Int       @default(0)
   lastPolledAt DateTime?
-  lastError   String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  lastError    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   @@unique([host, username, mailbox])
 }
@@ -1022,8 +1049,8 @@ model OutboundSuppression {
 
 // ─── Drip DM campaigns (Discord) ─────────────────────────
 enum DripCampaign {
-  WELCOME     // fires on join, one person at a time
-  ACTIVATION  // owner-triggered sweep over members without a plan
+  WELCOME // fires on join, one person at a time
+  ACTIVATION // owner-triggered sweep over members without a plan
 }
 
 enum DripStatus {
@@ -1087,45 +1114,45 @@ model SiteAppearance {
 }
 
 model FuturePlan {
-  id          String   @id @default(cuid())
+  id          String             @id @default(cuid())
   userId      String
   title       String
-  description String   @default("")
+  description String             @default("")
   document    Json
-  version     Int      @default(1)
-  cardCount   Int      @default(0)
-  doneCount   Int      @default(0)
-  archived    Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  version     Int                @default(1)
+  cardCount   Int                @default(0)
+  doneCount   Int                @default(0)
+  archived    Boolean            @default(false)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   runs        PlanProcedureRun[]
 
   @@index([userId, archived, updatedAt])
 }
 
 model PlanProcedureRun {
-  id          String   @id @default(cuid())
-  planId      String
-  nodeId      String
-  workflowId  String
-  runId       String?
-  status      String   @default("starting")
-  message     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  plan        FuturePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  id         String     @id @default(cuid())
+  planId     String
+  nodeId     String
+  workflowId String
+  runId      String?
+  status     String     @default("starting")
+  message    String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  plan       FuturePlan @relation(fields: [planId], references: [id], onDelete: Cascade)
 
   @@unique([planId, nodeId])
 }
 
 model ResearchDecisionBatch {
-  id String @id @default(cuid())
-  userId String
-  input String
-  output String @default("pending") @db.Text
+  id        String   @id @default(cuid())
+  userId    String
+  input     String
+  output    String   @default("pending") @db.Text
   createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, input])
   @@index([createdAt])

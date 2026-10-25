@@ -446,12 +446,19 @@ export async function POST(req: Request) {
   }
 
   // ── Inject Company DNA ──
-  const dna = await db.companyDna.findUnique({ where: { userId } });
+  const [dna, activeBusiness] = await Promise.all([
+    db.companyDna.findUnique({ where: { userId } }),
+    user.tier === "FREE" ? Promise.resolve(null) : db.businessProfile.findFirst({ where: { userId, active: true }, select: { name: true, website: true, industry: true, stage: true, businessModel: true, offer: true, audience: true, objective: true, bottleneck: true, teamSize: true, channels: true } }),
+  ]);
   let dnaContext = "";
   if (dna && Array.isArray(dna.entries) && (dna.entries as any[]).length > 0) {
     dnaContext =
       "\n\n## This user's Company DNA (their business context — use it for personalised responses):\n" +
       (dna.entries as any[]).map((e: any) => `**${e.label}**: ${e.content}`).join("\n");
+  }
+  if (activeBusiness) {
+    const channels = Array.isArray(activeBusiness.channels) ? (activeBusiness.channels as string[]).join(", ") : "not recorded";
+    dnaContext += `\n\n## Active business (treat this as the current operating context):\n**${activeBusiness.name}** · ${activeBusiness.industry} · ${activeBusiness.businessModel} · ${activeBusiness.stage}\nOffer: ${activeBusiness.offer}\nAudience: ${activeBusiness.audience}\n90-day outcome: ${activeBusiness.objective}\nCurrent constraint: ${activeBusiness.bottleneck}\nTeam: ${activeBusiness.teamSize}\nDemand channels: ${channels}${activeBusiness.website ? `\nWebsite: ${activeBusiness.website}` : ""}`;
   }
 
   // ── Tier-aware AI settings ──

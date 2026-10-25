@@ -152,6 +152,8 @@ export function TestWorkspace({
         .
       </p>
       <Guide
+        targets={["test-setup", "test-notes", "test-results"]}
+        complete={[!!value.hypothesis.trim() && !!(playUrl || value.versions.some(v => v.mediaId || v.videoUrl)), value.notes.length > 0, !!value.conclusion.trim()]}
         steps={[
           "Add your video and name the change you want to test",
           "Play it and leave notes at specific moments",
@@ -163,6 +165,7 @@ export function TestWorkspace({
           Open the linked story
         </Link>
       )}
+      <div id="test-setup" tabIndex={-1}>
       <Field
         label="What exactly are you testing?"
         hint="One clear hypothesis, such as: showing the booking flow first makes the offer easier to understand."
@@ -175,6 +178,7 @@ export function TestWorkspace({
           onChange={(e) => onChange({ ...value, hypothesis: e.target.value })}
         />
       </Field>
+      </div>
       <div className="cw-row cw-section-heading">
         <div className="cw-version-tabs" aria-label="Creative versions">
           {value.versions.map((v, i) => (
@@ -200,6 +204,7 @@ export function TestWorkspace({
       </div>
       <div className="cw-test-layout">
         <div className="cw-panel">
+          <h2>Creative to review</h2>
           <div className="cw-two">
             <Field label="Version name">
               <input
@@ -358,7 +363,7 @@ export function TestWorkspace({
             ))}
           </div>
         </div>
-        <aside className="cw-panel cw-test-notes">
+        <aside className="cw-panel cw-test-notes" id="test-notes" tabIndex={-1}>
           <h2>Notes at this moment</h2>
           <p className="cw-help">
             Play or scrub to a moment, then add an observation or a proposed
@@ -447,7 +452,7 @@ export function TestWorkspace({
           {error}
         </p>
       )}
-      <section className="cw-panel cw-section-heading">
+      <section className="cw-panel cw-section-heading" id="test-results" tabIndex={-1}>
         <h2>Record the actual results</h2>
         <p className="cw-help">
           Manual entry from your platform report. Empty means unknown. Different

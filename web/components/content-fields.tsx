@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { contentId, type Evidence } from "@/lib/content-workspace";
-import { Plus, Trash2, ExternalLink } from "lucide-react";
+import { Plus, Trash2, ExternalLink, ArrowRight, Check } from "lucide-react";
 export function Field({
   label,
   hint,
@@ -18,16 +18,55 @@ export function Field({
     </label>
   );
 }
-export function Guide({ steps }: { steps: string[] }) {
+export function Guide({
+  steps,
+  targets,
+  complete = [],
+}: {
+  steps: string[];
+  targets: string[];
+  complete?: boolean[];
+}) {
+  const current = Math.max(0, complete.findIndex((done) => !done));
+  const finished = complete.length === steps.length && complete.every(Boolean);
+  function jump(index: number) {
+    const target = document.getElementById(targets[index]);
+    if (!target) return;
+    if (target instanceof HTMLDetailsElement) target.open = true;
+    target.scrollIntoView({
+      block: "start",
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+    const control = target.querySelector<HTMLElement>(
+      "textarea:not(:disabled), input:not([type=checkbox]):not(:disabled), select:not(:disabled)",
+    ) || target.querySelector<HTMLElement>("button:not(:disabled), a");
+    (control || target).focus({ preventScroll: true });
+  }
   return (
-    <ol className="cw-guide" aria-label="How to use this workspace">
-      {steps.map((s, i) => (
-        <li key={s}>
-          <span>{i + 1}</span>
-          {s}
-        </li>
-      ))}
-    </ol>
+    <section className="cw-guide" aria-label="How to use this workspace">
+      <div className="cw-guide-next">
+        <div>
+          <strong>{finished ? "Ready for your next pass" : "Continue here"}</strong>
+          <p>{finished ? "Revisit any stage, or save your latest changes." : steps[current]}</p>
+        </div>
+        <button type="button" className="btn-secondary" onClick={() => jump(finished ? steps.length - 1 : current)}>
+          {finished ? "Review work" : "Go to step"} <ArrowRight size={15} />
+        </button>
+      </div>
+      <details>
+        <summary>See the full process</summary>
+        <ol>
+          {steps.map((s, i) => (
+            <li key={s} aria-current={!finished && i === current ? "step" : undefined}>
+              <button type="button" onClick={() => jump(i)}>
+                <span>{complete[i] ? <Check size={13} aria-label="Complete" /> : i + 1}</span>
+                {s}
+              </button>
+            </li>
+          ))}
+        </ol>
+      </details>
+    </section>
   );
 }
 export function Empty({
@@ -40,7 +79,7 @@ export function Empty({
   return (
     <div className="cw-empty">
       <h3>{title}</h3>
-      <p>{children}</p>
+      <div className="cw-empty-copy">{children}</div>
     </div>
   );
 }

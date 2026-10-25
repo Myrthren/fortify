@@ -17,7 +17,8 @@ export type PersonId = typeof PEOPLE[number]["id"];
 export type Agent = { id: PersonId; location: Location; activity: string; note: string; memories: string[] };
 export type Trial = { id: number; round: number; revision: number; level: number; reading: number; health: number; reviewed: boolean; verdict: "pending" | "valid" | "unreliable"; published: number | null };
 export type Project = { id: Method; title: string; level: number; funds: number; trials: Trial[] };
-export type LabEvent = { id: number; round: number; actor: PersonId | "you" | "world"; text: string; kind: "work" | "message" | "finding" | "intervention" };
+export type Exchange = { from: PersonId; to: PersonId; kind: "request" | "handoff" | "review" | "support" | "coordination"; subject: string; trialId?: number };
+export type LabEvent = { id: number; round: number; actor: PersonId | "you" | "world"; text: string; kind: "work" | "message" | "finding" | "intervention"; exchanges?: Exchange[] };
 export type World = { schema: 1; id: string; seed: number; round: number; focus: Focus; status: "active" | "completed" | "ended"; revision: number; treasury: number; compute: number; outageUntil: number; health: number; benchReady: boolean; agents: Agent[]; projects: Project[]; events: LabEvent[]; board: string[]; nextTrial: number; lastDriver: "rules" | "ai"; result: string };
 export type Action = { id: string; label: string; location: Location };
 export type Decision = { agentId: PersonId; actionId: string; note: string };
@@ -33,7 +34,7 @@ export function createInstitute(seed = 31415, id = "local-run"): World {
     agents: PEOPLE.map(p => ({ id: p.id, location: p.id === "jun" ? "maintenance" : p.id === "sol" ? "workbench" : p.id === "ada" ? "analysis" : "office", activity: "Reading the research brief", note: p.goal, memories: ["Brief: demonstrate a reliability score of at least 82% on the current test set."] })),
     projects: [{ id: "calibration", title: "Calibrated reasoning", level: 0, funds: 0, trials: [] }, { id: "redundancy", title: "Redundant reasoning", level: 0, funds: 0, trials: [] }], events: [], board: ["Two approaches. One shared grant. All results belong to this fictional test environment."], nextTrial: 1, lastDriver: "rules", result: "" };
 }
-function event(w: World, actor: LabEvent["actor"], text: string, kind: LabEvent["kind"] = "work") { w.events.push({ id: (w.events.at(-1)?.id ?? 0) + 1, round: w.round, actor, text, kind }); w.events = w.events.slice(-140); }
+function event(w: World, actor: LabEvent["actor"], text: string, kind: LabEvent["kind"] = "work", exchanges: Exchange[] = []) { w.events.push({ id: (w.events.at(-1)?.id ?? 0) + 1, round: w.round, actor, text, kind, ...(exchanges.length ? { exchanges } : {}) }); w.events = w.events.slice(-140); }
 function remember(w: World, id: PersonId, text: string) { const a = w.agents.find(a => a.id === id)!; a.memories = [...a.memories, text].slice(-6); }
 function publish(w: World, text: string) { w.board = [...w.board, text].slice(-6); for (const a of w.agents) remember(w, a.id, text); }
 export function evidence(w: World, p: Project) { return p.trials.filter(t => t.reviewed && t.verdict === "valid" && t.revision === w.revision && t.level === p.level); }
@@ -153,7 +154,7 @@ export function stepInstitute(previous: World, choices = chooseRules(previous), 
       const trialId = Number(d.actionId.split(":")[1]), p = w.projects.find(p => p.trials.some(t => t.id === trialId))!, t = p.trials.find(t => t.id === trialId)!;
       t.reviewed = true; t.verdict = t.health < 70 || t.revision !== w.revision ? "unreliable" : "valid"; t.published = t.verdict === "valid" ? t.reading : null;
       text = t.verdict === "valid" ? `Ada published experiment ${t.id}: ${Math.round(t.reading * 100)}% for ${p.title.toLowerCase()}, prototype ${t.level}.` : `Ada rejected experiment ${t.id}: ${t.revision !== w.revision ? "it used the previous test set" : "instrument condition made the reading unreliable"}.`;
-      publish(w, text); event(w, person.id, text, "finding"); continue;
+      publish(w, text); event(w, person.id, text, "finding", actionExchanges(previous, w, person.id, d.actionId, text)); continue;
     } else if (d.actionId === "audit") { text = `Ada requested ${requiredEvidence(w)} independent reviewed readings per current prototype before approval.`; remember(w, "nia", text); }
     else if (d.actionId.startsWith("fund:")) {
       const p = w.projects.find(p => p.id === d.actionId.split(":")[1])!;
@@ -166,7 +167,7 @@ export function stepInstitute(previous: World, choices = chooseRules(previous), 
       if (score !== null && score >= TARGET && evidence(w, p).length >= requiredEvidence(w)) { w.status = "completed"; w.result = `${p.title} met the objective with ${Math.round(score * 100)}% mean reliability across ${evidence(w, p).length} current reviewed experiments.`; text = `Nia approved the result. ${w.result}`; publish(w, text); }
     } else if (d.actionId === "coordinate") { text = `Nia asked the team to ${w.focus === "rigour" ? "prioritise replication and trustworthy measurements" : w.focus === "speed" ? "iterate prototypes quickly within the grant" : "balance iteration with independent evidence"}.`; }
     else { text = `${person.name.split(" ")[0]} reviewed the shared findings and their working notes.`; }
-    event(w, person.id, text || `${person.name.split(" ")[0]} deferred the action because shared resources had changed.`, ["request-funds", "request-analysis", "share", "coordinate"].includes(d.actionId) ? "message" : "work");
+    event(w, person.id, text || `${person.name.split(" ")[0]} deferred the action because shared resources had changed.`, ["request-funds", "request-analysis", "share", "coordinate"].includes(d.actionId) ? "message" : "work", actionExchanges(previous, w, person.id, d.actionId, text));
   }
   if (usedBench) w.benchReady = false;
   if (w.round === LAB_ROUNDS && w.status === "active") { w.status = "ended"; w.result = "The research window ended without an approved result. Inspect the evidence and resource decisions, or rerun with different priorities."; event(w, "world", w.result, "finding"); }
@@ -199,5 +200,43 @@ export function readInstitute(value: unknown): World {
   if ([o.treasury, o.compute, o.outageUntil, o.nextTrial, ...o.projects.map(p => p.funds)].some(n => !Number.isInteger(n)) || (o.status === "active" && o.round === LAB_ROUNDS)) throw Error("The research clock or resources are inconsistent.");
   if (o.projects.some(p => p.trials.some(t => !Number.isInteger(t.round) || !Number.isInteger(t.level) || !Number.isInteger(t.revision) || (t.verdict === "valid" && (!t.reviewed || t.published === null)) || (t.verdict !== "valid" && t.published !== null)))) throw Error("An experimental verdict is inconsistent.");
   if (!Array.isArray(o.board) || o.board.length > 6 || !o.board.every(b => str(b, 600)) || !Array.isArray(o.events) || o.events.length > 140 || !o.events.every(e => num(e.id, 1, 10000) && num(e.round, 0, LAB_ROUNDS) && (e.actor === "you" || e.actor === "world" || PEOPLE.some(p => p.id === e.actor)) && str(e.text, 600) && ["work", "message", "finding", "intervention"].includes(e.kind))) throw Error("Invalid research log.");
+  for (const entry of o.events) {
+    if (entry.exchanges === undefined) continue;
+    if (!Array.isArray(entry.exchanges) || entry.exchanges.length > 6) throw Error("Invalid team exchange.");
+    for (const exchange of entry.exchanges) {
+      if (!exchange || exchange.from !== entry.actor || !PEOPLE.some(p => p.id === exchange.from) || !PEOPLE.some(p => p.id === exchange.to) || exchange.from === exchange.to || !["request", "handoff", "review", "support", "coordination"].includes(exchange.kind) || !str(exchange.subject, 240) || !exchange.subject.trim() || (exchange.trialId !== undefined && (!Number.isInteger(exchange.trialId) || !trialIds.includes(exchange.trialId)))) throw Error("Invalid team exchange.");
+    }
+  }
   return copy(o);
+}
+
+// Record recipient and evidence references only after an action resolves. This
+// adds replayable communication without changing outcomes or granting an agent
+// resources, reviews or repairs that it did not actually perform.
+function actionExchanges(previous: World, w: World, from: PersonId, action: string, outcome: string): Exchange[] {
+  if (!outcome || /waiting|could not/i.test(w.agents.find(a => a.id === from)!.activity)) return [];
+  const make = (to: PersonId, kind: Exchange["kind"], subject: string, trialId?: number): Exchange => ({ from, to, kind, subject, ...(trialId ? { trialId } : {}) });
+  const method = from === "mira" ? "calibration" : from === "ivo" ? "redundancy" : null;
+  const project = w.projects.find(p => p.id === method);
+  if (action === "request-funds" && project) return [make("nia", "request", `Funding for ${project.title.toLowerCase()}`)];
+  if (action === "request-analysis" && project) {
+    const trial = previous.projects.find(p => p.id === method)!.trials.find(t => !t.reviewed);
+    return trial ? [make("ada", "request", `Review requested for experiment ${trial.id}`, trial.id)] : [];
+  }
+  if (action === "experiment" && project) {
+    const trial = project.trials.find(t => t.id >= previous.nextTrial && t.round === w.round);
+    return trial ? [make("ada", "handoff", `Experiment ${trial.id} ready for review`, trial.id)] : [];
+  }
+  if (action === "share" && project) return [make("nia", "handoff", `${project.title}: ${evidence(w, project).length} reviewed measurements`)];
+  if (action.startsWith("analyze:")) {
+    const trialId = Number(action.split(":")[1]), p = w.projects.find(p => p.trials.some(t => t.id === trialId))!, trial = p.trials.find(t => t.id === trialId)!;
+    return [make(p.id === "calibration" ? "mira" : "ivo", "review", `Experiment ${trial.id} ${trial.verdict === "valid" ? "reviewed and published" : "rejected"}`, trial.id)];
+  }
+  if (action.startsWith("fund:")) return [make(action.endsWith("calibration") ? "mira" : "ivo", "handoff", "8 lab credits allocated to the project")];
+  if (action === "calibrate") return [make("jun", "request", `Engineering support requested · ${w.health}% instrument health`)];
+  if (action === "repair") return [make("sol", "support", `Instrument serviced · ${w.health}% health`)];
+  if (action === "prepare") return [make("mira", "support", "Shared test bench prepared"), make("ivo", "support", "Shared test bench prepared")];
+  if (action === "optimize") return [make("nia", "support", "Third compute slot provisioned")];
+  if (action === "coordinate") return [make("mira", "coordination", `Research priority: ${w.focus}`), make("ivo", "coordination", `Research priority: ${w.focus}`)];
+  return [];
 }

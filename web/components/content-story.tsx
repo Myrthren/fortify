@@ -73,6 +73,18 @@ export function StoryWorkspace({
       beats: { ...value.beats, [b]: text },
     });
   }
+  function jumpToBeat(b: Beat) {
+    setPreview(false);
+    setSelected(b);
+    requestAnimationFrame(() => {
+      const input = document.getElementById(`story-${b}`);
+      input?.focus({ preventScroll: true });
+      input?.scrollIntoView({
+        block: "center",
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      });
+    });
+  }
   async function rewrite() {
     setWorking(true);
     setError("");
@@ -123,13 +135,15 @@ export function StoryWorkspace({
   return (
     <>
       <Guide
+        targets={["story-brief", "story-draft", "story-review"]}
+        complete={[!!value.idea.trim(), complete, value.approved]}
         steps={[
           "Write the idea and attach supporting facts",
           "Fill the five beats and compare openings",
           "Approve, export or open a content test",
         ]}
       />
-      <div className="cw-two">
+      <div className="cw-two cw-brief" id="story-brief" tabIndex={-1}>
         <Field label="What is this piece about?">
           <textarea
             className="input"
@@ -177,7 +191,7 @@ export function StoryWorkspace({
         </div>
       </div>
       <div className="cw-row cw-section-heading">
-        <h2>Your story ribbon</h2>
+        <div><h2>Your story</h2><p className="cw-help">{BEATS.filter(b => value.beats[b].trim()).length} of 5 beats written. Select a beat to work on it.</p></div>
         <div className="cw-row">
           <span className="cw-chip">
             {value.approved ? "Approved" : "Draft"}
@@ -192,8 +206,16 @@ export function StoryWorkspace({
           </button>
         </div>
       </div>
+      <nav className="cw-beat-nav" aria-label="Jump to a story beat">
+        {BEATS.map((b, i) => (
+          <button type="button" key={b} aria-pressed={selected === b} onClick={() => jumpToBeat(b)}>
+            <span>{value.beats[b].trim() ? <Check size={13} /> : i + 1}</span>
+            {labels[b].title}
+          </button>
+        ))}
+      </nav>
       <div className={`cw-forge-layout ${preview ? "cw-show-preview" : ""}`}>
-        <div className="cw-story-editor">
+        <div className="cw-story-editor" id="story-draft" tabIndex={-1}>
           {BEATS.map((b, i) => (
             <section
               key={b}
@@ -324,10 +346,10 @@ export function StoryWorkspace({
           )}
           {suggestion && (
             <section className="cw-suggestion">
-              <span className="eyebrow">
+              <h3>
                 Suggested {labels[suggestion.beat].title} ·{" "}
                 {suggestion.voice || "General voice"}
-              </span>
+              </h3>
               <div className="cw-two">
                 <div>
                   <h3>Current wording</h3>
@@ -362,7 +384,7 @@ export function StoryWorkspace({
           )}
         </div>
         <aside className="cw-story-preview">
-          <span className="eyebrow">Your actual text / {value.platform}</span>
+          <h3>Live text preview</h3><p className="cw-meta">{value.platform}</p>
           <div
             className={`cw-feed ${value.platform.includes("video") ? "cw-feed-video" : ""}`}
           >
@@ -396,6 +418,8 @@ export function StoryWorkspace({
           revise the wording before approving.
         </p>
       )}
+      <section className="cw-review" id="story-review" tabIndex={-1}>
+      <div><h2>Review and finish</h2><p className="cw-help">{!complete ? "Complete all five beats to approve this story." : flags.length ? "Support the flagged figures with evidence before approval." : value.approved ? "Story approved. Export your script or take it into a content test." : "All five beats are written. Review the wording and sources, then approve your story."}</p></div>
       <div className="cw-bottom-actions">
         <button
           type="button"
@@ -416,6 +440,7 @@ export function StoryWorkspace({
           Review in Test Track <ArrowRight size={14} />
         </button>
       </div>
+      </section>
     </>
   );
 }

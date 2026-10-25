@@ -13,6 +13,8 @@ import {
   Loader2,
   Lock,
   RotateCcw,
+  CheckCircle2,
+  Circle,
 } from "lucide-react";
 import {
   CONTENT_KINDS,
@@ -79,6 +81,7 @@ export function ContentWorkbench({
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [notice, setNotice] = useState("");
+  const titleInput = useRef<HTMLInputElement>(null);
   const editing = useRef(0),
     sequence = useRef(0),
     pending = useRef(false);
@@ -103,6 +106,7 @@ export function ContentWorkbench({
     editing.current++;
     setInstance((i) => i + 1);
     window.history.replaceState(window.history.state, "", contentHref(kind));
+    titleInput.current?.focus();
   };
   const load = useCallback(
     async (id: string) => {
@@ -162,6 +166,20 @@ export function ContentWorkbench({
     };
     window.addEventListener("beforeunload", prevent);
     return () => window.removeEventListener("beforeunload", prevent);
+  }, [dirty]);
+  useEffect(() => {
+    const protectEdits = (event: MouseEvent) => {
+      if (!dirty || event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      const link = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("a[href]") : null;
+      if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+      const destination = new URL(link.href, window.location.href);
+      if (destination.origin === window.location.origin && (destination.pathname !== window.location.pathname || destination.search !== window.location.search) && !window.confirm("Discard your unsaved edits?")) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    window.document.addEventListener("click", protectEdits, true);
+    return () => window.document.removeEventListener("click", protectEdits, true);
   }, [dirty]);
   const canLeave = () =>
     !dirty || window.confirm("Discard your unsaved edits?");
@@ -260,8 +278,9 @@ export function ContentWorkbench({
     }
   }
   const v = CONTENT_VIEWS[kind];
+  const saveState = loading ? "Opening work…" : busy ? "Working…" : dirty ? "Unsaved changes" : record ? `Saved · Version ${record.version}` : "New work · Not saved";
   return (
-    <div className="cw-workbench">
+    <div className={`cw-workbench cw-kind-${kind}`}>
       <nav className="cw-nav" aria-label="Content and decisions">
         {CONTENT_KINDS.map((k) => {
           const Icon = icons[k],
@@ -271,9 +290,6 @@ export function ContentWorkbench({
               key={k}
               href={contentHref(k)}
               aria-current={kind === k ? "page" : undefined}
-              onClick={(e) => {
-                if (!canLeave()) e.preventDefault();
-              }}
             >
               <Icon size={17} />
               <span>
@@ -294,9 +310,6 @@ export function ContentWorkbench({
       </nav>
       <header className="cw-heading">
         <div>
-          <span className="eyebrow">
-            {kind === "decision" ? "Plans" : "Content"} / {v.name}
-          </span>
           <h1>{v.action}</h1>
           <p>{v.help}</p>
         </div>
@@ -304,6 +317,8 @@ export function ContentWorkbench({
           Earlier tool results <ArrowRight size={14} />
         </Link>
       </header>
+      <details className="cw-library">
+      <summary><span>Saved work <span className="cw-library-count">{records.length}</span></span><span className="cw-meta">{record?.title || "Start something new"}</span></summary>
       <div className="cw-record-bar">
         <label>
           <span>Recent saved work</span>
@@ -349,10 +364,12 @@ export function ContentWorkbench({
           </button>
         )}
       </div>
-      <div className="cw-save-bar">
+      </details>
+      <div className="cw-save-bar" aria-busy={busy}>
         <label>
           <span>Title</span>
           <input
+            ref={titleInput}
             className="input"
             aria-label="Title for this work"
             placeholder={
@@ -387,9 +404,8 @@ export function ContentWorkbench({
           )}{" "}
           Save {dirty ? "changes" : "work"}
         </button>
-        <span className="cw-save-state">
-          {record ? `Version ${record.version}` : "Not saved"}
-          {dirty ? " · Unsaved edits" : ""}
+        <span className="cw-save-state" role="status" data-dirty={dirty}>
+          {record && !dirty ? <CheckCircle2 size={14} /> : <Circle size={12} />}{saveState}
         </span>
       </div>
       {error && (
@@ -397,7 +413,7 @@ export function ContentWorkbench({
           {error}
         </div>
       )}
-      <p className="cw-notice" role="status">
+      <p className="cw-notice" role="status" aria-live="polite">
         {notice}
       </p>
       {loading ? (
@@ -468,6 +484,10 @@ export function ContentWorkbench({
           </ol>
         </details>
       )}
+      {!loading && <footer className="cw-save-footer">
+        <div><strong>{title || "Untitled work"}</strong><p className="cw-meta">{saveState}</p></div>
+        <button type="button" className="btn-secondary" disabled={busy || !title.trim()} onClick={() => void save()}><Save size={15} /> Save {dirty ? "changes" : "work"}</button>
+      </footer>}
     </div>
   );
 }

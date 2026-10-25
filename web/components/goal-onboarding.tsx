@@ -5,7 +5,7 @@ import { ArrowRight, CheckCircle2, Circle, Compass, FileText, Radar } from "luci
 import { WORKSPACE_GOALS, goalSteps, type WorkspaceGoal, type GoalSignals } from "@/lib/workspace-goals";
 import { responseError } from "@/lib/response-error";
 
-export function GoalOnboarding({ initialGoal, initialDismissed, signals, tier }: { initialGoal: WorkspaceGoal | null; initialDismissed: boolean; signals: GoalSignals; tier: string }) {
+export function GoalOnboarding({ initialGoal, initialDismissed, signals, tier, onPreferenceChange }: { initialGoal: WorkspaceGoal | null; initialDismissed: boolean; signals: GoalSignals; tier: string; onPreferenceChange?: (preference: { goal: WorkspaceGoal | null; dismissed: boolean }) => void }) {
   const [goal, setGoal] = useState(initialGoal), [dismissed, setDismissed] = useState(initialDismissed);
   const [choosing, setChoosing] = useState(!initialGoal), [busy, setBusy] = useState(false), [error, setError] = useState("");
   const icons = [Compass, FileText, Radar];
@@ -14,7 +14,7 @@ export function GoalOnboarding({ initialGoal, initialDismissed, signals, tier }:
     try {
       const response = await fetch("/api/workspace/goal", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...(nextGoal ? { goal: nextGoal } : {}), dismissed: hide }) });
       if (!response.ok) throw new Error(await responseError(response));
-      const data = await response.json(); setGoal(data.preference.goal); setDismissed(data.preference.dismissed); setChoosing(!data.preference.goal);
+      const data = await response.json(); setGoal(data.preference.goal); setDismissed(data.preference.dismissed); setChoosing(!data.preference.goal); onPreferenceChange?.(data.preference);
     } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
   }
   const steps = goal ? goalSteps(goal, signals, tier) : [];

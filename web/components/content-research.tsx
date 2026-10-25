@@ -127,6 +127,8 @@ export function ResearchWorkspace({
   return (
     <>
       <Guide
+        targets={["research-intake", "research-map", "research-evidence"]}
+        complete={[value.observations.length > 0, !!selected, false]}
         steps={[
           "Add a customer question or search for sources",
           "Select a topic and inspect its evidence",
@@ -134,6 +136,7 @@ export function ResearchWorkspace({
         ]}
       />
       <details
+        id="research-intake"
         ref={intake}
         open={!value.observations.length}
         className="cw-intake"
@@ -340,7 +343,7 @@ export function ResearchWorkspace({
           Add a real question or source above. Related topics will appear here.
         </Empty>
       ) : (
-        <div className="cw-atlas-layout">
+        <div className="cw-atlas-layout" id="research-map" tabIndex={-1}>
           <div
             className={showList ? "cw-topic-list" : "cw-atlas"}
             aria-label="Audience topics"
@@ -385,14 +388,14 @@ export function ResearchWorkspace({
             )}
           </div>
           {active && (
-            <aside className="cw-panel cw-evidence-dock">
-              <span className="eyebrow">
+            <aside className="cw-panel cw-evidence-dock" id="research-evidence" tabIndex={-1}>
+              <h2>{active.topic}</h2>
+              <p className="cw-meta">
                 {active.type === "search"
                   ? "Search snippet"
                   : "Audience evidence"}{" "}
                 / {cluster.length} in this topic
-              </span>
-              <h2>{active.topic}</h2>
+              </p>
               <p className="cw-quote">{active.excerpt}</p>
               <p className="cw-help">
                 {active.source}

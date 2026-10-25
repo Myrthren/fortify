@@ -24,13 +24,14 @@ export function NotificationBell({ active }: { active: boolean }) {
       href="/dashboard/notifications"
       title="Notifications"
       aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
+      aria-current={active ? "page" : undefined}
       className={`workspace-notification relative flex rounded-md p-1.5 transition ${
         active ? "text-text" : "text-text-muted hover:bg-white/[0.04] hover:text-text"
       }`}
     >
       <Bell className="h-4 w-4" />
       {unread > 0 && (
-        <span className="absolute right-0.5 top-0.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white">
+        <span aria-hidden="true" className="workspace-notification-count">
           {unread > 9 ? "9+" : unread}
         </span>
       )}

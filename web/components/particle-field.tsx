@@ -10,7 +10,8 @@ export function ParticleField({ shape = "wave", className = "" }: {
       const angle = phase * Math.PI * 2 + row * .07;
       const x = shape === "halo" ? 500 + Math.cos(angle) * (100 + row * 27) : phase * 1000;
       const y = shape === "halo" ? 250 + Math.sin(angle) * (48 + row * 15) : 170 + row * 16 + Math.sin(phase * 7 + row * .19) * 72;
-      return <circle key={i} cx={x} cy={y} r={i % 17 === 0 ? 2 : 1.1} opacity={.18 + ((i * 7 + layer) % 11) / 17} />;
+      // Math.sin/cos can differ in the final bit between server/browser engines.
+      return <circle key={i} cx={x.toFixed(3)} cy={y.toFixed(3)} r={i % 17 === 0 ? 2 : 1.1} opacity={(.18 + ((i * 7 + layer) % 11) / 17).toFixed(3)} />;
     });
     return <g key={layer} className={`particle-layer particle-layer-${layer}`}>{points}</g>;
   });
