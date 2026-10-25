@@ -1,5 +1,7 @@
 "use client";
 
+import { responseError } from "@/lib/response-error";
+
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -122,7 +124,7 @@ export function OutboundClient({
         body: JSON.stringify(body),
       });
       if (!res.ok) {
-        setError((await res.text()) || "Update failed.");
+        setError(await responseError(res));
         return;
       }
       const data = await res.json();
@@ -342,6 +344,21 @@ export function OutboundClient({
                       <Fact label="Last run" value={timeAgo(c.lastTickAt)} />
                     )}
                   </dl>
+
+                  {!c.offer?.trim() && (
+                    <form className="mt-3 flex flex-wrap items-end gap-2" onSubmit={(event) => {
+                      event.preventDefault();
+                      const data = new FormData(event.currentTarget);
+                      const offer = String(data.get("offer") ?? "").trim();
+                      if (offer) void patchCampaign(c.id, { offer, status: "PAUSED", autoSend: false });
+                    }}>
+                      <label className="flex-1 text-xs text-text-muted">
+                        Describe what you sell before running this campaign
+                        <textarea name="offer" required maxLength={2000} className="input mt-1 min-h-[70px] w-full" placeholder="Your product or service, who it helps, and what you deliver" />
+                      </label>
+                      <button type="submit" disabled={busy === c.id} className="btn-secondary text-sm">Save offer</button>
+                    </form>
+                  )}
 
                   {c.lastError && (
                     <p className="mt-3 flex items-start gap-1.5 text-xs text-red-400">
@@ -690,13 +707,13 @@ function NewCampaignModal({
 
           <Field
             label="What you are offering"
-            hint="The engine judges every opportunity it finds against this, so be specific."
+            hint="Required before activation. Describe what you sell; prospects are assessed against this offer."
           >
             <textarea
               className="input min-h-[80px] resize-y"
               value={form.offer}
               onChange={(e) => set("offer", e.target.value)}
-              placeholder="We build automations that remove manual admin — booking confirmations, enquiry routing, follow-up sequences. Typically saves a small team 5-10 hours a week."
+              placeholder="Example: We design product photography for independent skincare brands, including studio shoots and images for online shops."
             />
           </Field>
 
@@ -706,7 +723,7 @@ function NewCampaignModal({
                 className="input"
                 value={form.senderName}
                 onChange={(e) => set("senderName", e.target.value)}
-                placeholder="Kene"
+                placeholder="Your name"
               />
             </Field>
             <Field label="Your role">
@@ -714,7 +731,7 @@ function NewCampaignModal({
                 className="input"
                 value={form.senderTitle}
                 onChange={(e) => set("senderTitle", e.target.value)}
-                placeholder="Founder, Fortify"
+                placeholder="Your role and business"
               />
             </Field>
             <Field label="Send from">
@@ -722,7 +739,7 @@ function NewCampaignModal({
                 className="input"
                 value={form.senderEmail}
                 onChange={(e) => set("senderEmail", e.target.value)}
-                placeholder="kene@fortify-io.com"
+                placeholder="you@yourbusiness.com"
               />
             </Field>
           </div>

@@ -1,3 +1,4 @@
+import { chargeForResult, validSourcedLeads, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -40,16 +41,10 @@ export async function POST(req: Request) {
     );
   }
 
-  // Deduct credits
-  await db.user.update({ where: { id: userId }, data: { credits: { decrement: 50 } } });
-  await db.creditTransaction.create({
-    data: { userId, amount: -50, source: "spend_leads" },
-  });
-
   const body = await req.json().catch(() => ({}));
-  const icp: string = (body.icp ?? "").trim();
-  const location: string = (body.location ?? "").trim();
-  const signal: string = (body.signal ?? "").trim();
+  const icp: string = (typeof body.icp === "string" ? body.icp : "").trim();
+  const location: string = (typeof body.location === "string" ? body.location : "").trim();
+  const signal: string = (typeof body.signal === "string" ? body.signal : "").trim();
 
   if (!icp || icp.length < 5) {
     return NextResponse.json({ error: "Describe your ideal prospect (min 5 chars)." }, { status: 400 });
@@ -61,7 +56,7 @@ export async function POST(req: Request) {
     const results = await braveSearch({ query, count: 15 });
 
     if (!results.length) {
-      return NextResponse.json({ leads: [] });
+      return NextResponse.json({ leads: [], creditsUsed: 0 });
     }
 
     const resultList = results
@@ -93,18 +88,20 @@ Return ONLY a JSON array of up to 8 lead objects. Format:
       ],
     });
 
-    const raw = (msg.content[0] as any).text as string;
+    const raw = msg.content.filter(b => b.type === "text").map(b => (b as { text: string }).text).join("\n");
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) return NextResponse.json({ leads: [] });
+    if (!jsonMatch) return NextResponse.json({ leads: [], creditsUsed: 0 });
 
-    const leads: ScoredLead[] = JSON.parse(jsonMatch[0]);
+    const leads: ScoredLead[] = validSourcedLeads(JSON.parse(jsonMatch[0]), results);
+    if (!leads.length) return NextResponse.json({ leads: [], creditsUsed: 0 });
 
-    await db.generation.create({
+    await chargeForResult(userId, 50, "spend_leads", async tx => tx.generation.create({
       data: { userId, type: "lead-sourcing", input: query, output: JSON.stringify(leads) },
-    });
+    }));
 
-    return NextResponse.json({ leads });
+    return NextResponse.json({ leads, creditsUsed: 50 });
   } catch (e: any) {
+    if (e instanceof InsufficientCredits) return NextResponse.json({ error: e.message }, { status: 402 });
     console.error("[leads/source]", e);
     return new NextResponse(`Failed: ${e.message}`, { status: 500 });
   }

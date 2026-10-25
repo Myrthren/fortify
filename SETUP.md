@@ -10,7 +10,7 @@ Step-by-step from cloned repo → live tool.
 - A Supabase project (you have one)
 - A Discord application + bot (you have one)
 - PayPal live app + 3 plans (done)
-- API keys: Anthropic, OpenAI, Brave, Resend
+- API keys: OpenRouter, OpenAI (image generation), Brave, Resend
 
 ---
 
@@ -318,3 +318,7 @@ Launch configuration:
 Local regression tests: `cd web && npm run test:whop`. Tests mock Whop, Prisma,
 Discord and auth; they do not prove live billing or affiliate payouts. Full
 TypeScript checking is `npx prisma generate && npx tsc --noEmit`.
+
+## Shared AI model allowances
+
+Follow [OPENROUTER.md](OPENROUTER.md). Configure OPENROUTER_API_KEY on both Netlify and Railway. Deploy the web additive AI ledger before the new bot. Direct Anthropic and Groq keys no longer select text providers.

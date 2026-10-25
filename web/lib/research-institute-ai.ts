@@ -1,7 +1,7 @@
 import { claude, CLAUDE_MODELS } from "@/lib/claude";
 import { observations, projectScore, validateDecisions, type World } from "./research-institute";
 
-export const labAiEnabled = () => process.env.LAB_AI_ENABLED === "true" && !!(process.env.ANTHROPIC_API_KEY?.trim() || process.env.GROQ_API_KEY?.trim());
+export const labAiEnabled = () => process.env.LAB_AI_ENABLED === "true" && !!process.env.OPENROUTER_API_KEY?.trim();
 export async function decideInstitute(w: World, signal?: AbortSignal) {
   const context = { round: w.round, focus: w.focus, objective: "Demonstrate at least 82% reliability with independently reviewed measurements on the current test set.", resources: { treasury: w.treasury, compute: w.compute, health: w.health, benchReady: w.benchReady },
     projects: w.projects.map(p => ({ id: p.id, level: p.level, funds: p.funds, reviewedScore: projectScore(w, p), pending: p.trials.filter(t => !t.reviewed).length })),

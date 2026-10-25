@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { getOrCreateUser } from "./lib/usage";
+import { withAiUser } from "./lib/ai-context";
 import {
   Client,
   Collection,
@@ -74,7 +76,8 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     const command = commands.get(interaction.commandName);
     if (!command) return;
     try {
-      await command.execute(interaction);
+      const member = await getOrCreateUser(interaction.user.id, interaction.user.username);
+      await withAiUser(member.id, () => command.execute(interaction));
     } catch (err) {
       console.error(err);
       if (interaction.deferred || interaction.replied) {

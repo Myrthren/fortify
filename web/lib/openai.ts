@@ -1,6 +1,5 @@
 import OpenAI from "openai";
-import { canFallback } from "@/lib/ai-fallback";
-import { groqConfigured, groqMessage } from "@/lib/groq";
+import { claude, CLAUDE_MODELS } from "@/lib/claude";
 
 let _client: OpenAI | null = null;
 function client(): OpenAI {
@@ -31,28 +30,45 @@ export async function generateImage(prompt: string, size: "1024x1024" | "1024x15
   return `data:image/png;base64,${b64}`;
 }
 
+// Image understanding follows the shared Claude/fallback budget.
+export async function analyzeImageWithVision(base64DataUrl: string, prompt: string): Promise<string> {
+  const base64 = base64DataUrl.replace(/^data:image\/\w+;base64,/, "");
+  const mediaType = base64DataUrl.match(/^data:(image\/\w+);base64,/)?.[1] ?? "image/png";
+  const result = await claude().messages.create({
+    model: CLAUDE_MODELS.fast, max_tokens: 1000,
+    messages: [{ role: "user", content: [
+      { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+      { type: "text", text: prompt },
+    ] }],
+  } as any);
+  return result.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n");
+}
+// Logo enhancement using gpt-image-1 edit
+export async function enhanceLogoImage(base64DataUrl: string, prompt: string, size: "1024x1024" | "1024x1536" | "1536x1024"): Promise<string> {
+  // Convert base64 to a File/Blob for the API
+  const base64 = base64DataUrl.replace(/^data:image\/\w+;base64,/, "");
+  const bytes = Buffer.from(base64, "base64");
+  const blob = new Blob([bytes], { type: "image/png" });
+  const file = new File([blob], "logo.png", { type: "image/png" });
+
+  const res = await client().images.edit({
+    model: "gpt-image-1",
+    image: file,
+    prompt,
+    size,
+    n: 1,
+  } as any);
+
+  const b64 = (res.data?.[0] as any)?.b64_json;
+  if (!b64) throw new Error("No enhanced image returned");
+  return `data:image/png;base64,${b64}`;
+}
+
 export async function generateHooks(topic: string, count = 5): Promise<string[]> {
-  const system = "You write scroll-stopping short-form video hooks. Punchy, curious, under 12 words. No hashtags. No emojis. Never invent statistics, percentages or results. Return one hook per line, no numbering.";
-  const prompt = `Topic: ${topic}\n\nWrite ${count} hooks.`;
-  const fallback = async (): Promise<string> => {
-    const result = await groqMessage({ system, messages: [{ role: "user", content: prompt }], max_tokens: 400 });
-    return result.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n");
-  };
-  let text: string;
-  if (!process.env.OPENAI_API_KEY?.trim()) {
-    if (!groqConfigured()) throw new Error("No hook-generation provider is configured");
-    text = await fallback();
-  } else {
-    try {
-      const res = await client().chat.completions.create({
-        model: "gpt-4o-mini", temperature: 0.9,
-        messages: [{ role: "system", content: system }, { role: "user", content: prompt }],
-      }, { maxRetries: 0, timeout: 20_000 });
-      text = res.choices[0]?.message?.content ?? "";
-    } catch (error) {
-      if (!groqConfigured() || !canFallback(error)) throw error;
-      text = await fallback();
-    }
-  }
-  return text.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, count);
+  const result = await claude().messages.create({
+    model: CLAUDE_MODELS.fast, max_tokens: 600,
+    system: "You write scroll-stopping short-form video hooks. Punchy, curious, under 12 words. No hashtags. No emojis. Never invent statistics, percentages or results. Return one hook per line, no numbering.",
+    messages: [{ role: "user", content: `Topic: ${topic}\n\nWrite ${count} hooks.` }],
+  });
+  return result.content.filter((b: any) => b.type === "text").map((b: any) => b.text).join("\n").split("\n").map((line: string) => line.trim()).filter(Boolean).slice(0, count);
 }

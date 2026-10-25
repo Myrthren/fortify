@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
     let report: string;
     try {
-      const res = await claude().messages.create({
+      const res = await claude(user.id).messages.create({
         model: CLAUDE_MODELS.fast,
         max_tokens: 600,
         system:

@@ -1,3 +1,4 @@
+import { chargeForResult, validReport, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -54,6 +55,7 @@ export async function POST(req: Request) {
   // ── Own images path ──────────────────────────────────────────────────────────
   if (hasOwnImages) {
     const slideContent: { title: string; subtitle: string }[] = [];
+    let validSlides = 0;
     const imageList = (images as string[]).slice(0, count);
 
     for (let slideIdx = 0; slideIdx < imageList.length; slideIdx++) {
@@ -124,6 +126,8 @@ Return ONLY valid JSON: {"title":"...","subtitle":"..."}`;
         const jsonMatch = raw.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
           const parsed = JSON.parse(jsonMatch[0]);
+          if (!validReport(parsed, ["title", "subtitle"])) throw new Error("Invalid slide");
+          validSlides++;
           slideContent.push({
             title:    parsed.title    ?? "Untitled",
             subtitle: parsed.subtitle ?? "",
@@ -136,9 +140,15 @@ Return ONLY valid JSON: {"title":"...","subtitle":"..."}`;
       }
     }
 
-    const actualCost = slideContent.length * costPerSlide;
-    await db.user.update({ where: { id: userId }, data: { credits: { decrement: actualCost } } });
-    await db.creditTransaction.create({ data: { userId, amount: -actualCost, source: "spend_slideshow" } });
+    const actualCost = validSlides * costPerSlide;
+    if (!validSlides) return NextResponse.json({ error: "No valid slides generated. No credits charged.", creditsUsed: 0 }, { status: 502 });
+    try {
+      await chargeForResult(userId, actualCost, "spend_slideshow", async tx => tx.generation.create({
+        data: { userId, type: "slideshow", input: description, output: JSON.stringify({ images: imageList, slideContent }) },
+      }));
+    } catch (e) {
+      return NextResponse.json({ error: e instanceof Error ? e.message : "Could not save slides. No credits charged." }, { status: e instanceof InsufficientCredits ? 402 : 500 });
+    }
 
     return NextResponse.json({
       images: (images as string[]).slice(0, count),
@@ -188,6 +198,10 @@ Return ONLY a valid JSON array with no explanation or markdown:
     return NextResponse.json({ error: "Invalid slide content from AI" }, { status: 500 });
   }
 
+  if (!Array.isArray(slideContent) || !slideContent.length ||
+      !slideContent.every(s => validReport(s, ["title", "subtitle", "backgroundDesc"])))
+    return NextResponse.json({ error: "Invalid slide content. No credits charged.", creditsUsed: 0 }, { status: 502 });
+
   const generatedImages: string[] = [];
   for (let i = 0; i < slideContent.slice(0, count).length; i++) {
     const slide = slideContent[i];
@@ -204,6 +218,7 @@ Return ONLY a valid JSON array with no explanation or markdown:
 
     try {
       const img = await generateImage(prompt, "1536x1024");
+      if (!/^data:image\/[^;]+;base64,[A-Za-z0-9+/=]+$/.test(img)) throw new Error("Invalid image");
       generatedImages.push(img);
     } catch {
       generatedImages.push("");
@@ -212,8 +227,14 @@ Return ONLY a valid JSON array with no explanation or markdown:
 
   const actualCount = generatedImages.filter(Boolean).length;
   const actualCost = actualCount * costPerSlide;
-  await db.user.update({ where: { id: userId }, data: { credits: { decrement: actualCost } } });
-  await db.creditTransaction.create({ data: { userId, amount: -actualCost, source: "spend_slideshow" } });
+  if (!actualCount) return NextResponse.json({ error: "No valid slides generated. No credits charged.", creditsUsed: 0 }, { status: 502 });
+  try {
+    await chargeForResult(userId, actualCost, "spend_slideshow", async tx => tx.generation.create({
+      data: { userId, type: "slideshow", input: description, output: JSON.stringify({ images: generatedImages, slideContent: slideContent.slice(0, count) }) },
+    }));
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Could not save slides. No credits charged." }, { status: e instanceof InsufficientCredits ? 402 : 500 });
+  }
 
   return NextResponse.json({ images: generatedImages, slideContent: slideContent.slice(0, count), creditsUsed: actualCost });
 }

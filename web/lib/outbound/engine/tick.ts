@@ -1,3 +1,5 @@
+import { withAiUser } from "@/lib/ai-context";
+import { requireCampaignOffer, offerFingerprint } from "@/lib/outbound/offer";
 import type { OutboundCampaign } from "@prisma/client";
 import { db } from "@/lib/db";
 import { runDiscovery } from "./discover";
@@ -67,7 +69,11 @@ export async function tickAllCampaigns(
   return results;
 }
 
-export async function tickCampaign(
+export async function tickCampaign(campaign: OutboundCampaign, budget: Budget): Promise<CampaignTickResult> {
+  return withAiUser(campaign.userId, () => tickCampaignOwned(campaign, budget));
+}
+
+async function tickCampaignOwned(
   campaign: OutboundCampaign,
   budget: Budget
 ): Promise<CampaignTickResult> {
@@ -82,6 +88,16 @@ export async function tickCampaign(
     errors: 0,
     budgetExhausted: false,
   };
+
+  try {
+    requireCampaignOffer(campaign.offer);
+  } catch (e) {
+    const message = e instanceof Error ? e.message : "Add your campaign offer.";
+    await db.outboundCampaign.update({ where: { id: campaign.id }, data: {
+      lastError: message, ...(campaign.status === "ACTIVE" ? { status: "PAUSED" } : {}),
+    } });
+    return { ...result, skippedSend: message, errors: 1 };
+  }
 
   // 1. Keep the funnel fed. Starting an Apify run is one fast API call; the
   //    results are collected on a later tick.
@@ -282,7 +298,8 @@ export async function queueApprovedEmail(emailId: string): Promise<void> {
 
   await db.outboundEmail.update({
     where: { id: emailId },
-    data: { status: "QUEUED", scheduledAt: new Date() },
+    data: { status: "QUEUED", scheduledAt: new Date(), failReason: null,
+      variation: { ...(email.variation as Record<string, unknown> ?? {}), offerFingerprint: offerFingerprint(email.campaign.offer) } as never },
   });
   await db.outboundLead.update({
     where: { id: email.leadId },

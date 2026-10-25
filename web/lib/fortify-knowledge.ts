@@ -9,13 +9,19 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-23-content-workspaces";
+export const KNOWLEDGE_VERSION = "2026-10-25-business-simulation-worlds";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
 - Community: the Fortify Discord server, for online business owners, resellers, and creators
 - Tagline: "AI co-pilot for online business and networking"
 - Owner: Kene (owner of the Fortify Discord server)
+
+AI MODEL ALLOWANCES
+- AI text and image understanding run through OpenRouter. Standard Claude requests use Sonnet 5.5 and premium requests use Opus 5.5, subject to availability.
+- Included Claude allowance is shared across website, Discord, text tools and background/workflow AI: Pro £2/week, Elite £4/week, Apex £10/week. Weeks reset Monday at 00:00 UTC.
+- Once a request cannot fit the remaining Claude allowance, Fortify continues using a configured alternative model. Free uses alternative models. Existing tool access, credits and anti-abuse limits still apply.
+- Alternative models also have API costs; do not call them free. Never claim that an alternative model is Claude. Image generation uses a separate image provider.
 
 SUBSCRIPTION TIERS
 - Free (£0/mo): 100 starter credits, Story Forge script editor, 10 cold outreach messages/mo, Trend Radar (5 watch terms), community forums, read-only member directory and deal board
@@ -40,15 +46,16 @@ Growth:
 - AI Matchmaking — Claude surfaces top Fortify members worth talking to (Pro+)
 - Fortify Recon — find local and niche businesses by location and category via Google Maps; returns name, address, phone, website, and rating, ready to prospect (Elite+)
 - Weekly Lead Pack — set who to find and where once; every Monday Fortify delivers new businesses (never repeats) with published emails and a drafted cold email each, at /dashboard/lead-pack (Elite 15, Apex 25; no credits)
-- Outbound Engine — COMING SOON, not available to members yet (sending is still being connected); do not tell anyone they can use it today. When live it will be a fully autonomous AI cold email system. You describe your target and your offer; it finds matching businesses, reads their websites, analyses them across 11 dimensions (website quality, lead capture, booking, CRM, chatbot, automation, SEO and more), works out where automation would genuinely help, and writes a completely unique email to each one. Every email varies its greeting, opening, structure, tone, sign-off and call to action, is checked against a banned-phrase and fabrication filter before it can send, and is capped at 70-140 words. It sends inside your chosen hours at your daily cap, runs the follow-up sequence, reads replies straight out of your sending mailbox, and stops instantly the moment someone replies. Positive replies are DMed to you, and bounced addresses are never contacted again. Drafts wait for your approval unless you switch on auto-send. (Elite+)
+- Outbound Engine — COMING SOON, not available to members yet (sending is still being connected); do not tell anyone they can use it today. When live it will be a fully autonomous AI cold email system. You describe your target and your offer; it finds matching businesses, reads their websites, analyses them across 11 dimensions (website quality, lead capture, booking, CRM, chatbot, automation, SEO and more), assesses fit against your campaign’s stated offer, and writes a completely unique email to each one. Every email varies its greeting, opening, structure, tone, sign-off and call to action, is checked against a banned-phrase and fabrication filter before it can send, and is capped at 70-140 words. It sends inside your chosen hours at your daily cap, runs the follow-up sequence, reads replies straight out of your sending mailbox, and stops instantly the moment someone replies. Positive replies are DMed to you, and bounced addresses are never contacted again. Drafts wait for your approval unless you switch on auto-send. (Elite+)
 
 Research:
 - Funnel Auditor — score and fix any landing page URL with AI (Pro+)
 - Trend Radar — track topics across the web (Free: 5 watch terms, Pro: 10, Elite+: unlimited plus Reddit signals)
 - Competitor Scanner — detailed intel reports on rival businesses (Pro+)
-- Competitor Watch — monitor competitor pages for live content changes; alerts on update (Elite+)
+- Competitor Watch — compare readable competitor web pages daily (07:00 UTC); alerts after a scan finds changed wording, with added/removed excerpts. Manual scans are also available. Private or JavaScript-only social content is not supported (Elite+)
 
 Business:
+- Business Setup — guided business context and an action blueprint at /dashboard/setup (Pro: 1 business, Elite: 5, Apex: unlimited). Create, edit, switch and remove saved businesses. The active business informs advisor and chat context; setup does not automatically connect external software.
 - Meta Ads — real campaign performance + competitor ad intel (Pro+)
 - Shopify Integration — revenue, orders, and product performance dashboard (Pro+)
 - Revenue Dashboard — MRR, subscriptions, and charges from Stripe (Pro+)
@@ -56,6 +63,7 @@ Business:
 - Analytics — GA4 and Google Search Console in one place — COMING SOON, not available yet
 
 Automation:
+- Simulation Lab — /dashboard/research-lab. Three visual 3D environments: Research Institute, Operations Studio and Orbital Command, with six agents, shared resources, interventions and recorded replay. They share a bounded fictional engine. They do not execute real software actions or run while the page is closed. Rules mode runs locally; AI-assisted decisions require explicit server configuration and bounded request limits.
 - Workflows — multi-step AI automation builder; triggers, logic, AI nodes, Discord/Slack/Email/Notion/HTTP actions (Elite+)
 
 Community:

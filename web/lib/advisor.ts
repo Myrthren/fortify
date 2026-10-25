@@ -37,7 +37,7 @@ export async function buildAdvisorContext(userId: string): Promise<string> {
       take: 20,
     }),
     db.generation.findMany({
-      where: { userId },
+      where: { userId, type: { not: "credit-job" } },
       orderBy: { createdAt: "desc" },
       take: 20,
       select: { type: true, createdAt: true },

@@ -14,10 +14,12 @@ type Msg = {
   imagePreview?: string;    // user-attached image shown in bubble
   generatedImage?: string;  // AI-generated image (base64 data URL)
   actions?: ActionResult[];
+  model?: string;
 };
 
 type Usage = {
   tier: string;
+  fallback?: boolean;
   canUse: boolean;
   isApex: boolean;
   isFree: boolean;
@@ -151,7 +153,7 @@ export function FortifyAI() {
       await fetch("/api/ai/chat/sessions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, messages: messages.map((m) => ({ role: m.role, content: m.content, actions: m.actions })) }),
+        body: JSON.stringify({ title, messages: messages.map((m) => ({ role: m.role, content: m.content, actions: m.actions, model: m.model })) }),
       });
     } finally {
       setSavingSession(false);
@@ -176,6 +178,7 @@ export function FortifyAI() {
         role: m.role as "user" | "assistant",
         content: m.content as string,
         actions: m.actions,
+        model: m.model,
       }));
       setMessages(msgs);
       setCurrentSessionId(id);
@@ -244,6 +247,7 @@ export function FortifyAI() {
         {
           role: "assistant",
           content: d.message,
+          model: d.model,
           actions: d.actions?.length ? d.actions : undefined,
           generatedImage: d.imageUrl ?? undefined,
         },
@@ -345,14 +349,15 @@ export function FortifyAI() {
                   style={{ background: "linear-gradient(135deg,#111,#333)", border: "1px solid rgba(255,255,255,0.25)" }}
                 />
                 <span className="text-sm font-semibold">Fortify AI</span>
-                {usage?.tier && usage.tier !== "FREE" && !usage.isApex && (
+                {usage?.tier && usage.tier !== "FREE" && (
                   <div className="flex items-center gap-1.5">
                     <div className="h-1.5 w-20 overflow-hidden rounded-full bg-bg-elevated">
                       <div className={`h-full rounded-full ${barColor(usage.pct)}`} style={{ width: `${usage.pct}%` }} />
                     </div>
-                    <span className="text-[10px] text-text-muted">{usage.pct}%</span>
+                    <span className="text-[10px] text-text-muted" title="Weekly Claude allowance used">{usage.pct}% Claude</span>
                   </div>
                 )}
+                {usage?.fallback && !usage.isFree && <span className="text-[10px] text-text-muted" title="Claude returns when your weekly allowance resets">Standard AI active</span>}
                 {usage?.isFree && !usage.freeTrialExhausted && usage.remainingGbp !== undefined && (
                   <span className="text-[10px] text-text-muted">Trial · £{usage.remainingGbp.toFixed(2)} left</span>
                 )}
@@ -463,6 +468,7 @@ export function FortifyAI() {
                     {m.hasFile && !m.imagePreview && (
                       <p className="text-[10px] text-text-muted mb-1 flex items-center gap-1"><Paperclip className="h-2.5 w-2.5" /> File attached</p>
                     )}
+                    {m.model && <p className="mb-1 text-[10px] text-text-muted">{m.model.split("/").pop()}</p>}
                     <div className="whitespace-pre-wrap">{renderContent(m.content)}</div>
 
                     {/* AI-generated image */}

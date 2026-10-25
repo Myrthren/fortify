@@ -1,3 +1,4 @@
+import { weeklyAiUsage } from "@/lib/ai-budget";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -11,6 +12,16 @@ export async function GET() {
   const user = await db.user.findUnique({ where: { id: userId } });
   if (!user) return NextResponse.json({ tier: "FREE", canUse: false });
 
+  if (user.tier !== "FREE") {
+    const weekly = await weeklyAiUsage(userId);
+    return NextResponse.json({
+      tier: user.tier, canUse: true, isApex: user.tier === "APEX", isFree: false,
+      pct: weekly.limitGbp ? Math.min(100, Math.round(weekly.usedGbp / weekly.limitGbp * 100)) : 100,
+      sessionExhausted: false, freeTrialExhausted: false, expiresAt: weekly.resetsAt,
+      packRemainingGbp: 0, hasPackCredits: false, remainingGbp: weekly.remainingGbp,
+      claudeWeekly: weekly, fallback: weekly.fallback,
+    }, { headers: { "Cache-Control": "no-store" } });
+  }
   const { session: aiSession, remainingGbp, packRemainingGbp, overLimit, freeTrialExhausted } =
     await getOrCreateSession(userId, user.tier);
 
@@ -25,7 +36,7 @@ export async function GET() {
   const budgetGbp = aiSession.budgetGbp;
   const usedGbp = aiSession.usedCostGbp;
   const pct = budgetGbp >= 999999 ? 0 : Math.min(100, Math.round((usedGbp / budgetGbp) * 100));
-  const isApex = user.tier === "APEX";
+  const isApex = false;
   const isFree = user.tier === "FREE";
   const sessionExhausted = !isApex && remainingGbp <= 0;
 

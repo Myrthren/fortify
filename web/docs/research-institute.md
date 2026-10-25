@@ -14,7 +14,7 @@ Autonomous rules mode runs locally without AI requests. Each agent chooses a leg
 
 AI-assisted mode selects the same six agents' legal actions through one bounded provider request per round. The adapter validates all six unique decisions and rejects unknown actions or oversized notes. The existing provider wrapper may use its configured availability fallback; the response records the reported provider/model identifier. Failure never silently switches the simulation to rules mode.
 
-AI is disabled unless `LAB_AI_ENABLED=true` and an existing Anthropic or Groq provider is configured. The local preview deliberately has AI disabled. No real AI request is required to try the prototype.
+AI is disabled unless `LAB_AI_ENABLED=true` and the OpenRouter provider is configured. AI-assisted requests use the authenticated member's shared model allowance. The local preview deliberately has AI disabled. No real AI request is required to try the prototype.
 
 AI calls require authentication and a matching origin. Private `ResearchDecisionBatch` reservations are made before provider calls under a PostgreSQL transaction advisory lock. The limits are six reserved batches per user and 60 globally per UTC day. Failed calls count toward those limits. Atomic claims prevent parallel duplicates; successful repeated snapshots return cached decisions. Input is bounded, output is capped at 1,800 tokens and an 18-second shared abort deadline bounds provider time. These are request/token limits, not a guaranteed dollar budget. Account credits and normal content history are untouched.
 

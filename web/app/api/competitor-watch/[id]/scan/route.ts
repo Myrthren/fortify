@@ -1,7 +1,8 @@
+import { InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { createHash } from "crypto";
+import { scanWatch, WatchChanged } from "@/lib/competitor-watch";
 
 const COST = 10;
 
@@ -31,82 +32,18 @@ export async function POST(
     );
   }
 
-  const links = (watch.links as {
-    id: string;
-    url: string;
-    label: string;
-    type: string;
-    lastHash?: string;
-    lastScanAt?: string;
-  }[]);
+  if (user.tier !== "ELITE" && user.tier !== "APEX")
+    return NextResponse.json({ error: "Competitor Watch requires Elite+." }, { status: 403 });
+  if (!watch.active) return NextResponse.json({ error: "Resume this watch before scanning." }, { status: 409 });
 
-  const scansCreated: {
-    id: string;
-    url: string;
-    hasChange: boolean;
-    summary: string;
-    scannedAt: string;
-  }[] = [];
-
-  const updatedLinks = [...links];
-
-  for (let i = 0; i < updatedLinks.length; i++) {
-    const link = updatedLinks[i];
-    let hash: string | null = null;
-    let hasChange = false;
-    let summary = "No changes detected";
-
-    try {
-      const res = await fetch(link.url, {
-        signal: AbortSignal.timeout(10000),
-        headers: { "User-Agent": "Mozilla/5.0 (compatible; FortifyBot/1.0)" },
-      });
-      const text = await res.text();
-      hash = createHash("md5").update(text).digest("hex");
-      hasChange = link.lastHash !== undefined && link.lastHash !== null
-        ? hash !== link.lastHash
-        : false;
-      summary = hasChange ? "Content changed" : "No changes detected";
-    } catch {
-      summary = "Fetch failed — site unreachable or timed out";
-    }
-
-    const scan = await db.competitorWatchScan.create({
-      data: {
-        watchId: id,
-        url: link.url,
-        hasChange,
-        summary,
-      },
-    });
-
-    scansCreated.push({
-      id: scan.id,
-      url: scan.url,
-      hasChange: scan.hasChange,
-      summary: scan.summary ?? summary,
-      scannedAt: scan.scannedAt.toISOString(),
-    });
-
-    if (hash !== null) {
-      updatedLinks[i] = {
-        ...link,
-        lastHash: hash,
-        lastScanAt: new Date().toISOString(),
-      };
-    }
+  let result;
+  try {
+    result = await scanWatch(watch);
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Could not save scan. No credits charged." },
+      { status: e instanceof InsufficientCredits ? 402 : e instanceof WatchChanged ? 409 : 500 });
   }
-
-  await db.$transaction([
-    db.competitorWatch.update({
-      where: { id },
-      data: { links: updatedLinks },
-    }),
-    db.user.update({
-      where: { id: userId },
-      data: { credits: { decrement: COST } },
-    }),
-  ]);
+  const { scans: scansCreated, creditsUsed } = result;
 
   // Create in-app notification for any changed pages
   const changed = scansCreated.filter((s) => s.hasChange);
@@ -122,5 +59,5 @@ export async function POST(
     }).catch(() => {});
   }
 
-  return NextResponse.json({ scans: scansCreated, creditsUsed: COST });
+  return NextResponse.json({ scans: scansCreated, creditsUsed });
 }

@@ -34,6 +34,8 @@ var __importStar = (this && this.__importStar) || (function () {
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
+const usage_1 = require("./lib/usage");
+const ai_context_1 = require("./lib/ai-context");
 const discord_js_1 = require("discord.js");
 const hook = __importStar(require("./commands/hook"));
 const upgrade = __importStar(require("./commands/upgrade"));
@@ -85,7 +87,8 @@ client.on(discord_js_1.Events.InteractionCreate, async (interaction) => {
         if (!command)
             return;
         try {
-            await command.execute(interaction);
+            const member = await (0, usage_1.getOrCreateUser)(interaction.user.id, interaction.user.username);
+            await (0, ai_context_1.withAiUser)(member.id, () => command.execute(interaction));
         }
         catch (err) {
             console.error(err);

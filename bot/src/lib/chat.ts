@@ -306,7 +306,7 @@ export async function handleMention(message: Message) {
     ];
     const tools = toolList.length > 0 ? toolList : undefined;
 
-    let response = await claude().messages.create({
+    let response = await claude(user?.id).messages.create({
       model: CLAUDE_MODELS.fast,
       max_tokens: 1024,
       system: systemPrompt,
@@ -353,8 +353,8 @@ export async function handleMention(message: Message) {
         // ignore
       }
 
-      response = await claude().messages.create({
-        model: CLAUDE_MODELS.fast,
+      response = await claude(user?.id).messages.create({
+        model: (response as any).fortify?.routedModel ?? CLAUDE_MODELS.fast,
         max_tokens: 1024,
         system: systemPrompt,
         messages,
@@ -369,7 +369,9 @@ export async function handleMention(message: Message) {
         : "I couldn't generate a response.";
 
     // Send in chunks if needed (Discord 2000 char limit)
-    const chunks = text.match(/[\s\S]{1,1900}/g) ?? [text];
+    const modelLabel = (response as any).fortify?.model;
+    const labelledText = modelLabel ? `${text}\n\n-# ${modelLabel}` : text;
+    const chunks = labelledText.match(/[\s\S]{1,1900}/g) ?? [text];
     let firstReply: Message | null = null;
     for (let i = 0; i < chunks.length; i++) {
       if (i === 0) {

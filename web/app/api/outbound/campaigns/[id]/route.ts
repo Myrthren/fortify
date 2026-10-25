@@ -39,7 +39,7 @@ export async function PATCH(
 
   const existing = await db.outboundCampaign.findFirst({
     where: { id, userId },
-    select: { id: true },
+    select: { id: true, offer: true, status: true },
   });
   if (!existing) return new NextResponse("Not found", { status: 404 });
 
@@ -81,6 +81,11 @@ export async function PATCH(
       // showing as the campaign's current state.
       if (status === "ACTIVE") data.lastError = null;
     }
+  }
+
+  const finalOffer = "offer" in data ? data.offer : existing.offer;
+  if ((data.status ?? existing.status) === "ACTIVE" && (typeof finalOffer !== "string" || !finalOffer.trim())) {
+    return NextResponse.json({ error: "Describe what you sell before activating this campaign." }, { status: 400 });
   }
 
   if (!Object.keys(data).length) {

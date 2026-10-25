@@ -1,3 +1,4 @@
+import { registerCreditRun, readCreditRun, completeCreditRun, validReport, nonemptyText, InsufficientCredits } from "@/lib/result-credits";
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -98,13 +99,9 @@ export async function POST(req: Request) {
     const json = await res.json();
     const runId = json.data.id as string;
 
-    // Only charge once the Apify run actually started
-    await db.$transaction([
-      db.user.update({ where: { id: userId }, data: { credits: { decrement: SCAN_COST } } }),
-      db.creditTransaction.create({ data: { userId, amount: -SCAN_COST, source: "inspiration-ads" } }),
-    ]);
+    await registerCreditRun(userId, runId, `inspiration/ads`);
 
-    return NextResponse.json({ runId, creditsUsed: SCAN_COST });
+    return NextResponse.json({ runId, creditsUsed: 0 });
   } catch (e: any) {
     console.error("[inspiration/ads] startRun failed:", e);
     return new NextResponse(`Failed: ${e.message}`, { status: 500 });
@@ -122,6 +119,13 @@ export async function GET(req: Request) {
   const runId = searchParams.get("runId");
   const niche = searchParams.get("niche") ?? "";
   if (!runId) return NextResponse.json({ error: "runId required" }, { status: 400 });
+
+  try {
+    const cached = await readCreditRun(userId, runId, `inspiration/ads`);
+    if (cached) return NextResponse.json(cached);
+  } catch {
+    return NextResponse.json({ error: "Scan not found. Start a new scan from this account." }, { status: 404 });
+  }
 
   let status: string;
   try {
@@ -143,6 +147,8 @@ export async function GET(req: Request) {
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: 502 });
   }
+
+  items = items.filter(ad => nonemptyText(ad.snapshot?.body?.text) || nonemptyText(ad.snapshot?.body?.markup?.__html?.replace(/<[^>]+>/g, "")) || ad.snapshot?.cards?.some(c => nonemptyText(c.body)));
 
   if (!items.length) {
     return NextResponse.json({
@@ -193,9 +199,15 @@ Return ONLY a JSON array of 6 objects: [{ "hook": string, "angle": string, "ctaP
     return NextResponse.json({ status: "failed", error: "Claude returned invalid JSON" });
   }
 
-  await db.generation.create({
-    data: { userId, type: "inspiration-ads", input: niche, output: JSON.stringify(insights) },
-  });
-
-  return NextResponse.json({ status: "succeeded", niche, frames: insights });
+  if (!(Array.isArray(insights) && insights.length > 0 && insights.every(i => validReport(i, ["hook", "angle", "ctaPattern", "format", "spendSignal"])))) {
+    return NextResponse.json({ status: "failed", error: "Incomplete report. No credits charged.", creditsUsed: 0 }, { status: 502 });
+  }
+  try {
+    const result = await completeCreditRun(userId, runId, `inspiration/ads`, SCAN_COST, "inspiration-ads",
+      { status: "succeeded", niche, frames: insights }, async tx => tx.generation.create({ data: { userId, type: "inspiration-ads", input: niche, output: JSON.stringify(insights) } }));
+    return NextResponse.json(result);
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : "Could not save result. No credits charged." },
+      { status: e instanceof InsufficientCredits ? 402 : 500 });
+  }
 }
