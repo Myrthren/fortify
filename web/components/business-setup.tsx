@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Building2, Check, CheckCircle2, ChevronRight, CircleDot, Compass, Layers3, Pencil, Plus, RotateCcw, Trash2, Users2, Workflow } from "lucide-react";
 import { BUSINESS_CHANNELS, BUSINESS_MODELS, BUSINESS_STAGES, buildBusinessRecommendations, type BusinessRecommendation, type BusinessSetupInput } from "@/lib/business-setup";
 import { responseError } from "@/lib/response-error";
@@ -14,8 +15,14 @@ const questions = [
   { title: "Activate the blueprint", detail: "Review what Fortify will configure before it becomes live context." },
 ];
 
-export function BusinessSetup({ tier, limit, initialBusinesses }: { tier: string; limit: number | null; initialBusinesses: Business[] }) {
-  const [businesses, setBusinesses] = useState(initialBusinesses), [creating, setCreating] = useState(initialBusinesses.length === 0), [editingId, setEditingId] = useState<string | null>(null), [step, setStep] = useState(0), [form, setForm] = useState<BusinessSetupInput>(blank), [busy, setBusy] = useState(false), [error, setError] = useState("");
+export function BusinessSetup({ tier, limit, initialBusinesses, startNew = false }: { tier: string; limit: number | null; initialBusinesses: Business[]; startNew?: boolean }) {
+  const router = useRouter();
+  const [businesses, setBusinesses] = useState(initialBusinesses), [creating, setCreating] = useState(initialBusinesses.length === 0 || (startNew && (limit === null || initialBusinesses.length < limit))), [editingId, setEditingId] = useState<string | null>(null), [step, setStep] = useState(0), [form, setForm] = useState<BusinessSetupInput>(blank), [busy, setBusy] = useState(false), [error, setError] = useState("");
+  function syncBusinesses(clearNew = false) {
+    window.dispatchEvent(new CustomEvent("fortify:businesses-changed"));
+    if (clearNew && new URLSearchParams(window.location.search).get("new") === "1") router.replace("/dashboard/setup", { scroll: false });
+    else router.refresh();
+  }
   const active = businesses.find(item => item.active) ?? businesses[0], atLimit = limit !== null && businesses.length >= limit, overCapacity = limit !== null && businesses.length > limit;
   const recommendations = useMemo(() => {
     try { return buildBusinessRecommendations({ ...form, name: form.name || "This business", audience: form.audience || "the intended audience", offer: form.offer || "the offer", bottleneck: form.bottleneck || "the current constraint", channels: form.channels.length ? form.channels : ["Content"] }); }
@@ -38,17 +45,18 @@ export function BusinessSetup({ tier, limit, initialBusinesses }: { tier: string
       if (!response.ok) throw new Error(await responseError(response));
       const data = await response.json();
       setBusinesses(current => editingId ? current.map(item => item.id === editingId ? data.business : item) : [data.business, ...current.map(item => ({ ...item, active: false }))]); setCreating(false); setEditingId(null); setStep(0); setForm(blank);
+      syncBusinesses(!editingId);
     } catch (cause) { setError((cause as Error).message); } finally { setBusy(false); }
   }
   async function activate(id: string) {
     if (active?.id === id || busy) return; setBusy(true); setError("");
-    try { const response = await fetch("/api/businesses", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }); if (!response.ok) throw new Error(await responseError(response)); setBusinesses(current => current.map(item => ({ ...item, active: item.id === id }))); }
+    try { const response = await fetch("/api/businesses", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }); if (!response.ok) throw new Error(await responseError(response)); setBusinesses(current => current.map(item => ({ ...item, active: item.id === id }))); syncBusinesses(); }
     catch (cause) { setError((cause as Error).message); } finally { setBusy(false); }
   }
   async function remove(id: string) {
     if (!window.confirm("Remove this business and its setup blueprint? Other saved Fortify work will remain.")) return;
     setBusy(true); setError("");
-    try { const response = await fetch("/api/businesses", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }); if (!response.ok) throw new Error(await responseError(response)); setBusinesses(current => { const remaining = current.filter(item => item.id !== id); return remaining.map((item, index) => ({ ...item, active: item.active || (!remaining.some(row => row.active) && index === 0) })); }); }
+    try { const response = await fetch("/api/businesses", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id }) }); if (!response.ok) throw new Error(await responseError(response)); setBusinesses(current => { const remaining = current.filter(item => item.id !== id); return remaining.map((item, index) => ({ ...item, active: item.active || (!remaining.some(row => row.active) && index === 0) })); }); syncBusinesses(); }
     catch (cause) { setError((cause as Error).message); } finally { setBusy(false); }
   }
   if (tier === "FREE") return <div className="business-gate"><div><Building2 size={28}/><h1>Build Fortify around your business.</h1><p>The guided setup creates persistent business context, a recommended operating path and the starting conditions for agent work.</p><Link href="/pricing" className="btn-primary">Unlock business setup <ArrowRight size={15}/></Link><Link href="/dashboard">Return to dashboard</Link></div><BlueprintPreview name="Your business" recommendations={buildBusinessRecommendations({ ...blank, name: "Your business", offer: "your offer", audience: "your audience", objective: "your primary outcome", bottleneck: "your current constraint", channels: ["Content"] })}/></div>;

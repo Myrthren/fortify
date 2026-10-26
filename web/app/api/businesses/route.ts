@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { BUSINESS_LIMITS, buildBusinessRecommendations, businessLimitLabel, parseBusinessSetup } from "@/lib/business-setup";
 import { mutationOrigin, workspaceBody, workspaceError, workspaceUserId } from "@/lib/workspace-request";
+import { tutorialScope } from "@/lib/simulation-tutorial";
 
 const select = {
   id: true, name: true, website: true, industry: true, stage: true,
@@ -105,6 +106,7 @@ export async function DELETE(req: Request) {
       await tx.$queryRaw<Array<{ id: string }>>`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
       const target = await tx.businessProfile.findFirst({ where: { id, userId }, select: { active: true } });
       if (!target) throw new Error("Business unavailable.");
+      await tx.simulationTutorialProgress.deleteMany({ where: { userId, scope: tutorialScope(id) } });
       await tx.businessProfile.delete({ where: { id } });
       if (target.active) {
         const next = await tx.businessProfile.findFirst({ where: { userId }, orderBy: { updatedAt: "desc" }, select: { id: true } });

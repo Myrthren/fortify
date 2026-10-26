@@ -239,13 +239,14 @@ test('account export includes only the authenticated member ledger and anonymisa
   const model = { findMany: async () => [], findUnique: async () => ({}), deleteMany: async () => ({}), updateMany: async () => ({}), update: async () => ({}) };
   const db = new Proxy({
     $queryRawUnsafe: async (sql, id) => { ids.push(id); assert.match(sql, /WHERE "userId" = \$1/); return [{ model: 'qwen/alternate', userId: id }]; },
-    $transaction: async action => action(new Proxy({ $executeRawUnsafe: async (sql, id) => { ids.push(id); assert.match(sql, /DELETE FROM "AiUsageLedger" WHERE "userId" = \$1/); } }, { get: (obj, name) => obj[name] || model })),
+    $transaction: async action => action(new Proxy({ $executeRawUnsafe: async (sql, id) => { ids.push(id); assert.match(sql, /DELETE FROM "(?:AiUsageLedger|SimulationTutorialProgress)" WHERE "userId" = \$1/); } }, { get: (obj, name) => obj[name] || model })),
   }, { get: (obj, name) => obj[name] || model });
   const mocks = { '@/lib/db': { db }, '@/auth': { auth: async () => ({ user: { id: 'own-member' } }) }, 'next/server': { NextResponse: Response } };
   const exported = await (await load('app/api/user/export/route.ts', mocks).GET()).json();
   assert.equal(exported.aiUsageLedger[0].userId, 'own-member');
+  assert.equal(exported.simulationTutorials[0].userId, 'own-member');
   assert.equal((await load('app/api/user/delete/route.ts', mocks).DELETE()).status, 200);
-  assert.deepEqual(ids, ['own-member', 'own-member']);
+  assert.deepEqual(ids, ['own-member', 'own-member', 'own-member', 'own-member']);
 });
 
 test('outbound providers are available with only an OpenRouter key; retired credentials cannot enable them', () => {

@@ -10,6 +10,16 @@ The Simulation Lab at `/dashboard/research-lab` is independent of Plans. It is a
 
 ## Working modes
 
+### Business walkthrough and save isolation
+
+The lab resolves the authenticated member's active paid business. Simulation device saves are isolated by both member and business. The original personal save key is retained when no business is active. Switching business refreshes the current route and remounts the lab with that business's save and walkthrough status.
+
+First visits automatically show an optional five-action walkthrough: inspect a person, advance a round, introduce an equipment fault, advance to observe the response, then replay an earlier state. The walkthrough operates the same controls and seeded engine in a practice session. Autosave and AI calls are suppressed during practice, and exiting restores the original frames, cursor, selected agent, inspector, driver and seed. Closing the page or switching businesses during practice leaves the original device save intact. The user can skip or restart the walkthrough.
+
+`SimulationTutorialProgress` records completion or skipping for each member and server-validated business scope (or personal scope), at the current tutorial version. It persists across devices; completing for one business does not dismiss another business's tutorial. A replay cannot downgrade completed progress to skipped. The API enforces authentication, origin and business ownership. Storage preparation applies additive `simulation-tutorial.sql` with business setup during production builds. Deleting a business clears its tutorial scope, and account export/anonymisation include the progress data. Failed progress saves stay visible and permit retry or exit without claiming durable completion.
+
+The account/navigation menu loads the real business roster when opened. Activating a business uses the same plan-enforced business API as Setup and refreshes server-rendered context. New-business links open Setup's interview directly when capacity permits. The Classic admin emblem uses a fixed centred hit area. Menu reveals, active selection feedback, tutorial progress, environment arrival and newly recorded events use short bounded animations, with reduced-motion and ambient-pause paths.
+
 Autonomous rules mode runs locally without AI requests. Each agent chooses a legal action from its role, personal objective, available resources, memories and published evidence. Agents choose from the same prior snapshot; the engine rotates action resolution order to avoid permanently favouring one researcher. Funding transfers, preparation, experiments, instrument degradation, evidence review and approval change subsequent available actions. Results are produced by seeded world rules, never invented by an AI response.
 
 AI-assisted mode selects the same six agents' legal actions through one bounded provider request per round. The adapter validates all six unique decisions and rejects unknown actions or oversized notes. The existing provider wrapper may use its configured availability fallback; the response records the reported provider/model identifier. Failure never silently switches the simulation to rules mode.

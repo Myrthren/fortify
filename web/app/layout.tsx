@@ -14,6 +14,7 @@ import "./planning-canvas.css";
 import "./research-institute.css";
 import "./dashboard-shell.css";
 import "./business-setup.css";
+import "./simulation-onboarding.css";
 
 const BASE_URL = "https://fortify-io.com";
 

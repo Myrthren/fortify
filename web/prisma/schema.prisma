@@ -99,6 +99,7 @@ model User {
   mediaItems            MediaItem[]
   companyDna            CompanyDna?
   businesses            BusinessProfile[]
+  simulationTutorials   SimulationTutorialProgress[]
   aiSessions            AiSession[]
   aiCreditPacks         AiCreditPack[]
   forumPosts            ForumPost[]
@@ -432,6 +433,18 @@ model BusinessProfile {
 }
 
 // ─── Fortify AI sessions ──────────────────────────────────
+model SimulationTutorialProgress {
+  id      String   @id @default(cuid())
+  userId  String
+  scope   String
+  version Int      @default(1)
+  outcome String
+  seenAt  DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scope])
+}
+
 model AiSession {
   id          String   @id @default(cuid())
   userId      String

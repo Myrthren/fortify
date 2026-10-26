@@ -53,6 +53,7 @@ enum Tier {
 
 model User {
   aiUsageLedger AiUsageLedger[]
+  simulationTutorials SimulationTutorialProgress[]
   id            String    @id @default(cuid())
   name          String?
   email         String?   @unique
@@ -380,6 +381,18 @@ model ResearchDecisionBatch {
   @@unique([userId, input])
   @@index([createdAt])
 }
+model SimulationTutorialProgress {
+  id      String   @id @default(cuid())
+  userId  String
+  scope   String
+  version Int      @default(1)
+  outcome String
+  seenAt  DateTime @default(now())
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, scope])
+}
+
 model AiUsageLedger {
   id             String   @id
   userId         String

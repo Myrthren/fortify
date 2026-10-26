@@ -9,7 +9,7 @@
  * Bump KNOWLEDGE_VERSION so it's easy to confirm the bot has the latest.
  */
 
-export const KNOWLEDGE_VERSION = "2026-10-25-business-simulation-worlds";
+export const KNOWLEDGE_VERSION = "2026-10-26-simulation-walkthrough";
 
 export const FORTIFY_KNOWLEDGE = `ABOUT FORTIFY
 - Platform: https://fortify-io.com
@@ -55,7 +55,7 @@ Research:
 - Competitor Watch — compare readable competitor web pages daily (07:00 UTC); alerts after a scan finds changed wording, with added/removed excerpts. Manual scans are also available. Private or JavaScript-only social content is not supported (Elite+)
 
 Business:
-- Business Setup — guided business context and an action blueprint at /dashboard/setup (Pro: 1 business, Elite: 5, Apex: unlimited). Create, edit, switch and remove saved businesses. The active business informs advisor and chat context; setup does not automatically connect external software.
+- Business Setup — guided business context and an action blueprint at /dashboard/setup (Pro: 1 business, Elite: 5, Apex: unlimited). Create, edit, switch and remove saved businesses. Switch the active business or start a new setup from the Account menu, or Navigation on mobile. The active business informs advisor and chat context; setup does not automatically connect external software.
 - Meta Ads — real campaign performance + competitor ad intel (Pro+)
 - Shopify Integration — revenue, orders, and product performance dashboard (Pro+)
 - Revenue Dashboard — MRR, subscriptions, and charges from Stripe (Pro+)
@@ -64,6 +64,7 @@ Business:
 
 Automation:
 - Simulation Lab — /dashboard/research-lab. Three visual 3D environments: Research Institute, Operations Studio and Orbital Command, with six agents, shared resources, interventions and recorded replay. They share a bounded fictional engine. They do not execute real software actions or run while the page is closed. Rules mode runs locally; AI-assisted decisions require explicit server configuration and bounded request limits.
+- Simulation walkthrough — an optional five-action practice guide opens on a member's first lab visit for each business (or personal workspace). Completion or skipping is remembered across devices; restart it with Walkthrough. Practice leaves the saved session intact and makes no AI calls. Simulation sessions and environment preferences remain device-local and are separated by member and business.
 - Workflows — multi-step AI automation builder; triggers, logic, AI nodes, Discord/Slack/Email/Notion/HTTP actions (Elite+)
 
 Community:

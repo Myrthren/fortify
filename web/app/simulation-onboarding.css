@@ -1,0 +1,91 @@
+/* Shared navigation feedback, plus the simulation's guided practice layer. */
+:root[data-theme] .workspace-header .admin-emblem { display:inline-flex; align-items:center; justify-content:center; flex:0 0 36px; width:36px; height:36px; min-width:36px; padding:6px; line-height:1; border-radius:5px; overflow:visible; }
+:root[data-theme] .workspace-header .admin-emblem-icon { display:block; flex:0 0 22px; width:22px; height:22px; object-fit:contain; object-position:center; }
+:root[data-theme=original] .workspace-header .admin-emblem { border-radius:8px; }
+.workspace-account-menu .workspace-disclosure-panel { width:304px; max-width:calc(100vw - 28px); }
+.workspace-disclosure-panel:not([hidden]) { transform-origin:top right; animation:workspace-menu-open 180ms cubic-bezier(.16,1,.3,1) both; }
+.workspace-business-switcher { padding:14px 10px; border-bottom:1px solid var(--border); }
+.workspace-business-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.workspace-business-heading h2 { font-size:12px; font-weight:500; color:var(--text); }
+.workspace-business-heading>span { font-size:10px; color:var(--shell-dim); font-variant-numeric:tabular-nums; }
+.workspace-business-switcher>p,.workspace-business-error p { display:flex; align-items:center; gap:7px; color:var(--shell-muted); font-size:12px; line-height:1.65; margin:10px 0; }
+.workspace-business-switcher ul { list-style:none; margin:0 -3px; padding:0; max-height:220px; overflow:auto; scrollbar-width:thin; }
+.workspace-business-switcher li+li { margin-top:3px; }
+.workspace-business-switcher li button { display:flex; align-items:center; gap:10px; width:100%; min-height:48px; padding:9px; text-align:left; border-radius:4px; color:var(--shell-muted); transition:background 150ms,color 150ms; }
+.workspace-business-switcher li button>span { flex:1; min-width:0; }
+.workspace-business-switcher li strong { display:block; overflow-wrap:anywhere; font-size:12px; font-weight:500; line-height:1.5; }
+.workspace-business-switcher li small { display:block; margin-top:2px; font-size:10px; line-height:1.5; color:var(--shell-dim); }
+.workspace-business-switcher li svg { flex-shrink:0; }
+.workspace-business-switcher li button:hover,.workspace-business-switcher li button[aria-pressed=true] { background:var(--bg-elevated); color:var(--text); }
+.workspace-business-switcher li button:disabled:not([aria-pressed=true]) { opacity:.5; cursor:not-allowed; }
+.workspace-business-switcher li button[aria-pressed=true]>svg:last-child { stroke-dasharray:30; animation:workspace-business-confirm 320ms ease-out both; }
+.workspace-business-add,.workspace-business-manage { display:flex; align-items:center; gap:8px; min-height:40px; margin-top:7px; color:var(--text); font-size:12px; border-radius:4px; }
+.workspace-business-add:hover,.workspace-business-manage:hover { color:var(--accent); text-decoration:underline; text-underline-offset:4px; }
+.workspace-business-manage { min-height:30px; margin-top:0; color:var(--shell-muted); font-size:11px; }
+.workspace-business-error button { display:inline-flex; align-items:center; gap:6px; min-height:36px; font-size:12px; color:var(--text); }
+.workspace-business-spinner { animation:workspace-business-spin 850ms linear infinite; }
+.workspace-business-announcement,.institute-tutorial-announcement { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.workspace-mobile-sheet>.workspace-business-switcher { grid-column:1/-1; padding:4px 0 18px; }
+.workspace-business-switcher button:focus-visible,.workspace-business-switcher a:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.institute-business-context { display:inline-flex; align-items:center; gap:7px; margin-top:12px; max-width:100%; overflow-wrap:anywhere; font-size:12px; color:var(--text-muted); }
+.institute-controls .institute-tutorial-restart { display:inline-flex; align-items:center; gap:7px; min-height:38px; padding:8px 10px; color:var(--text); border:1px solid var(--border-strong); border-radius:4px; font-size:12px; }
+.institute-tutorial-restart:hover { background:var(--bg-elevated); }
+.institute-tutorial-restart:disabled { opacity:.5; }
+.institute-tutorial { position:sticky; top:116px; z-index:25; margin:0 0 22px; border:1px solid var(--border-strong); border-radius:6px; background:var(--bg-panel); color:var(--text); box-shadow:0 12px 32px #0005; isolation:isolate; }
+.institute-tutorial-heading { display:flex; align-items:center; gap:11px; padding:12px 18px; }
+.institute-tutorial-heading>svg { color:var(--text-muted); flex-shrink:0; }
+.institute-tutorial-heading>div { display:flex; align-items:baseline; gap:12px; flex:1; min-width:0; }
+.institute-tutorial-heading strong { font-size:12px; font-weight:500; }
+.institute-tutorial-heading span { font-size:11px; color:var(--text-muted); overflow-wrap:anywhere; }
+.institute-tutorial-heading>button { display:flex; align-items:center; justify-content:center; width:36px; height:36px; color:var(--text-muted); border-radius:4px; }
+.institute-tutorial-heading>button:hover { background:var(--bg-elevated); color:var(--text); }
+.institute-tutorial-progress { height:2px; overflow:hidden; background:var(--border); }
+.institute-tutorial-progress>span { display:block; width:100%; height:100%; background:var(--accent); transform-origin:left; transition:transform 360ms cubic-bezier(.16,1,.3,1); }
+.institute-tutorial-body { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:28px; padding:18px; animation:institute-guide-change 220ms ease-out; }
+.institute-tutorial h2 { font-size:20px; font-weight:500; letter-spacing:-.02em; line-height:1.35; margin-bottom:7px; }
+:root[data-theme] .institute-tutorial h2:focus-visible { outline:none; }
+.institute-tutorial-body p { max-width:75ch; font-size:13px; line-height:1.7; color:var(--text-muted); }
+.institute-tutorial-practice { display:block; margin-top:10px; font-size:11px; color:var(--text-muted); }
+.institute-tutorial-actions { display:flex; align-items:center; flex-direction:column; gap:8px; min-width:180px; }
+.institute-tutorial-actions .btn-primary { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:44px; padding:11px 15px; font-size:12px; white-space:nowrap; }
+.institute-tutorial-actions .btn-primary:disabled { opacity:.55; cursor:wait; }
+.institute-tutorial-skip { min-height:32px; font-size:11px; color:var(--text-muted); text-decoration:underline; text-underline-offset:4px; }
+.institute-tutorial-error { display:flex; gap:18px; align-items:center; padding:12px 18px; border-top:1px solid var(--border); font-size:12px; line-height:1.6; }
+.institute-tutorial-error button { flex-shrink:0; min-height:36px; text-decoration:underline; text-underline-offset:4px; }
+.institute-tutorial button:focus-visible,.institute-tutorial-restart:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
+.institute[data-tutorial=inspect] .institute-people-strip,.institute[data-tutorial=advance] .institute-3d-playback,.institute[data-tutorial=intervene] .institute-scene-events,.institute[data-tutorial=respond] .institute-3d-playback,.institute[data-tutorial=replay] .institute-replay { outline:1px solid var(--accent); outline-offset:3px; scroll-margin-top:340px; }
+.institute-3d-shell { animation:institute-world-enter 340ms cubic-bezier(.16,1,.3,1); }
+.institute-round-state { animation:institute-round-recorded 300ms ease-out; font-variant-numeric:tabular-nums; }
+.institute-feed li:first-child { animation:institute-event-recorded 250ms ease-out; }
+.institute-people-strip button,.institute-environments button { transition:background 160ms,border-color 160ms,color 160ms; }
+.institute[data-tutorial]:not([data-tutorial=welcome]) .institute-new-session { display:none; }
+:root[data-theme=original] .institute-tutorial { border-radius:12px; }
+@keyframes workspace-menu-open { from { opacity:.6; clip-path:inset(0 0 18% 0); transform:translateY(-4px); } to { opacity:1; clip-path:inset(0); transform:translateY(0); } }
+@keyframes workspace-business-confirm { from { stroke-dashoffset:30; } to { stroke-dashoffset:0; } }
+@keyframes workspace-business-spin { to { transform:rotate(360deg); } }
+@keyframes institute-guide-change { from { opacity:.7; } to { opacity:1; } }
+@keyframes institute-world-enter { from { clip-path:inset(0 0 3% 0); opacity:.8; } to { clip-path:inset(0); opacity:1; } }
+@keyframes institute-round-recorded { from { background:var(--bg-elevated); } to { background:transparent; } }
+@keyframes institute-event-recorded { from { opacity:.55; transform:translateX(5px); } to { opacity:1; transform:translateX(0); } }
+@media(max-width:760px) {
+  .institute-tutorial { top:111px; }
+  .institute-tutorial-heading { padding:8px 12px; gap:8px; }
+  .institute-tutorial-heading>div { display:block; }
+  .institute-tutorial-heading>div>span { display:block; margin-top:2px; font-size:10px; }
+  .institute-tutorial-heading>span { font-size:10px; max-width:75px; }
+  .institute-tutorial-body { grid-template-columns:1fr; gap:12px; padding:12px; }
+  .institute-tutorial h2 { font-size:17px; }
+  .institute-tutorial-body p { font-size:12px; line-height:1.6; }
+  .institute-tutorial-practice { font-size:10px; margin-top:7px; }
+  .institute-tutorial-actions { flex-direction:row; flex-wrap:wrap; justify-content:space-between; gap:5px 10px; }
+  .institute-tutorial-actions .btn-primary { min-height:40px; font-size:11px; padding:9px 11px; }
+  .institute-tutorial-skip { font-size:10px; }
+  .institute-tutorial-error { padding:10px 12px; gap:10px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .workspace-disclosure-panel:not([hidden]),.workspace-business-switcher li button[aria-pressed=true]>svg:last-child,.workspace-business-spinner,.institute-tutorial-body,.institute-3d-shell,.institute-round-state,.institute-feed li:first-child { animation:none; }
+  .institute-tutorial-progress>span { transition:none; }
+  :root[data-theme] .workspace-header .admin-emblem-icon { animation:none; transform:none; }
+}
+:root[data-motion=paused] .workspace-business-spinner,:root[data-page-hidden=true] .workspace-business-spinner { animation-play-state:paused; }
+:root[data-motion=paused] .workspace-disclosure-panel,:root[data-motion=paused] .institute-tutorial-body,:root[data-motion=paused] .institute-3d-shell,:root[data-motion=paused] .institute-round-state,:root[data-motion=paused] .institute-feed li:first-child { animation:none; }

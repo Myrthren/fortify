@@ -64,6 +64,7 @@ export async function DELETE() {
       await tx.notificationPrefs.deleteMany({ where: { userId } });
 
       // Anonymise the User row — strip all personal identifiers
+      await tx.$executeRawUnsafe('DELETE FROM "SimulationTutorialProgress" WHERE "userId" = $1', userId);
       await tx.user.update({
         where: { id: userId },
         data: {

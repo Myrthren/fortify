@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { Activity, ArrowRight, Bot, Building2, Check, ChevronRight, Cpu, Download, FlaskConical, Gauge, History, Microscope, Orbit, RotateCcw, Settings2, ShieldCheck, Users, Zap } from "lucide-react";
+import { Activity, ArrowRight, Bot, Building2, Check, ChevronRight, Cpu, Download, FlaskConical, Gauge, GraduationCap, History, Microscope, Orbit, RotateCcw, Settings2, ShieldCheck, Users, Zap } from "lucide-react";
 import { createInstitute, stepInstitute, intervene, readInstitute, validateDecisions, projectScore, evidence, availableCompute, requiredEvidence, PEOPLE, FOCUS, LAB_ROUNDS, TARGET, type World, type PersonId, type Intervention, type Focus } from "@/lib/research-institute";
 import { ResearchInstituteScene } from "@/components/research-institute-scene";
 import { InstituteTeamwork } from "@/components/institute-teamwork";
@@ -8,12 +8,18 @@ import type { CameraView } from "@/lib/institute-space";
 import { responseError } from "@/lib/response-error";
 import { isSimulationTheme, SIMULATION_THEMES, type SimulationTheme } from "@/lib/institute-themes";
 import { presentThemeText, themePerson, THEME_PRESENTATION } from "@/lib/institute-theme-presentation";
+import { SIMULATION_TUTORIAL_VERSION, type TutorialContext, type TutorialOutcome, type TutorialStep } from "@/lib/simulation-tutorial";
+import { SimulationTutorial } from "@/components/simulation-tutorial";
 
 const firstName = (id: string) => PEOPLE.find(p => p.id === id)?.name.split(" ")[0] ?? (id === "you" ? "You" : "Institute");
 type Tape = { schema: 1; frames: World[] };
-export function ResearchInstitute({ storageKey = "fortify-institute-preview-v1", aiAvailable = false, initialFrames, initialView, initialSelected = "sol" }: { storageKey?: string; aiAvailable?: boolean; initialFrames?: World[]; initialView?: CameraView; initialSelected?: PersonId }) {
+export function ResearchInstitute({ storageKey = "fortify-institute-preview-v1", aiAvailable = false, initialFrames, initialView, initialSelected = "sol", tutorial }: { storageKey?: string; aiAvailable?: boolean; initialFrames?: World[]; initialView?: CameraView; initialSelected?: PersonId; tutorial?: TutorialContext }) {
   const [frames, setFrames] = useState<World[]>(initialFrames ?? [createInstitute()]), [cursor, setCursor] = useState((initialFrames?.length ?? 1) - 1), [selected, setSelected] = useState<PersonId>(initialSelected), [playing, setPlaying] = useState(false), [busy, setBusy] = useState(false), [driver, setDriver] = useState<"rules" | "ai">("rules"), [speed, setSpeed] = useState(12000), [saveState, setSaveState] = useState("Loading device save…"), [error, setError] = useState(""), [loaded, setLoaded] = useState(false), [seed, setSeed] = useState("31415"), [tab, setTab] = useState<"people" | "experiments">("people");
   const [theme, setTheme] = useState<SimulationTheme>("research");
+  const [tutorialStep, setTutorialStep] = useState<TutorialStep | null>(null), [tutorialSaving, setTutorialSaving] = useState(false), [tutorialError, setTutorialError] = useState("");
+  const originalRun = useRef<{ frames: World[]; cursor: number; selected: PersonId; inspecting: boolean; driver: "rules" | "ai"; seed: string } | null>(null);
+  const savingTutorial = useRef(false), practice = tutorialStep !== null && tutorialStep !== "welcome";
+  const instituteRoot = useRef<HTMLDivElement>(null);
   const current = frames[frames.length - 1], world = frames[cursor] ?? current, replaying = cursor !== frames.length - 1, agent = world.agents.find(a => a.id === selected)!, person = PEOPLE.find(p => p.id === selected)!;
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null), request = useRef<AbortController | null>(null), flight = useRef(false), alive = useRef(true), advanceRef = useRef<() => Promise<void>>(async () => {}), hydrated = useRef(false);
   const interventionsUsed = frames.length - 1 - current.round;
@@ -21,14 +27,30 @@ export function ResearchInstitute({ storageKey = "fortify-institute-preview-v1",
   const [inspecting, setInspecting] = useState(false);
   useEffect(() => { alive.current = true; try { const savedTheme = localStorage.getItem(`${storageKey}:environment`); if (isSimulationTheme(savedTheme)) setTheme(savedTheme); const raw = localStorage.getItem(storageKey); if (raw) { if (raw.length > 2500000) throw Error(); const tape = JSON.parse(raw) as Tape; if (tape.schema !== 1 || !Array.isArray(tape.frames) || !tape.frames.length || tape.frames.length > 90) throw Error(); const checked = tape.frames.map(readInstitute); if (checked.some((w, i) => i && (w.round < checked[i - 1].round || w.round > checked[i - 1].round + 1))) throw Error(); setFrames(checked); setCursor(checked.length - 1); setSeed(String(checked[0].seed)); } } catch { setError("The previous device save could not be restored. A fresh session is ready."); } hydrated.current = true; setLoaded(true); return () => { alive.current = false; request.current?.abort(); if (timer.current) clearTimeout(timer.current); }; }, [storageKey]);
   useEffect(() => { if (!loaded) return; try { localStorage.setItem(`${storageKey}:environment`, theme); } catch { setSaveState("Device save unavailable · export this session"); } }, [loaded, storageKey, theme]);
-  useEffect(() => { if (!loaded || !hydrated.current) return; try { const saved = JSON.stringify({ schema: 1, frames }); if (saved.length > 2500000) throw Error("Session exceeds device-save limit"); localStorage.setItem(storageKey, saved); setSaveState("Saved on this device"); } catch { setSaveState("Device save unavailable · export this session"); } }, [frames, loaded, storageKey]);
+  useEffect(() => { if (!loaded || !hydrated.current || practice) return; try { const saved = JSON.stringify({ schema: 1, frames }); if (saved.length > 2500000) throw Error("Session exceeds device-save limit"); localStorage.setItem(storageKey, saved); setSaveState("Saved on this device"); } catch { setSaveState("Device save unavailable · export this session"); } }, [frames, loaded, storageKey, practice]);
+  useEffect(() => {
+    if (!loaded || !tutorial || tutorial.seen) return;
+    // Back navigation can reuse an older server render. Only an acknowledged
+    // server save writes this member/business-specific local marker.
+    try { if (Number(localStorage.getItem(`${storageKey}:tutorial`)) >= SIMULATION_TUTORIAL_VERSION) return; } catch { /* Server state still works without device storage. */ }
+    setTutorialStep("welcome");
+  }, [loaded, storageKey, tutorial?.seen]);
+  useEffect(() => {
+    if (!practice || !instituteRoot.current || !tutorialStep) return;
+    const selectors: Partial<Record<TutorialStep, string>> = { inspect: ".institute-people-strip", advance: ".institute-3d-playback", intervene: ".institute-3d-playback", respond: ".institute-3d-readings", replay: ".institute-replay", finish: ".institute-replay" };
+    const target = instituteRoot.current.querySelector<HTMLElement>(selectors[tutorialStep] ?? ".institute-world");
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "paused";
+    const frame = window.requestAnimationFrame(() => target?.scrollIntoView({ block: "center", behavior: reduced ? "instant" : "smooth" }));
+    return () => window.cancelAnimationFrame(frame);
+  }, [tutorialStep, practice]);
   function pause() { setPlaying(false); if (timer.current) clearTimeout(timer.current); request.current?.abort(); }
   async function advance() {
     if (flight.current || replaying || current.status !== "active" || !loaded) return;
+    if (practice && tutorialStep !== "advance" && tutorialStep !== "respond") return;
     flight.current = true; setBusy(true); setError("");
     try {
       let next: World;
-      if (driver === "ai") {
+      if (driver === "ai" && !practice) {
         const controller = new AbortController(); request.current = controller;
         const response = await fetch("/api/research-lab/decision", { method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal, body: JSON.stringify({ world: current }) });
         if (!response.ok) throw Error(await responseError(response));
@@ -37,12 +59,46 @@ export function ResearchInstitute({ storageKey = "fortify-institute-preview-v1",
       } else next = stepInstitute(current);
       if (!alive.current) return;
       setFrames(previous => [...previous, next]); setCursor(frames.length); if (next.status !== "active") setPlaying(false);
+      if (tutorialStep === "advance") setTutorialStep("intervene");
+      else if (tutorialStep === "respond") setTutorialStep("replay");
     } catch (e) { if (alive.current && (e as Error).name !== "AbortError") { setError((e as Error).message); setPlaying(false); } }
     finally { flight.current = false; request.current = null; if (alive.current) setBusy(false); }
   }
   advanceRef.current = advance;
   useEffect(() => { if (!playing || busy || replaying || current.status !== "active") return; timer.current = setTimeout(() => { void advanceRef.current(); }, speed); return () => { if (timer.current) clearTimeout(timer.current); }; }, [playing, busy, replaying, current, speed]);
-  function changeWorld(change: Intervention | Focus) { if (busy || replaying || current.status !== "active" || interventionsUsed >= 40) return; pause(); const next = intervene(current, change); setFrames(previous => [...previous, next]); setCursor(frames.length); setError(""); }
+  function changeWorld(change: Intervention | Focus) { if (busy || replaying || current.status !== "active" || interventionsUsed >= 40 || (practice && tutorialStep !== "intervene")) return; pause(); const next = intervene(current, change); setFrames(previous => [...previous, next]); setCursor(frames.length); setError(""); if (tutorialStep === "intervene" && change === "equipment-fault") setTutorialStep("respond"); }
+  function selectPerson(id: PersonId) { setSelected(id); setTab("people"); if (tutorialStep === "inspect") { setInspecting(true); setTutorialStep("advance"); } }
+  function replayTo(index: number) { if (practice && tutorialStep !== "replay" && tutorialStep !== "finish") return; pause(); setCursor(index); if (tutorialStep === "replay" && index < frames.length - 1) setTutorialStep("finish"); }
+  function startTutorial() {
+    if (busy || flight.current || savingTutorial.current) return;
+    pause(); setTutorialError("");
+    originalRun.current = { frames, cursor, selected, inspecting, driver, seed };
+    setFrames([createInstitute(31415, "walkthrough-practice")]); setCursor(0); setSelected("mira"); setInspecting(false); setDriver("rules"); setSeed("31415"); setTutorialStep("inspect");
+  }
+  function restoreRun() {
+    pause(); const saved = originalRun.current;
+    if (saved) { setFrames(saved.frames); setCursor(saved.cursor); setSelected(saved.selected); setInspecting(saved.inspecting); setDriver(saved.driver); setSeed(saved.seed); originalRun.current = null; }
+    setTutorialStep(null); setTutorialError("");
+  }
+  async function finishTutorial(outcome: TutorialOutcome) {
+    if (savingTutorial.current || busy) return;
+    savingTutorial.current = true; setTutorialSaving(true); setTutorialError(""); pause();
+    try {
+      const response = await fetch("/api/research-lab/tutorial", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ businessId: tutorial?.businessId ?? null, version: SIMULATION_TUTORIAL_VERSION, outcome }) });
+      if (!response.ok) throw new Error(await responseError(response));
+      try { localStorage.setItem(`${storageKey}:tutorial`, String(SIMULATION_TUTORIAL_VERSION)); } catch { /* Progress is already saved on the server. */ }
+      if (alive.current) restoreRun();
+    } catch { if (alive.current) setTutorialError("Progress could not be saved. Try again, or exit for now; the walkthrough will return next visit."); }
+    finally { savingTutorial.current = false; if (alive.current) setTutorialSaving(false); }
+  }
+  function tutorialAction() {
+    if (tutorialStep === "welcome") startTutorial();
+    else if (tutorialStep === "inspect") { selectPerson("mira"); setInspecting(true); }
+    else if (tutorialStep === "advance" || tutorialStep === "respond") void advance();
+    else if (tutorialStep === "intervene") changeWorld("equipment-fault");
+    else if (tutorialStep === "replay") replayTo(Math.max(0, cursor - 1));
+    else if (tutorialStep === "finish") void finishTutorial("completed");
+  }
   function restart() { const n = Number(seed); if (!Number.isSafeInteger(n) || n < 1 || n > 2147483647) { setError("Use a seed between 1 and 2147483647."); return; } if (current.round > 0 && !window.confirm(`Start a new ${SIMULATION_THEMES[theme].setting.toLowerCase()} session? Export this run first if you want to keep its history.`)) return; pause(); setFrames([createInstitute(n, crypto.randomUUID())]); setCursor(0); setError(""); }
   function exportRun() { const url = URL.createObjectURL(new Blob([JSON.stringify({ schema: 1, frames }, null, 2)], { type: "application/json" })), a = document.createElement("a"); a.href = url; a.download = `fortify-${theme}-${current.seed}.json`; a.click(); URL.revokeObjectURL(url); }
   const themeIcons = { research: FlaskConical, operations: Building2, orbital: Orbit };
@@ -53,14 +109,15 @@ export function ResearchInstitute({ storageKey = "fortify-institute-preview-v1",
     : theme === "operations"
       ? [{id:"equipment-fault",title:"Systems fault",detail:"Operating health falls to 35%. A control pod needs service."},{id:"dataset-shift",title:"Demand shift",detail:"Previous evidence no longer fits current conditions."},{id:"compute-outage",title:"Capacity shortage",detail:"One delivery slot for three rounds."},{id:"budget-cut",title:"Reduce the reserve",detail:"Remove up to 15 unallocated programme credits."},{id:"grant",title:"Emergency capacity",detail:"Add 20 fictional programme credits."}]
       : [{id:"equipment-fault",title:"Sensor fault",detail:"Vessel health falls to 35%. The systems bay needs service."},{id:"dataset-shift",title:"Flight-condition shift",detail:"Previous telemetry no longer supports clearance."},{id:"compute-outage",title:"Compute restriction",detail:"One flight-compute slot for three rounds."},{id:"budget-cut",title:"Reduce mission reserve",detail:"Remove up to 15 unallocated mission credits."},{id:"grant",title:"Emergency allocation",detail:"Add 20 fictional mission credits."}];
-  return <div className="institute" data-environment={theme}>
-    <header className="institute-heading"><div><h1>Enter {themeCopy.name}.</h1><p>Follow the people. Test a constraint. See what changes.</p></div><div className="institute-controls"><label className="institute-speed">Pace<select aria-label="Simulation speed" value={speed} onChange={e => setSpeed(Number(e.target.value))}><option value={20000}>Slow</option><option value={12000}>Normal</option><option value={6000}>Fast</option></select></label><div className="institute-engine-controls"><label><Bot size={13}/><select aria-label="Agent decision mode" disabled={busy || playing} value={driver} onChange={e => setDriver(e.target.value as typeof driver)}><option value="rules">Autonomous rules</option><option value="ai" disabled={!aiAvailable}>AI-assisted decisions{!aiAvailable ? " · unavailable here" : ""}</option></select></label><button onClick={exportRun}><Download size={13}/> Export run</button></div></div></header>
-    <div className="institute-session-meta"><span><i className={playing ? "live" : ""}/>{busy ? "Choosing agent actions…" : replaying ? "Viewing recorded history" : playing ? "Session running" : current.status === "active" ? "Session paused" : current.status === "completed" ? "Objective demonstrated" : presentation.endedLabel}</span><span>{saveState}</span><span>Round {world.round} / {LAB_ROUNDS}</span></div>
+  return <div ref={instituteRoot} className="institute" data-environment={theme} data-tutorial={tutorialStep ?? undefined}>
+    <header className="institute-heading"><div><h1>Enter {themeCopy.name}.</h1><p>Follow the people. Test a constraint. See what changes.</p>{tutorial && <span className="institute-business-context"><Building2 size={12}/>{tutorial.businessName}</span>}</div><div className="institute-controls">{tutorial && <button type="button" className="institute-tutorial-restart" disabled={!loaded || busy || !!tutorialStep} onClick={() => { pause(); setTutorialStep("welcome"); }}><GraduationCap size={15}/> Walkthrough</button>}<label className="institute-speed">Pace<select aria-label="Simulation speed" value={speed} onChange={e => setSpeed(Number(e.target.value))}><option value={20000}>Slow</option><option value={12000}>Normal</option><option value={6000}>Fast</option></select></label><div className="institute-engine-controls"><label><Bot size={13}/><select aria-label="Agent decision mode" disabled={busy || playing || practice} value={driver} onChange={e => setDriver(e.target.value as typeof driver)}><option value="rules">Autonomous rules</option><option value="ai" disabled={!aiAvailable}>AI-assisted decisions{!aiAvailable ? " · unavailable here" : ""}</option></select></label><button onClick={exportRun}><Download size={13}/> Export run</button></div></div></header>
+    <div className="institute-session-meta"><span><i className={playing ? "live" : ""}/>{busy ? "Choosing agent actions…" : replaying ? "Viewing recorded history" : playing ? "Session running" : current.status === "active" ? "Session paused" : current.status === "completed" ? "Objective demonstrated" : presentation.endedLabel}</span><span>{practice ? "Walkthrough practice · saved session protected" : saveState}</span><span key={`round:${world.round}`} className="institute-round-state">Round {world.round} / {LAB_ROUNDS}</span></div>
     {error && <p className="institute-error" role="alert">{error}</p>}
+    {tutorialStep && loaded && <SimulationTutorial step={tutorialStep} businessName={tutorial?.businessName ?? "Personal workspace"} busy={busy} saving={tutorialSaving} error={tutorialError} onAction={tutorialAction} onSkip={() => void finishTutorial("skipped")} onExit={restoreRun}/>}
     <section className="institute-environments" aria-label="Simulation environment"><header><div><h2>Choose the world around the simulation</h2><p>The agents, decisions and replay stay intact. The working environment changes how the system is read.</p></div><span>3 environments</span></header><div>{(Object.entries(SIMULATION_THEMES) as [SimulationTheme,typeof SIMULATION_THEMES[SimulationTheme]][]).map(([id,item])=>{const Icon=themeIcons[id];return <button key={id} aria-pressed={theme===id} onClick={()=>{pause();setTheme(id);}}><Icon size={17}/><span><strong>{item.name}</strong><small>{item.setting}</small><p>{item.description}</p></span>{theme===id&&<Check size={14}/>}</button>})}</div></section>
-    <div className={`institute-layout ${inspecting ? "has-inspector" : ""}`}><section className="institute-world"><ResearchInstituteScene key={theme} theme={theme} initialView={initialView} world={world} selected={selected} playing={playing} canRun={loaded&&!replaying&&current.status==="active"&&(playing||!busy)} canStep={loaded&&!busy&&!playing&&!replaying&&current.status==="active"} canIntervene={loaded&&!busy&&!replaying&&current.status==="active"&&interventionsUsed<40} inspecting={inspecting} onInspect={()=>setInspecting(!inspecting)} onIntervene={changeWorld} onToggleRun={()=>playing?pause():setPlaying(true)} onStep={()=>void advance()} onSelect={id=>{setSelected(id);setTab("people");}}/><div className="institute-people-strip">{PEOPLE.map(p=>{const display=themePerson(theme,p.id,p);return <button key={p.id} aria-label={"Inspect "+p.name+", "+display.role} aria-pressed={selected===p.id} onClick={()=>{setSelected(p.id);setTab("people");setInspecting(true);}}><span>{p.initials}</span><strong>{p.name.split(" ")[0]}</strong><small>{present(world.agents.find(a=>a.id===p.id)!.activity)}</small></button>})}</div>
-    <InstituteTeamwork world={world} theme={theme} onSelect={id=>{setSelected(id);setTab("people");}}/>
-    <div className="institute-replay"><History size={14}/><label htmlFor="institute-replay">Session replay</label><input id="institute-replay" type="range" aria-label={theme === "research" ? "Replay recorded research states" : `Replay recorded ${themeCopy.setting.toLowerCase()} states`} min={0} max={frames.length-1} value={cursor} disabled={busy} onChange={e=>{pause();setCursor(Number(e.target.value));}}/><span>{cursor+1}/{frames.length}</span>{replaying&&<button onClick={()=>setCursor(frames.length-1)}>Return to latest <ArrowRight size={12}/></button>}</div>
+    <div className={`institute-layout ${inspecting ? "has-inspector" : ""}`}><section className="institute-world"><ResearchInstituteScene key={theme} theme={theme} initialView={initialView} world={world} selected={selected} playing={playing} canRun={loaded&&!practice&&!replaying&&current.status==="active"&&(playing||!busy)} canStep={loaded&&!busy&&!playing&&!replaying&&current.status==="active"&&(!practice||tutorialStep==="advance"||tutorialStep==="respond")} canIntervene={loaded&&!busy&&!replaying&&current.status==="active"&&interventionsUsed<40&&(!practice||tutorialStep==="intervene")} inspecting={inspecting} onInspect={()=>setInspecting(!inspecting)} onIntervene={changeWorld} onToggleRun={()=>playing?pause():setPlaying(true)} onStep={()=>void advance()} onSelect={selectPerson}/><div className="institute-people-strip">{PEOPLE.map(p=>{const display=themePerson(theme,p.id,p);return <button key={p.id} aria-label={"Inspect "+p.name+", "+display.role} aria-pressed={selected===p.id} onClick={()=>{selectPerson(p.id);setInspecting(true);}}><span>{p.initials}</span><strong>{p.name.split(" ")[0]}</strong><small>{present(world.agents.find(a=>a.id===p.id)!.activity)}</small></button>})}</div>
+    <InstituteTeamwork world={world} theme={theme} onSelect={selectPerson}/>
+    <div className="institute-replay"><History size={14}/><label htmlFor="institute-replay">Session replay</label><input id="institute-replay" type="range" aria-label={theme === "research" ? "Replay recorded research states" : `Replay recorded ${themeCopy.setting.toLowerCase()} states`} min={0} max={frames.length-1} value={cursor} disabled={busy} onChange={e=>replayTo(Number(e.target.value))}/><span>{cursor+1}/{frames.length}</span>{replaying&&<button onClick={()=>setCursor(frames.length-1)}>Return to latest <ArrowRight size={12}/></button>}</div>
     </section>{inspecting&&<aside id="institute-inspector" className="institute-inspector"><nav aria-label={`${themeCopy.name} inspection`}><button aria-pressed={tab==="people"} onClick={()=>setTab("people")}><Users size={13}/> People</button><button aria-pressed={tab==="experiments"} onClick={()=>setTab("experiments")}><Microscope size={13}/> {presentation.recordPlural}</button></nav>{tab==="people"?<><div className="institute-person-heading"><span className={`institute-person-icon agent-${person.id}`}>{person.initials}</span><div><h2>{person.name}</h2><p>{displayPerson.role}</p></div></div><label className="institute-person-picker">Inspect agent<select value={selected} onChange={e=>setSelected(e.target.value as PersonId)}>{PEOPLE.map(p=>{const display=themePerson(theme,p.id,p);return <option key={p.id} value={p.id}>{p.name} · {display.role}</option>})}</select></label><div className="institute-person-section"><span>PERSONAL OBJECTIVE</span><p>{displayPerson.goal}</p></div><div className="institute-person-section"><span>CURRENT ACTION</span><h3>{present(agent.activity)}</h3><p>{present(agent.note)}</p></div><div className="institute-person-section"><span>RECENT MEMORY</span><ol>{[...agent.memories].reverse().map((memory,i)=><li key={i}>{present(memory)}</li>)}</ol></div></>:<div className="institute-experiments">{world.projects.map(p=><article key={p.id}><h2>{present(p.title)}</h2><div><span>{presentation.buildLabel} {p.level}/4</span><span>{p.funds} {presentation.creditsLabel}</span></div><strong>{projectScore(world,p)===null?present("Awaiting reviewed evidence"):`${Math.round(projectScore(world,p)!*100)}% current mean`}</strong><p>{evidence(world,p).length}/{requiredEvidence(world)} {present("required current measurements")}</p><ol>{[...p.trials].reverse().slice(0,8).map(t=><li key={t.id}><span>{presentation.recordSingular} {t.id} · rev {t.level}<small>{presentation.revisionLabel} {t.revision+1} · round {t.round}</small></span><span>{Math.round(t.reading*100)}%<small>{t.revision!==world.revision?`Old ${presentation.revisionLabel.toLowerCase()}`:!t.reviewed?"Awaiting review":t.verdict==="valid"?"Reviewed":"Rejected"}</small></span></li>)}</ol>{!p.trials.length&&<p>{present("No experiments yet. Funding and a prepared prototype come first.")}</p>}</article>)}</div>}</aside>}</div>
     <section className="institute-objective"><div><span className="eyebrow">{themeCopy.objectiveLabel}</span><h2>{themeCopy.objective}</h2><p>{themeCopy.objectiveDetail} The current threshold requires {requiredEvidence(world)} reviewed results. Outcomes are generated by the simulation’s world rules.</p></div><div className="institute-objective-score"><strong>{best ? `${Math.round(best * 100)}%` : "—"}</strong><span>Best current reviewed result</span><div><i style={{ width: `${Math.min(100, best / TARGET * 100)}%` }}/></div></div></section>
     <div className="institute-metrics"><div><Cpu size={16}/><span>{presentation.computeLabel}<strong>{availableCompute(world)} slots / round</strong></span></div><div><Gauge size={16}/><span>{themeCopy.healthLabel}<strong>{world.health}% <small>{world.health < 70 ? "Needs attention" : "Operational"}</small></strong></span></div><div><Zap size={16}/><span>{themeCopy.reserveLabel}<strong>{world.treasury} world credits</strong></span></div><div><ShieldCheck size={16}/><span>{presentation.environmentLabel}<strong>{presentation.environmentValue} {world.revision + 1} <small>{world.benchReady ? presentation.readyLabel : presentation.preparationLabel}</small></strong></span></div></div>
