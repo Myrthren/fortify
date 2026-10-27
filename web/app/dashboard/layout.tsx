@@ -10,6 +10,7 @@ import { WorkspaceLoading } from "@/components/workspace-loading";
 import "../workspace-navigation.css";
 import "../workspace-operations.css";
 import "../dashboard-shell.css";
+import "../workspace-feedback.css";
 import "../navigation-performance.css";
 
 // The dashboard reads live announcements and member data. Do not attempt
