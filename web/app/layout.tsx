@@ -8,6 +8,7 @@ import "./globals.css";
 import "./command-theme.css";
 import "./immersive-theme.css";
 import "./classic-theme.css";
+import "./fortify-finish.css";
 
 const BASE_URL = "https://fortify-io.com";
 
@@ -65,6 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="en" data-theme={theme}>
       <head>
+        <link rel="preload" href="/fonts/archivo/Archivo-Variable.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

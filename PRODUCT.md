@@ -36,7 +36,7 @@ Members work from a web dashboard with Company DNA, decision and content workspa
 
 ## Brand Commitments
 
-The product name is Fortify. The established visual language uses the existing graphite-and-silver palette, the original/classic and science-fiction themes, precise instrument-like controls, restrained radii, dotted signal motifs and Chakra Petch as the science-fiction display face. New work extends that identity.
+The product name is Fortify. The visual language uses the graphite-and-silver palette, the original/classic and science-fiction themes, precise instrument-like controls, restrained radii and dotted signal motifs. Archivo is the primary brand typeface, with Inter Tight for supporting text and dense product controls. New work extends that identity.
 
 ## Evidence on Hand
 
