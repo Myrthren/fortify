@@ -47,7 +47,9 @@ export function DashboardNav({ user: initialUser, owner = false }: { user: Works
   const pathname = usePathname(), search = useSearchParams();
   const active = workspaceActiveKey(pathname, search.get("assets") === "slideshow" ? "test" : search.get("view"));
   const [user, setUser] = useState(initialUser);
-  useEffect(() => { setUser(initialUser); }, [initialUser]);
+  // A refresh can resend identical layout props after a page supplies fresher
+  // credits. Only an actual server-side member change should replace them.
+  useEffect(() => { setUser(initialUser); }, [initialUser.email, initialUser.username, initialUser.tier, initialUser.discordId, initialUser.credits]);
   useEffect(() => {
     const update = (event: Event) => setUser(workspaceMember((event as CustomEvent<WorkspaceMember>).detail));
     window.addEventListener("fortify:member-updated", update);
