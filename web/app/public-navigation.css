@@ -1,0 +1,54 @@
+/* Public navigation belongs to the root layout, not the authenticated workspace. */
+:root[data-theme="original"] .classic-public-header { background:#101010f5; border-bottom:1px solid #ffffff17; backdrop-filter:blur(18px); box-shadow:0 7px 25px #0003; }
+:root[data-theme="original"] .classic-public-topbar { max-width:1400px; margin:auto; display:flex; align-items:center; justify-content:space-between; gap:25px; padding:16px 24px; }
+:root[data-theme="original"] .classic-public-brand { display:flex; align-items:center; gap:18px; flex-shrink:0; }
+:root[data-theme="original"] .classic-public-brand>span { border-left:1px solid #ffffff17; padding-left:17px; font-size:10px; color:#aaa; }
+:root[data-theme="original"] .classic-public-primary { display:flex; align-items:center; gap:24px; color:#a4a4a4; font-size:12px; }
+:root[data-theme="original"] .classic-public-primary>a { display:flex; align-items:center; gap:7px; }
+:root[data-theme="original"] .classic-public-primary>a:hover { color:#fff; }
+:root[data-theme="original"] .classic-product-menu { position:relative; }
+:root[data-theme="original"] .classic-product-menu>summary { display:flex; align-items:center; gap:7px; cursor:pointer; list-style:none; color:#eee; }
+:root[data-theme="original"] .classic-product-menu>summary::-webkit-details-marker { display:none; }
+:root[data-theme="original"] .classic-product-dropdown { position:absolute; z-index:50; top:calc(100% + 25px); left:-35px; width:430px; padding:16px; border:1px solid #ffffff25; background:#161616; border-radius:13px; box-shadow:0 24px 70px #000b; }
+:root[data-theme="original"] .classic-product-dropdown>p { color:#aaa; font-size:8px; letter-spacing:.12em; padding:4px 9px 13px; }
+:root[data-theme="original"] .classic-product-dropdown a { display:flex; align-items:center; gap:12px; padding:12px 9px; border-radius:8px; }
+:root[data-theme="original"] .classic-product-dropdown a:hover { background:#ffffff07; }
+:root[data-theme="original"] .classic-product-dropdown a>span { display:flex; align-items:center; justify-content:center; width:33px; height:33px; border:1px solid #ffffff12; background:#ffffff03; border-radius:8px; color:#b7b7b7; }
+:root[data-theme="original"] .classic-product-dropdown a>div { flex:1; }
+:root[data-theme="original"] .classic-product-dropdown strong { font-size:11px; font-weight:500; color:#ddd; }
+:root[data-theme="original"] .classic-product-dropdown small { display:block; font-size:9px; color:#aaa; margin-top:4px; }
+:root[data-theme="original"] .classic-product-dropdown a>svg { color:#aaa; }
+:root[data-theme="original"] .classic-public-account { display:flex; align-items:center; gap:22px; }
+:root[data-theme="original"] .classic-public-login { color:#aaa; font-size:12px; }
+:root[data-theme="original"] .classic-public-account .btn-primary { min-height:38px; padding:9px 14px; font-size:11px; border-radius:8px; }
+:root[data-theme="original"] .classic-public-toolstrip { background:#0b0b0b; border-top:1px solid #ffffff0a; }
+:root[data-theme="original"] .classic-public-toolstrip>div { max-width:1400px; margin:auto; display:flex; align-items:center; gap:30px; padding:10px 24px; }
+:root[data-theme="original"] .classic-toolstrip-label { display:flex; align-items:center; gap:7px; color:#aaa; font-size:9px; flex-shrink:0; }
+:root[data-theme="original"] .classic-public-toolstrip nav { display:flex; gap:25px; align-items:center; overflow-x:auto; scrollbar-width:none; }
+:root[data-theme="original"] .classic-public-toolstrip nav a { display:inline-flex; align-items:center; gap:7px; flex-shrink:0; color:#b0b0b0; font-size:10px; }
+:root[data-theme="original"] .classic-public-toolstrip nav a:hover { color:#fff; }
+:root[data-theme="original"] .classic-public-toolstrip nav svg { color:#999; }
+:root[data-theme="original"] .classic-all-tools { display:flex; align-items:center; gap:5px; margin-left:auto; flex-shrink:0; font-size:9px; color:#aaa; }
+:root[data-theme="original"] .classic-public-mobile { display:none; position:relative; }
+:root[data-theme="original"] .classic-public-mobile summary { display:flex; padding:7px; list-style:none; cursor:pointer; color:#bbb; border:1px solid #ffffff16; border-radius:7px; }
+:root[data-theme="original"] .classic-public-mobile summary::-webkit-details-marker { display:none; }
+:root[data-theme="original"] .classic-public-mobile nav { position:absolute; z-index:50; right:0; top:calc(100% + 15px); width:260px; padding:10px; border:1px solid #ffffff22; border-radius:12px; background:#151515; box-shadow:0 20px 60px #000b; }
+:root[data-theme="original"] .classic-public-mobile nav a { display:flex; align-items:center; gap:12px; padding:12px 10px; color:#ccc; font-size:12px; }
+:root[data-theme="original"] .classic-public-mobile nav a:hover { background:#ffffff06; }
+
+@media (max-width:1200px) { :root[data-theme="original"] .classic-public-brand>span { display:none; } }
+@media (max-width:1023px) {
+  :root[data-theme="original"] .classic-public-primary { gap:17px; }
+  :root[data-theme="original"] .classic-public-toolstrip>div { gap:20px; }
+}
+@media (max-width:767px) {
+  :root[data-theme="original"] .classic-public-topbar { padding:13px 18px; gap:12px; }
+  :root[data-theme="original"] .classic-public-primary { display:none; }
+  :root[data-theme="original"] .classic-public-mobile { display:block; }
+  :root[data-theme="original"] .classic-public-account { gap:12px; }
+  :root[data-theme="original"] .classic-public-login { display:none; }
+  :root[data-theme="original"] .classic-public-toolstrip>div { padding:10px 18px; }
+  :root[data-theme="original"] .classic-toolstrip-label, :root[data-theme="original"] .classic-all-tools { display:none; }
+  :root[data-theme="original"] .classic-public-toolstrip nav { gap:20px; }
+  :root[data-theme="original"] .classic-public-toolstrip nav a { font-size:9px; }
+}

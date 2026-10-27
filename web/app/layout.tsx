@@ -8,6 +8,7 @@ import "./globals.css";
 import "./command-theme.css";
 import "./immersive-theme.css";
 import "./classic-theme.css";
+import "./public-navigation.css";
 import "./fortify-finish.css";
 
 const BASE_URL = "https://fortify-io.com";
