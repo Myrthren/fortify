@@ -3,7 +3,7 @@
 @keyframes workspace-pending-spin{to{transform:rotate(360deg)}}
 .workspace-loading-main{max-width:1280px;margin:auto;padding:32px 24px 48px}
 .workspace-loading-main>p{font-size:13px;color:var(--text-muted);margin-bottom:20px}
-.workspace-loading-header{height:119px;border-bottom:1px solid var(--border);background:var(--bg-panel)}
+.workspace-loading-header{height:72px;border-bottom:1px solid var(--border);background:var(--bg-panel)}
 .workspace-skeleton{background:var(--bg-elevated);border-radius:5px;max-width:100%}
 .workspace-skeleton-title{width:240px;height:32px;margin-bottom:12px}
 .workspace-skeleton-description{width:390px;height:16px;margin-bottom:36px}

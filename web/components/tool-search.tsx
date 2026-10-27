@@ -37,7 +37,7 @@ export function ToolSearch({ tier }: { tier: Tier }) {
   }, []);
 
   return <details ref={container} className="workspace-search" onToggle={() => { if (container.current?.open) { window.dispatchEvent(new CustomEvent("fortify:navigation-open", { detail: "tool-search" })); input.current?.focus(); } }}>
-    <summary aria-label="Search Fortify tools"><Search size={14}/><span>Find a workspace…</span><kbd>Ctrl K</kbd></summary>
+    <summary aria-label="Search Fortify tools"><Search size={16}/><span>Search</span><kbd>Ctrl K</kbd></summary>
     <div className="workspace-search-panel">
       <div className="workspace-search-input"><Search size={16}/><input ref={input} type="search" aria-label="Search Fortify tools" placeholder="Search leads, content, research…" value={query} onChange={event => setQuery(event.target.value)} onKeyDown={event => { if (event.key === "ArrowDown") { event.preventDefault(); container.current?.querySelector<HTMLAnchorElement>("li a")?.focus(); } else if (event.key === "Enter") { event.preventDefault(); container.current?.querySelector<HTMLAnchorElement>("li a")?.click(); } }}/></div>
       <p className="workspace-search-caption">{items.length} tools <span>Search the Fortify toolkit</span></p>

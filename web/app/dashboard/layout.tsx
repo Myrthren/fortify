@@ -4,7 +4,6 @@ import { currentUser } from "@/lib/session-user";
 import { isOwner } from "@/lib/owner";
 import { getAnnouncements } from "@/lib/announcements";
 import { AnnouncementBar } from "@/components/announcement-bar";
-import { FortifyAILauncher } from "@/components/fortify-ai-launcher";
 import { DashboardNav } from "@/components/dashboard-nav";
 import { WorkspaceLoading } from "@/components/workspace-loading";
 import "../workspace-navigation.css";
@@ -12,6 +11,7 @@ import "../workspace-operations.css";
 import "../dashboard-shell.css";
 import "../workspace-feedback.css";
 import "../navigation-performance.css";
+import "../workspace-refinement.css";
 
 // The dashboard reads live announcements and member data. Do not attempt
 // these queries during static generation, when database access may be absent.
@@ -27,7 +27,6 @@ async function WorkspaceShell({ children }: { children: React.ReactNode }) {
   return <div className="workspace-shell">
     <DashboardNav user={{ email: user.email, username: user.username, tier: user.tier, discordId: user.discordId, credits: user.credits }} owner={isOwner(user.discordId)} />
     {children}
-    <FortifyAILauncher />
   </div>;
 }
 

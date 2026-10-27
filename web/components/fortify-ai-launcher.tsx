@@ -1,22 +1,27 @@
 "use client";
-import { useState, type ComponentType } from "react";
+import { useCallback, useRef, useState, type ComponentType } from "react";
 import { Sparkles } from "lucide-react";
 
-export function FortifyAILauncher() {
-  const [Panel, setPanel] = useState<ComponentType<{ initiallyOpen: boolean }> | null>(null);
-  const [busy, setBusy] = useState(false), [error, setError] = useState(false);
+type PanelProps = { visible?: boolean; hideLauncher?: boolean; onClose?: () => void };
+export function FortifyAILauncher({ inline = false }: { inline?: boolean }) {
+  const [Panel, setPanel] = useState<ComponentType<PanelProps> | null>(null);
+  const [busy, setBusy] = useState(false), [error, setError] = useState(false), [visible, setVisible] = useState(false);
+  const trigger = useRef<HTMLButtonElement>(null);
+  const close = useCallback(() => { setVisible(false); trigger.current?.focus(); }, []);
   async function open() {
     if (busy) return;
+    if (Panel) { setVisible(true); return; }
     setBusy(true); setError(false);
     try {
       const { FortifyAI } = await import("./fortify-ai");
-      setPanel(() => FortifyAI);
+      setPanel(() => FortifyAI); setVisible(true);
     } catch { setError(true); }
     finally { setBusy(false); }
   }
-  if (Panel) return <Panel initiallyOpen />;
-  return <button type="button" className="fortify-ai-launcher" onClick={() => void open()} disabled={busy} aria-busy={busy}>
-    <Sparkles size={15} aria-hidden="true" />
-    <span role="status">{busy ? "Opening chat…" : error ? "Chat could not load. Retry" : "Fortify AI"}</span>
-  </button>;
+  return <>
+    <button ref={trigger} type="button" className={inline ? "workspace-ai-launcher" : "fortify-ai-launcher"} onClick={() => void open()} disabled={busy} aria-busy={busy} aria-expanded={visible} aria-haspopup="dialog" aria-label={error ? "Chat could not load. Retry Fortify AI" : "Ask Fortify AI"}>
+      <Sparkles size={16} aria-hidden="true"/><span>{busy ? "Opening…" : error ? "Retry chat" : inline ? "Ask Fortify" : "Fortify AI"}</span>
+    </button>
+    {Panel && <Panel visible={visible} hideLauncher onClose={close}/>}
+  </>;
 }

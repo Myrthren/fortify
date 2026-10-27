@@ -6,6 +6,19 @@ retain their own authentication, ownership and feature checks. The shell keeps
 menus, search, notification polling, business controls and the opened assistant
 mounted between tools. Owner visibility is resolved on the server.
 
+The shared header uses one row for Dashboard, the grouped workspace catalog,
+Activity, search, the assistant, notifications and the account menu. The catalog
+exposes every tool previously reached through a hub tab bar. Mobile navigation
+uses expandable categories; unavailable tools remain marked Soon and cannot be
+opened. Business selection and owner administration are inside the account menu
+on desktop and the navigation sheet on mobile. Existing plan checks still apply.
+
+The dashboard puts the next saved action and saved work first, followed by a
+compact metrics strip, history and other work needing attention. Focus settings,
+the full directory and account setup are secondary disclosures. Empty accounts
+retain starting actions and do not show invented progress. Classic and Sci-fi
+keep their existing typography and appearance.
+
 `dashboardSession` and `currentUser` use React request-local caching. Member
 data is never placed in Next's cross-request Data Cache. Shared theme and
 announcement reads use separate 30-second tagged caches; owner mutations
@@ -23,7 +36,7 @@ every navigation; the owner-save event still applies an immediate update.
 - The full chat component is imported only when the launcher is clicked. Its
   state survives dashboard navigation after opening, and failed imports offer
   a retry. Assistant links to Fortify use client navigation.
-- Menu, search, shortcut and directory links prefetch their loading boundary on
+- Menu, search and directory links prefetch their loading boundary on
   hover or keyboard focus. Data Saver and 2G connections suppress this warming.
   Pending links show immediate feedback. No full-route prefetch is forced.
 - The shared header stays outside page loading boundaries. The busiest tools
@@ -48,23 +61,27 @@ covers route selection, safe member serialization, announcement expiry,
 authentication and cache invalidation. The appearance suite covers owner access,
 origins, failed reads/writes, cache reuse and immediate invalidation.
 
-An initial local bundle comparison against the cached pre-change production
-build found:
+A local bundle comparison against the cached pre-change production build,
+including the final dashboard and navigation refinement, found:
 
 | Resources | Before | After |
 | --- | ---: | ---: |
 | Public shared CSS, minified | 235,690 B | 99,808 B |
-| Ordinary dashboard CSS, minified | 235,690 B | 158,986 B |
-| Ordinary dashboard CSS, separately gzipped files | 42,023 B | 29,363 B |
-| Dashboard initial JavaScript, separately gzipped files | 208,130 B | 215,305 B |
+| Ordinary dashboard CSS, minified | 235,690 B | 178,615 B |
+| Ordinary dashboard CSS, separately gzipped files | 42,023 B | 31,646 B |
+| Dashboard initial JavaScript, separately gzipped files | 208,130 B | 214,565 B |
 
-The persistent client navigation adds about 7 KB compressed JavaScript net of
+The persistent client navigation adds about 6 KB compressed JavaScript net of
 chat deferral. These are local build artifact sizes, including shared framework
 resources, not a controlled production timing benchmark. Tool-specific layout
 assets must also be included when assessing Plans or Simulation Lab payloads.
 
 Browser verification uses a separate, local Next.js fixture with the actual
-navigation/chat components and sample endpoints. It does not bypass production
+dashboard/navigation/chat components and clearly labelled sample endpoints. Both
+themes, populated and empty states, desktop and 320/375-pixel phone layouts,
+category menus, search, and assistant close/reopen are checked there. The
+assistant retains an unfinished message, supports Escape and returns focus to
+its launcher. The fixture does not bypass production
 authentication or write member records. Live signed-in navigation latency,
 database/hosting region effects, mobile INP and Core Web Vitals still require
 measurement after deployment; no millisecond improvement is claimed here.
