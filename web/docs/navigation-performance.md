@@ -54,9 +54,9 @@ build found:
 | Resources | Before | After |
 | --- | ---: | ---: |
 | Public shared CSS, minified | 235,690 B | 99,808 B |
-| Ordinary dashboard CSS, minified | 235,690 B | 154,757 B |
-| Ordinary dashboard CSS, separately gzipped files | 42,023 B | 28,666 B |
-| Dashboard initial JavaScript, separately gzipped files | 208,130 B | 215,279 B |
+| Ordinary dashboard CSS, minified | 235,690 B | 158,986 B |
+| Ordinary dashboard CSS, separately gzipped files | 42,023 B | 29,363 B |
+| Dashboard initial JavaScript, separately gzipped files | 208,130 B | 215,305 B |
 
 The persistent client navigation adds about 7 KB compressed JavaScript net of
 chat deferral. These are local build artifact sizes, including shared framework
