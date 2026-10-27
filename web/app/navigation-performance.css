@@ -1,0 +1,20 @@
+.workspace-link-pending{display:none}
+.workspace-link-pending[data-pending=true]{display:inline-block;width:10px;height:10px;flex:0 0 10px;margin-left:6px;border:1px solid currentColor;border-right-color:transparent;border-radius:50%;animation:workspace-pending-spin .7s linear infinite}
+@keyframes workspace-pending-spin{to{transform:rotate(360deg)}}
+.workspace-loading-main{max-width:1280px;margin:auto;padding:32px 24px 48px}
+.workspace-loading-main>p{font-size:13px;color:var(--text-muted);margin-bottom:20px}
+.workspace-loading-header{height:72px;border-bottom:1px solid var(--border);background:var(--bg-panel)}
+.workspace-skeleton{background:var(--bg-elevated);border-radius:5px;max-width:100%}
+.workspace-skeleton-title{width:240px;height:32px;margin-bottom:12px}
+.workspace-skeleton-description{width:390px;height:16px;margin-bottom:36px}
+.workspace-skeleton-content{height:280px;border:1px solid var(--border);background:var(--bg-panel)}
+.workspace-snapshot-loading{padding:16px 0 28px;color:var(--text-muted);font-size:13px}
+.workspace-snapshot-loading>p{margin-bottom:16px}
+.fortify-ai-launcher{position:fixed;bottom:24px;right:24px;z-index:50;display:flex;align-items:center;gap:8px;padding:12px 16px;border:1px solid var(--border-strong);border-radius:24px;background:var(--bg-panel);color:var(--text);font-size:14px;font-weight:600;box-shadow:0 4px 24px #0005}
+.fortify-ai-launcher:hover{background:var(--bg-elevated)}
+.fortify-ai-launcher:focus-visible{outline:2px solid var(--text);outline-offset:4px}
+/* Dashboard ambience stays static while the public site keeps its motion. */
+:root:has(.workspace-shell) .site-atmosphere .particle-field{display:none}
+:root:has(.workspace-shell) .site-atmosphere .ambient-stars{animation:none}
+@media(prefers-reduced-motion:reduce){.workspace-link-pending[data-pending=true]{animation:none;border-right-color:currentColor}}
+@media(max-width:600px){.workspace-loading-main{padding:24px 16px}}

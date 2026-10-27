@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { LeadSourcer } from "@/components/lead-sourcer";
 import Link from "next/link";
 
@@ -18,7 +18,7 @@ export default async function LeadsPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="leads" />
+      <WorkspaceMemberSync user={user} active="leads" />
 
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-8 anim-fade-up">

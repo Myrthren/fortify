@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
 import { getWorkspaceSnapshot } from "@/lib/workspace-activity";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { DashboardHome } from "@/components/dashboard-home";
 
 export default async function DashboardPage() {
@@ -10,7 +10,8 @@ export default async function DashboardPage() {
   if (!session?.user) redirect("/login");
   const userId = (session.user as any).id as string;
   if (typeof userId !== "string" || !userId) redirect("/login");
-  const [user, snapshot] = await Promise.all([db.user.findUnique({ where: { id: userId }, include: { _count: { select: { businesses: true } } } }), getWorkspaceSnapshot(userId)]);
+  const user = await db.user.findUnique({ where: { id: userId }, include: { _count: { select: { businesses: true } } } });
   if (!user) redirect("/login");
-  return <div className="relative min-h-screen"><DashboardNav user={user} active="dashboard"/><DashboardHome name={user.name?.split(" ")[0] ?? "operator"} tier={user.tier} credits={user.credits} snapshot={snapshot} hasBusiness={user._count.businesses > 0}/></div>;
+  const snapshot = getWorkspaceSnapshot(userId);
+  return <div className="relative min-h-screen"><WorkspaceMemberSync user={user} active="dashboard"/><DashboardHome name={user.name?.split(" ")[0] ?? "operator"} tier={user.tier} credits={user.credits} snapshot={snapshot} hasBusiness={user._count.businesses > 0}/></div>;
 }

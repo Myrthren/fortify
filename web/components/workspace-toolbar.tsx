@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { WorkspaceLink as Link } from "./workspace-link";
 import { ArrowUpRight, Coins, Compass, Clapperboard, Radar, FlaskConical, Workflow, Layers } from "lucide-react";
 import { ToolSearch } from "./tool-search";
 import type { Tier } from "@prisma/client";

@@ -33,14 +33,31 @@ function fixture({ tier = 'FREE', provider, memberships = [], linked = true } = 
     upsert: async ({ create, update }) => { state.subscription = { ...(state.subscription || create), ...update }; },
     update: async ({ data }) => { Object.assign(state.subscription, data); },
   };
-  const db = { user, subscription, $transaction: async (fn) => fn({ user, subscription }) };
-  const mocks = { '@/lib/db': { db }, '@/lib/discord': { syncTierRole: async (...args) => roles.push(args) } };
+  const tutorial = { upsert: async ({create}) => { state.tutorial ??= create; } };
+  const db = { user, subscription, $transaction: async (fn) => fn({ user, subscription, workspaceTutorialProgress: tutorial }) };
+  const mocks = { '@/lib/db': { db }, '@/lib/discord': { syncTierRole: async (...args) => roles.push(args) }, '@/lib/workspace-tutorial': load('lib/workspace-tutorial.ts') };
   let response = { data: memberships };
   let failed = false;
   const api = load('lib/whop.ts', mocks, env, async () => ({ ok: !failed, status: failed ? 503 : 200, json: async () => response, text: async () => 'unavailable' }));
   return { api, state, roles, mocks, env, response: (value) => { response = value; }, fail: () => { failed = true; } };
 }
 const member = (tier) => ({ id: `mem_${tier}`, plan: `plan_${tier}` });
+
+test('only the first verified Whop subscription enrolls the workspace tutorial', async () => {
+  const f = fixture({ memberships: [member('pro')] });
+  await f.api.syncWhopTier('u1', 'w1');
+  assert.equal(f.state.tutorial.userId, 'u1');
+  f.state.tutorial.outcome = 'completed';
+  f.response({data:[member('apex')]});
+  await f.api.syncWhopTier('u1', 'w1');
+  assert.equal(f.state.tutorial.outcome, 'completed');
+  const returning = fixture({tier:'PRO',provider:'whop',memberships:[member('apex')]});
+  await returning.api.syncWhopTier('u1','w1');
+  assert.equal(returning.state.tutorial, undefined);
+  const unpaid = fixture();
+  await unpaid.api.syncWhopTier('u1','w1');
+  assert.equal(unpaid.state.tutorial, undefined);
+});
 
 for (const [before, after] of [['FREE', 'PRO'], ['PRO', 'APEX'], ['APEX', 'PRO']]) {
   test(`Whop ${before} to ${after} reconciles exact tier and subscription`, async () => {

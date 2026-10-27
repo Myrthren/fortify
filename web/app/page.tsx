@@ -1,9 +1,9 @@
 import { ParticleField } from "@/components/particle-field";
 import { CommandHero } from "@/components/command-hero";
+import { FortifyScene } from "@/components/fortify-scene";
 import Link from "next/link";
-import Image from "next/image";
 import {
-  ArrowRight, Sparkles, Zap, Bot, Network, Radar, ShieldCheck, Workflow, Search,
+  ArrowRight, Sparkles, Bot, Network, Radar, ShieldCheck, Workflow, Search,
   MapPin, Send, Eye, TrendingUp, Check,
 } from "lucide-react";
 import { Nav } from "@/components/nav";
@@ -20,11 +20,10 @@ export default function HomePage() {
       {/* ═══════════════ TOOLS YOU CAN CANCEL ═══════════════ */}
       <section className="border-b border-bg-border py-14 sm:py-16">
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <p className="mb-2 text-center text-xs uppercase tracking-widest text-text-dim">One co-pilot</p>
           <h2 className="mb-10 text-center text-2xl font-bold tracking-tight sm:text-3xl">Five tools you can cancel.</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="fortify-replacements">
             {REPLACES.map((r) => (
-              <div key={r.from} className="card-elevated flex flex-col gap-3 p-4">
+              <div key={r.from} className="fortify-replacement">
                 <span className="text-xs text-text-dim line-through decoration-text-dim/60">{r.from}</span>
                 <span className="flex items-center gap-2 text-sm font-medium text-text">
                   <r.icon className="h-4 w-4 shrink-0 text-[var(--accent)]" />
@@ -41,14 +40,13 @@ export default function HomePage() {
         <ParticleField className="section-particle-wave" />
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 sm:py-28">
           <div className="mb-12 text-center sm:mb-16">
-            <span className="eyebrow"><Zap className="h-3.5 w-3.5" /> How it works</span>
-            <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">From cold list to booked call.</h2>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">From cold list to booked call.</h2>
             <p className="mx-auto mt-3 max-w-xl text-text-muted">
               Each step feeds the next, and every one of them knows your business.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="fortify-journey">
             <Step n="01" title="Find the right people" body="Pull businesses from Google Maps or contacts from social profiles, then score them against your ideal customer.">
               <MockLeads />
             </Step>
@@ -66,19 +64,15 @@ export default function HomePage() {
       <section id="features" className="signal-section mx-auto max-w-6xl scroll-mt-20 px-4 py-20 sm:px-6 sm:py-28">
         <ParticleField shape="halo" className="section-particle-halo" />
         <div className="mb-12 text-center sm:mb-16">
-          <span className="eyebrow">
-            <Sparkles className="h-3.5 w-3.5" /> The arsenal
-          </span>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Everything in one fortress.</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Everything in one fortress.</h2>
           <p className="mx-auto mt-3 max-w-xl text-text-muted">
             Tools that compound. Each feature feeds the next.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="fortify-feature-grid">
           {/* Large feature */}
           <BentoCard
-            className="md:col-span-2 md:row-span-2"
             icon={<Sparkles className="h-5 w-5" />}
             title="Brand Voice Studio"
             body="Train it on your own writing, then generate hooks, posts, cold outreach and long-form that sound unmistakably like you. Your voice becomes the engine behind every other tool."
@@ -124,19 +118,22 @@ export default function HomePage() {
           <div className="aurora aurora-violet left-1/2 top-1/2 h-[420px] w-[620px] -translate-x-1/2 -translate-y-1/2" />
         </div>
         <div className="bg-grid-fade absolute inset-0" />
-        <div className="relative mx-auto max-w-3xl px-4 py-24 text-center sm:px-6">
-          <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-5xl">
-            Build your fortress today.
-          </h2>
-          <p className="mx-auto mt-4 max-w-md text-text-muted">
-            Start free. Upgrade when you're ready to scale. Cancel anytime.
-          </p>
-          <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link href="/login" className="btn-primary group">
-              Start free <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
-            </Link>
-            <Link href="/pricing" className="btn-secondary">View pricing</Link>
+        <div className="fortify-final-cta relative mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="fortify-final-copy">
+            <h2 className="text-balance text-3xl font-bold tracking-tight sm:text-5xl">
+              Build your fortress today.
+            </h2>
+            <p className="mt-4 max-w-md text-text-muted">
+              Start free. Upgrade when you're ready to scale. Cancel anytime.
+            </p>
+            <div className="mt-8 flex flex-col items-start gap-3 sm:flex-row">
+              <Link href="/login" className="btn-primary group">
+                Start free <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link href="/pricing" className="btn-secondary">View pricing</Link>
+            </div>
           </div>
+          <FortifyScene kind="workflow" />
         </div>
       </section>
 
@@ -156,7 +153,7 @@ const REPLACES = [
 
 function Step({ n, title, body, children }: { n: string; title: string; body: string; children: React.ReactNode }) {
   return (
-    <div className="bento flex flex-col p-6">
+    <div className="fortify-journey-step flex flex-col">
       <span className="text-xs font-semibold tracking-widest text-text-dim">{n}</span>
       <h3 className="mt-2 text-lg font-semibold tracking-tight">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-text-muted">{body}</p>
@@ -280,7 +277,7 @@ function BentoCard({
   children?: React.ReactNode;
 }) {
   return (
-    <div className={`bento group flex flex-col p-6 ${className}`}>
+    <div className={`${featured ? "fortify-feature-main" : "fortify-feature-item"} group flex flex-col ${className}`}>
       <div className={`icon-tile mb-4 text-text ${featured ? "h-12 w-12" : "h-10 w-10"}`}>
         {icon}
       </div>

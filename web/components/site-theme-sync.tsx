@@ -1,11 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import { usePathname } from "next/navigation";
 import { isSiteTheme, type SiteTheme } from "@/lib/site-theme";
 
 export function SiteThemeSync() {
-  const pathname = usePathname();
   useEffect(() => {
     let pending: AbortController | undefined;
     let disposed = false;
@@ -42,6 +40,6 @@ export function SiteThemeSync() {
       window.removeEventListener("focus", sync);
       window.removeEventListener("fortify-theme-saved", onSaved);
     };
-  }, [pathname]);
+  }, []);
   return null;
 }

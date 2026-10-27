@@ -1,11 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, ArrowUpRight, Check, Compass, FileText, Fingerprint, Sparkles, Workflow } from "lucide-react";
+import { FortifyScene } from "./fortify-scene";
 
 /** Illustrative product UI, clearly labelled and independent of account data. */
 function WorkspaceIllustration() {
   return <div className="classic-product-scene">
     <div className="classic-product-glow" aria-hidden="true" />
+    <div className="classic-hero-signal"><FortifyScene kind="signal" /></div>
     <div className="classic-product-window">
       <div className="classic-window-bar"><span className="classic-window-dots" aria-hidden="true"><i/><i/><i/></span><span>Fortify workspace</span><span className="classic-example-label">Example view</span></div>
       <div className="classic-window-body">

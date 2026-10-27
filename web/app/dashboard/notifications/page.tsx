@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { Bell, Check, MessageSquare, UserPlus } from "lucide-react";
 import Link from "next/link";
 
@@ -40,7 +40,7 @@ export default async function NotificationsPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="notifications" />
+      <WorkspaceMemberSync user={user} active="notifications" />
       <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
         <h1 className="mb-6 text-2xl font-bold tracking-tight">Notifications</h1>
 

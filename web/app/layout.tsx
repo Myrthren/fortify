@@ -8,13 +8,8 @@ import "./globals.css";
 import "./command-theme.css";
 import "./immersive-theme.css";
 import "./classic-theme.css";
-import "./workspace-navigation.css";
-import "./workspace-operations.css";
-import "./planning-canvas.css";
-import "./research-institute.css";
-import "./dashboard-shell.css";
-import "./business-setup.css";
-import "./simulation-onboarding.css";
+import "./public-navigation.css";
+import "./fortify-finish.css";
 
 const BASE_URL = "https://fortify-io.com";
 
@@ -63,13 +58,16 @@ export const viewport: Viewport = {
   minimumScale: 1,
 };
 
-export const dynamic = "force-dynamic";
+// Public pages can reuse the global appearance read. Member routes remain
+// dynamic through their authenticated layout and page-level access checks.
+export const revalidate = 30;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const theme = await getSiteTheme();
   return (
     <html lang="en" data-theme={theme}>
       <head>
+        <link rel="preload" href="/fonts/archivo/Archivo-Variable.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "./dashboard-nav";
+import { WorkspaceMemberSync } from "./workspace-member-sync";
 import { LockedPage } from "./locked-page";
 import { ContentWorkbench } from "./content-workbench";
 import {
@@ -45,7 +45,7 @@ export async function ContentAssetPage() {
     );
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="virality" />
+      <WorkspaceMemberSync user={user} active="virality" />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
         <span className="eyebrow">Content / Creative assets</span>
         <h1 className="my-3 text-3xl">Slideshow creator</h1>
@@ -98,7 +98,7 @@ export async function ContentWorkspacePage({
     );
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active={active[kind]} />
+      <WorkspaceMemberSync user={user} active={active[kind]} />
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
         <ContentWorkbench
           key={kind}

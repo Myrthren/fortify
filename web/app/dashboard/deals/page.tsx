@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { DealForm } from "@/components/deal-form";
 import { DealDelete } from "@/components/deal-delete";
 import Link from "next/link";
@@ -47,7 +47,7 @@ export default async function DealsPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="deals" />
+      <WorkspaceMemberSync user={user} active="deals" />
 
       {/* ── Hero header ── */}
       <div className="relative overflow-hidden border-b border-bg-border">

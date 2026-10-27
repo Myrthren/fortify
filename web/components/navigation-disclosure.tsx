@@ -2,12 +2,15 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { ChevronDown, Menu, X } from "lucide-react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 // The links and account permissions remain server-rendered. This small boundary
 // owns only disclosure behaviour, including touch and keyboard navigation.
 export function NavigationDisclosure({ label, icon, active = false, placement = "left", className = "", children }: { label: string; icon?: ReactNode; active?: boolean; placement?: "left" | "right" | "mobile"; className?: string; children: ReactNode }) {
   const id = useId(), root = useRef<HTMLDivElement>(null), trigger = useRef<HTMLButtonElement>(null), focusFirst = useRef(false);
   const [open, setOpen] = useState(false);
+  const pathname = usePathname(), search = useSearchParams();
+  useEffect(() => { setOpen(false); }, [pathname, search]);
   useEffect(() => {
     const other = (event: Event) => { if ((event as CustomEvent).detail !== id) setOpen(false); };
     window.addEventListener("fortify:navigation-open", other);

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import Link from "next/link";
 
 export default async function PodsPage() {
@@ -35,7 +35,7 @@ export default async function PodsPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="pods" />
+      <WorkspaceMemberSync user={user} active="pods" />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
         <h1 className="mb-2 text-3xl font-bold tracking-tight">Mastermind Pod</h1>
         <p className="mb-8 text-text-muted">Your accountability circle — a small group of operators committed to showing up.</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { MetaConnectSection } from "@/components/meta-connect";
 import { GoogleConnectSection } from "@/components/google-connect";
 import { ShopifyConnectSection } from "@/components/shopify-connect";
@@ -11,6 +11,7 @@ import { BillingAccessSection } from "@/components/billing-access-section";
 import type { Tier } from "@prisma/client";
 import { Download, Trash2 } from "lucide-react";
 import { OwnerLeadExtractorSettings } from "./owner-lead-extractor";
+import { WorkspaceTutorialReplay } from "@/components/workspace-tutorial-replay";
 
 type Prefs = {
   dmPaymentFailed: boolean;
@@ -244,7 +245,7 @@ export function SettingsClient({
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="settings" />
+      <WorkspaceMemberSync user={{ ...user, username, credits }} active="settings" />
 
       <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-8">
@@ -254,6 +255,7 @@ export function SettingsClient({
           </p>
         </div>
 
+        <WorkspaceTutorialReplay />
         <BillingAccessSection access={{ tier: user.tier, discordLinked: !!user.discordId, subscription, whop }} />
 
         {/* Google connection */}

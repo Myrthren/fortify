@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { CompetitorWatchClient } from "@/components/competitor-watch-client";
 import { LockedPage } from "@/components/locked-page";
 import { Eye, RefreshCw, Bell, History } from "lucide-react";
@@ -68,7 +68,7 @@ export default async function CompetitorTrackingPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="competitor-watch" />
+      <WorkspaceMemberSync user={user} active="competitor-watch" />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
         <CompetitorWatchClient
           watches={serialisedWatches}

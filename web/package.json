@@ -21,6 +21,8 @@
     "test:workspace": "node --test scripts/test-workspace.cjs",
     "test:business": "node --test scripts/test-business-setup.cjs",
     "test:dashboard": "node --test scripts/test-dashboard-priority.cjs",
+    "test:tutorial": "node --test scripts/test-workspace-tutorial.cjs",
+    "test:navigation": "node --test scripts/test-navigation.cjs scripts/test-site-theme.cjs",
     "test:plans": "node --test scripts/test-plans.cjs",
     "test:institute": "node --test scripts/test-institute.cjs scripts/test-institute-controls.cjs scripts/test-institute-space.cjs scripts/test-institute-motion.cjs scripts/test-institute-teamwork.cjs scripts/test-institute-performance.cjs scripts/test-institute-character.cjs scripts/test-institute-themes.cjs scripts/test-simulation-tutorial.cjs",
     "test:content": "node --test scripts/test-content-workspace.cjs",

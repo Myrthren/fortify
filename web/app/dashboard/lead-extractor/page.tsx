@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { LeadExtractorClient } from "@/components/lead-extractor-client";
 import { LockedPage } from "@/components/locked-page";
 import { Search, ClipboardList, Globe, Contact } from "lucide-react";
@@ -42,7 +42,7 @@ export default async function LeadExtractorPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="lead-extractor" />
+      <WorkspaceMemberSync user={user} active="lead-extractor" />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
         <LeadExtractorClient
           userCredits={user.credits}

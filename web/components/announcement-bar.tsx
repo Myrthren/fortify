@@ -3,13 +3,36 @@
 import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 
-type Announcement = { id: string; message: string };
+type Announcement = { id: string; message: string; expiresAt?: string | null };
 
-export function AnnouncementBar({ announcements }: { announcements: Announcement[] }) {
+export function AnnouncementBar({ announcements: initial }: { announcements: Announcement[] }) {
+  const [announcements, setAnnouncements] = useState(initial);
   const [visible, setVisible] = useState(true);
   const [index, setIndex] = useState(0);
   const [fading, setFading] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    let stopped = false, pending = false;
+    const controller = new AbortController();
+    const refresh = async () => {
+      if (document.hidden || pending) return;
+      // Expiry still works while the network is unavailable.
+      setAnnouncements(items => items.filter(item => !item.expiresAt || Date.parse(item.expiresAt) > Date.now()));
+      pending = true;
+      try {
+        const response = await fetch("/api/announcements", { cache: "no-store", signal: controller.signal });
+        if (response.ok) {
+          const data = await response.json();
+          if (!stopped) { setAnnouncements(data.announcements); setIndex(0); }
+        }
+      } catch { /* Keep the last received message while offline. */ }
+      finally { pending = false; }
+    };
+    const interval = setInterval(refresh, 30000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { stopped = true; controller.abort(); clearInterval(interval); document.removeEventListener("visibilitychange", refresh); };
+  }, []);
 
   useEffect(() => {
     if (announcements.length <= 1) return;
@@ -34,7 +57,7 @@ export function AnnouncementBar({ announcements }: { announcements: Announcement
 
   if (!announcements.length || !visible) return null;
 
-  const current = announcements[index];
+  const current = announcements[index % announcements.length];
 
   return (
     <div className="relative z-50 w-full bg-white/[0.06] border-b border-white/10 backdrop-blur-sm">

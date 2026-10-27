@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { Send, Loader2, Paperclip, X, ShoppingCart, CheckCircle2, XCircle, History, SquarePen, Trash2, Download } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -50,8 +51,9 @@ function renderContent(text: string): React.ReactNode {
     if (linkMatch) {
       const [, label, href] = linkMatch;
       const isInternal = href.startsWith("/");
+      const ContentLink = isInternal ? Link : "a";
       nodes.push(
-        <a
+        <ContentLink
           key={si}
           href={href}
           target={isInternal ? "_self" : "_blank"}
@@ -60,7 +62,7 @@ function renderContent(text: string): React.ReactNode {
           onClick={isInternal ? (e) => { e.stopPropagation(); } : undefined}
         >
           {label} ↗
-        </a>
+        </ContentLink>
       );
       return;
     }
@@ -84,8 +86,9 @@ function renderContent(text: string): React.ReactNode {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function FortifyAI() {
-  const [open,             setOpen]             = useState(false);
+export function FortifyAI({ initiallyOpen = false, visible, hideLauncher = false, onClose }: { initiallyOpen?: boolean; visible?: boolean; hideLauncher?: boolean; onClose?: () => void }) {
+  const [localOpen, setOpen] = useState(initiallyOpen);
+  const open = visible ?? localOpen;
   const [launching,        setLaunching]        = useState(false);
   const [btnHovered,       setBtnHovered]       = useState(false);
   const [messages,         setMessages]         = useState<Msg[]>([]);
@@ -103,14 +106,15 @@ export function FortifyAI() {
   const [imagePreview,     setImagePreview]     = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => { if (open && !usage) fetchUsage(); }, [open]);
+  useEffect(() => { if (open) closeRef.current?.focus({ preventScroll: true }); }, [open]);
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   function handleOpen() {
     if (open || launching) return;
-    setLaunching(true);
-    setTimeout(() => { setOpen(true); setLaunching(false); }, 210);
+    setOpen(true);
   }
 
   function handlePaste(e: React.ClipboardEvent) {
@@ -312,7 +316,7 @@ export function FortifyAI() {
       `}</style>
 
       {/* ── Floating button ── */}
-      {!open && (
+      {!hideLauncher && !open && (
         <button
           onClick={handleOpen}
           onMouseEnter={() => !launching && setBtnHovered(true)}
@@ -337,8 +341,11 @@ export function FortifyAI() {
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-end p-4 sm:p-6 pointer-events-none">
           <div
+            role="dialog"
+            aria-label="Fortify AI"
             className="fortify-panel-in pointer-events-auto flex flex-col w-full max-w-md h-[620px] rounded-2xl theme-ai-panel border border-bg-border bg-bg shadow-2xl overflow-hidden"
             onPaste={handlePaste}
+            onKeyDown={event => { if (event.key === "Escape") { event.stopPropagation(); if (onClose) onClose(); else setOpen(false); } }}
           >
 
             {/* Header */}
@@ -383,7 +390,7 @@ export function FortifyAI() {
                     <SquarePen className="h-3.5 w-3.5" />
                   </button>
                 )}
-                <button onClick={() => setOpen(false)} className="p-1 text-text-muted hover:text-text transition">
+                <button ref={closeRef} aria-label="Close Fortify AI" onClick={() => onClose ? onClose() : setOpen(false)} className="p-1 text-text-muted hover:text-text transition">
                   <X className="h-4 w-4" />
                 </button>
               </div>

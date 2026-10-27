@@ -82,6 +82,14 @@ export function tool(key: ActiveKey): Tool | undefined {
   return (TOOLS as Record<string, Tool>)[key];
 }
 
+export function workspaceActiveKey(pathname: string, view: string | null): ActiveKey {
+  if (pathname === "/dashboard/content") return view === "research" ? "inspiration" : view === "test" ? "virality" : "story";
+  if (pathname.startsWith("/dashboard/decisions")) return "advisor";
+  const match = Object.values(TOOLS).find(item => pathname === item.href.split("?")[0] || pathname.startsWith(`${item.href.split("?")[0]}/`));
+  if (match) return match.key;
+  return (pathname.split("/")[2] || "dashboard") as ActiveKey;
+}
+
 const RANK: Record<Tier, number> = { FREE: 0, PRO: 1, ELITE: 2, APEX: 3 };
 
 export function isLocked(minTier: MinTier | undefined, tier: Tier): boolean {

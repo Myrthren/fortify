@@ -1,6 +1,6 @@
 import { Lock, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import type { Tier } from "@prisma/client";
 
 // Tier display config
@@ -73,7 +73,7 @@ export function LockedPage({
         }
       `}</style>
 
-      <DashboardNav user={user} active={active as any} />
+      <WorkspaceMemberSync user={user} active={active as any} />
 
       <main className="mx-auto max-w-3xl px-4 py-20 sm:px-6 text-center">
 

@@ -10,11 +10,11 @@ try { ts = require('typescript'); } catch {
 }
 
 function fixture() {
-  const state = { session: { user: { id: 'owner' } }, owner: true, setting: null, writes: 0, readFails: false, writeFails: false };
+  const state = { session: { user: { id: 'owner' } }, owner: true, setting: null, writes: 0, reads: 0, readFails: false, writeFails: false };
   const db = {
     user: { findUnique: async () => ({ id: 'owner', discordId: state.owner ? 'allowed' : 'member' }) },
     siteAppearance: {
-      findUnique: async () => { if (state.readFails) throw Error('offline'); return state.setting; },
+      findUnique: async () => { state.reads++; if (state.readFails) throw Error('offline'); return state.setting; },
       upsert: async ({ where, create, update }) => {
         assert.equal(where.id, 'global');
         if (state.writeFails) throw Error('offline');
@@ -25,6 +25,7 @@ function fixture() {
     },
   };
   const cache = new Map();
+  const dataCache = new Map();
   function load(relative) {
     const file = path.resolve(root, relative);
     if (cache.has(file)) return cache.get(file).exports;
@@ -34,6 +35,17 @@ function fixture() {
     });
     assert.equal((result.diagnostics || []).filter(d => d.category === ts.DiagnosticCategory.Error).length, 0, file);
     const localRequire = name => {
+      if (name === 'next/cache') return {
+        unstable_cache: (fn, keys, options) => {
+          assert.equal(options.revalidate, 30);
+          return async () => {
+            const key = keys.join(':');
+            if (!dataCache.has(key)) dataCache.set(key, Promise.resolve().then(fn).catch(error => { dataCache.delete(key); throw error; }));
+            return dataCache.get(key);
+          };
+        },
+        revalidateTag: tag => dataCache.delete(tag),
+      };
       if (name === 'next/server') return { NextResponse: { json: (body, init) => Response.json(body, init) } };
       if (name === '@/auth') return { auth: async () => state.session };
       if (name === '@/lib/db') return { db };
@@ -116,6 +128,19 @@ test('read outages are not broadcast as a theme reset', async () => {
   assert.equal(res.status, 503);
   assert.equal(res.headers.get('cache-control'), 'no-store');
   assert.equal((await res.json()).theme, undefined);
+});
+
+test('repeated theme reads share one database read and owner edits invalidate it immediately', async () => {
+  const f = fixture();
+  await Promise.all([f.get(), f.get(), f.get()]);
+  assert.equal(f.state.reads, 1);
+  await f.patch(request({ theme: 'original' }));
+  assert.deepEqual(await (await f.get()).json(), { theme: 'original' });
+  assert.equal(f.state.reads, 2);
+  f.state.writeFails = true;
+  assert.equal((await f.patch(request({ theme: 'scifi' }))).status, 503);
+  assert.deepEqual(await (await f.get()).json(), { theme: 'original' });
+  assert.equal(f.state.reads, 2);
 });
 
 test('storage rejects invalid values even outside the HTTP handler', async () => {

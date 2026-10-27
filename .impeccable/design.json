@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-27T21:11:17.782Z",
+  "title": "Design System: Fortify",
+  "extensions": {
+    "colorMeta": {
+      "graphite": {
+        "role": "neutral",
+        "displayName": "Deep Graphite",
+        "canonical": "#050505",
+        "tonalRamp": [
+          "#1a1a1a",
+          "#303030",
+          "#4a4a4a",
+          "#666666",
+          "#858585",
+          "#aaaaaa",
+          "#d0d0d0",
+          "#f3f3f3"
+        ]
+      },
+      "graphite-subtle": {
+        "role": "neutral",
+        "displayName": "Graphite Recess",
+        "canonical": "#0c0c0c",
+        "tonalRamp": [
+          "#1a1a1a",
+          "#303030",
+          "#4a4a4a",
+          "#666666",
+          "#858585",
+          "#aaaaaa",
+          "#d0d0d0",
+          "#f3f3f3"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel Graphite",
+        "canonical": "#111111",
+        "tonalRamp": [
+          "#1a1a1a",
+          "#303030",
+          "#4a4a4a",
+          "#666666",
+          "#858585",
+          "#aaaaaa",
+          "#d0d0d0",
+          "#f3f3f3"
+        ]
+      },
+      "elevated": {
+        "role": "neutral",
+        "displayName": "Raised Graphite",
+        "canonical": "#161616",
+        "tonalRamp": [
+          "#1a1a1a",
+          "#303030",
+          "#4a4a4a",
+          "#666666",
+          "#858585",
+          "#aaaaaa",
+          "#d0d0d0",
+          "#f3f3f3"
+        ]
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Fine Rule",
+        "canonical": "#1f1f1f",
+        "tonalRamp": [
+          "#1a1a1a",
+          "#303030",
+          "#4a4a4a",
+          "#666666",
+          "#858585",
+          "#aaaaaa",
+          "#d0d0d0",
+          "#f3f3f3"
+        ]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Strong Rule",
+        "canonical": "#2a2a2a",
+        "tonalRamp": [
+          "#1a1a1a",
+          "#303030",
+          "#4a4a4a",
+          "#666666",
+          "#858585",
+          "#aaaaaa",
+          "#d0d0d0",
+          "#f3f3f3"
+        ]
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Bright Text",
+        "canonical": "#fafafa",
+        "tonalRamp": [
+          "#1a1a1a",
+          "#303030",
+          "#4a4a4a",
+          "#666666",
+          "#858585",
+          "#aaaaaa",
+          "#d0d0d0",
+          "#f3f3f3"
+        ]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Cool Muted Text",
+        "canonical": "#b0b0b9",
+        "tonalRamp": [
+          "#19191c",
+          "#303037",
+          "#494952",
+          "#666671",
+          "#858591",
+          "#aaaab3",
+          "#d0d0d6",
+          "#f3f3f5"
+        ]
+      },
+      "text-dim": {
+        "role": "neutral",
+        "displayName": "Cool Dim Text",
+        "canonical": "#898994",
+        "tonalRamp": [
+          "#19191c",
+          "#303037",
+          "#494952",
+          "#666671",
+          "#858591",
+          "#aaaab3",
+          "#d0d0d6",
+          "#f3f3f5"
+        ]
+      },
+      "silver": {
+        "role": "primary",
+        "displayName": "Signal Silver",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#1a1a1a",
+          "#303030",
+          "#4a4a4a",
+          "#666666",
+          "#858585",
+          "#aaaaaa",
+          "#d0d0d0",
+          "#f3f3f3"
+        ]
+      },
+      "silver-deep": {
+        "role": "primary",
+        "displayName": "Soft Silver",
+        "canonical": "#e5e5e5",
+        "tonalRamp": [
+          "#1a1a1a",
+          "#303030",
+          "#4a4a4a",
+          "#666666",
+          "#858585",
+          "#aaaaaa",
+          "#d0d0d0",
+          "#f3f3f3"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Heavy Archivo hero emphasis."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Inter Tight supporting copy and dense controls."
+      },
+      "label": {
+        "displayName": "Instrument Label",
+        "purpose": "Coordinates, rails and small status labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "tactile-primary",
+        "value": "inset 0 1px 0 #ffffffa8, 0 7px 20px -8px #000b",
+        "purpose": "Primary controls at rest."
+      },
+      {
+        "name": "scifi-card",
+        "value": "inset 0 1px 0 #ffffff03",
+        "purpose": "Nearly flat sci-fi cards at rest."
+      },
+      {
+        "name": "original-card",
+        "value": "inset 0 1px 0 #ffffff06, 0 12px 35px #0002",
+        "purpose": "Soft original-theme card depth."
+      }
+    ],
+    "motion": [
+      {
+        "name": "control-state",
+        "value": "180ms cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Tactile button translation and icon response."
+      },
+      {
+        "name": "control-press",
+        "value": "90ms",
+        "purpose": "Short active-state response."
+      },
+      {
+        "name": "scene-reveal",
+        "value": "400ms ease",
+        "purpose": "Canvas opacity after the still frame."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "small-phone",
+        "value": "390px"
+      },
+      {
+        "name": "mobile",
+        "value": "767px"
+      },
+      {
+        "name": "feature-and-cta-stack",
+        "value": "900px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button — Original",
+      "kind": "button",
+      "refersTo": "button-primary-original",
+      "description": "Softly rounded silver action for the original theme.",
+      "html": "<button class=\"ds-btn-primary-original\">Start free →</button>",
+      "css": ".ds-btn-primary-original{font:700 14px Archivo,\"Inter Tight\",system-ui,sans-serif;min-height:44px;padding:11px 19px;border:1px solid #ffffffb3;border-radius:10px;color:#050505;background:linear-gradient(160deg,#ffffff 0%,#e8e8e8 60%,#d8d8d8 100%);box-shadow:inset 0 1px 0 #ffffffa8,0 7px 20px -8px #000b;cursor:pointer;transition:transform 180ms cubic-bezier(.16,1,.3,1),box-shadow 180ms ease}.ds-btn-primary-original:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 #fff,0 12px 24px -9px #000e}.ds-btn-primary-original:active{transform:translateY(1px) scale(.985)}.ds-btn-primary-original:focus-visible{outline:2px solid #f4f6fa;outline-offset:3px}"
+    },
+    {
+      "name": "Primary Button — Sci-fi",
+      "kind": "button",
+      "refersTo": "button-primary-scifi",
+      "description": "Tighter silver action for the science-fiction theme.",
+      "html": "<button class=\"ds-btn-primary-scifi\">Start free →</button>",
+      "css": ".ds-btn-primary-scifi{font:700 14px Archivo,\"Inter Tight\",system-ui,sans-serif;min-height:42px;padding:10px 16px;border:1px solid #ffffffb3;border-radius:6px;color:#050505;background:linear-gradient(160deg,#ffffff,#e8e8e8);box-shadow:inset 0 1px 0 #ffffffa8,0 7px 20px -8px #000b;cursor:pointer;transition:transform 180ms cubic-bezier(.16,1,.3,1),box-shadow 180ms ease}.ds-btn-primary-scifi:hover{transform:translateY(-2px);box-shadow:inset 0 1px 0 #fff,0 12px 24px -9px #000e}.ds-btn-primary-scifi:active{transform:translateY(1px) scale(.985)}.ds-btn-primary-scifi:focus-visible{outline:2px solid #f4f6fa;outline-offset:3px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "description": "Graphite action that supports the silver primary control.",
+      "html": "<button class=\"ds-btn-secondary\">Explore Fortify</button>",
+      "css": ".ds-btn-secondary{font:500 14px Archivo,\"Inter Tight\",system-ui,sans-serif;padding:10px 16px;min-height:42px;border:1px solid #2a2a2a;border-radius:8px;color:#fafafa;background:#161616;cursor:pointer;transition:transform 180ms cubic-bezier(.16,1,.3,1),background-color 180ms ease,border-color 180ms ease}.ds-btn-secondary:hover{transform:translateY(-2px);background:#23252a;border-color:#81848b}.ds-btn-secondary:active{transform:translateY(1px) scale(.985)}.ds-btn-secondary:focus-visible{outline:2px solid #f4f6fa;outline-offset:3px}"
+    },
+    {
+      "name": "Input — Original",
+      "kind": "input",
+      "refersTo": "input-original",
+      "description": "Recessed field in the original theme.",
+      "html": "<input class=\"ds-input-original\" aria-label=\"Business name\" placeholder=\"Business name\" />",
+      "css": ".ds-input-original{font:400 14px \"Inter Tight\",Archivo,system-ui,sans-serif;width:240px;padding:10px 14px;border:1px solid #333;border-radius:10px;color:#fafafa;background:#0d0d0d;box-shadow:inset 0 1px 4px #0004;transition:border-color 180ms ease,box-shadow 180ms ease}.ds-input-original::placeholder{color:#898994}.ds-input-original:hover{border-color:#555}.ds-input-original:focus-visible{outline:2px solid #f4f6fa;outline-offset:3px;border-color:#777;box-shadow:0 0 0 3px #ffffff08}"
+    },
+    {
+      "name": "Input — Sci-fi",
+      "kind": "input",
+      "refersTo": "input-scifi",
+      "description": "Compact flat field in the science-fiction theme.",
+      "html": "<input class=\"ds-input-scifi\" aria-label=\"Business name\" placeholder=\"Business name\" />",
+      "css": ".ds-input-scifi{font:400 14px \"Inter Tight\",Archivo,system-ui,sans-serif;width:240px;padding:10px 14px;border:1px solid #2a2a2a;border-radius:6px;color:#fafafa;background:#0f0f0f;transition:border-color 180ms ease,box-shadow 180ms ease}.ds-input-scifi::placeholder{color:#898994}.ds-input-scifi:hover{border-color:#505050}.ds-input-scifi:focus-visible{outline:2px solid #f4f6fa;outline-offset:3px;border-color:#ffffff;box-shadow:0 0 0 3px #cacaca16}"
+    },
+    {
+      "name": "Card — Original",
+      "kind": "card",
+      "description": "Softly layered graphite workspace container.",
+      "html": "<article class=\"ds-card-original\"><strong>Next action</strong><p>Continue from your saved business context.</p></article>",
+      "css": ".ds-card-original{width:250px;padding:24px;border:1px solid #ffffff12;border-radius:16px;color:#fafafa;background:linear-gradient(150deg,#1b1b1b,#111 80%);box-shadow:inset 0 1px 0 #ffffff06,0 12px 35px #0002;font-family:\"Inter Tight\",Archivo,system-ui,sans-serif;transition:transform 180ms ease,border-color 180ms ease}.ds-card-original strong{font:650 18px Archivo,system-ui,sans-serif}.ds-card-original p{color:#b0b0b9;font-size:14px;line-height:1.6}.ds-card-original:hover{transform:translateY(-2px);border-color:#ffffff2b}.ds-card-original:focus-visible{outline:2px solid #f4f6fa;outline-offset:3px}"
+    },
+    {
+      "name": "Card — Sci-fi",
+      "kind": "card",
+      "description": "Tight framed graphite workspace container.",
+      "html": "<article class=\"ds-card-scifi\"><strong>Next action</strong><p>Continue from your saved business context.</p></article>",
+      "css": ".ds-card-scifi{width:250px;padding:24px;border:1px solid #1f1f1f;border-radius:8px;color:#fafafa;background:linear-gradient(145deg,#181818,#111111);box-shadow:inset 0 1px 0 #ffffff03;font-family:\"Inter Tight\",Archivo,system-ui,sans-serif;transition:transform 180ms ease,border-color 180ms ease,box-shadow 180ms ease}.ds-card-scifi strong{font:650 18px Archivo,system-ui,sans-serif}.ds-card-scifi p{color:#b0b0b9;font-size:14px;line-height:1.6}.ds-card-scifi:hover{transform:translateY(-2px);border-color:#505050;box-shadow:0 8px 26px #0003}.ds-card-scifi:focus-visible{outline:2px solid #f4f6fa;outline-offset:3px}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "chip",
+      "description": "Selected graphite control with a silver edge.",
+      "html": "<button class=\"ds-seg\">Overview</button><button class=\"ds-seg ds-seg-active\" aria-pressed=\"true\">Actions</button>",
+      "css": ".ds-seg{font:500 14px \"Inter Tight\",Archivo,system-ui,sans-serif;padding:6px 12px;margin-right:6px;border:1px solid #2a2a2a;border-radius:8px;color:#b0b0b9;background:#161616;cursor:pointer;transition:color 180ms ease,border-color 180ms ease}.ds-seg:hover{color:#fafafa;border-color:#3d3d3d}.ds-seg:focus-visible{outline:2px solid #f4f6fa;outline-offset:3px}.ds-seg-active{color:#fff;border-color:#ffffff66;background:#ffffff14;box-shadow:inset 0 1px 0 #ffffff1a,0 0 18px -6px #ffffff66}"
+    },
+    {
+      "name": "Ruled Feature Row",
+      "kind": "custom",
+      "description": "Open homepage feature treatment with a fine divider.",
+      "html": "<div class=\"ds-feature-row\"><span>01 / RESEARCH</span><strong>Find the right people</strong><p>Focus the work on useful next steps.</p></div>",
+      "css": ".ds-feature-row{width:280px;padding:20px 30px;border-top:1px solid #1f1f1f;border-bottom:1px solid #1f1f1f;color:#fafafa;background:#111111;font-family:\"Inter Tight\",Archivo,system-ui,sans-serif;transition:background-color 180ms ease}.ds-feature-row span{display:block;margin-bottom:10px;color:#ced1d8;font:600 10px ui-monospace,Consolas,monospace;letter-spacing:.13em}.ds-feature-row strong{font:650 18px Archivo,system-ui,sans-serif}.ds-feature-row p{color:#b0b0b9;font-size:14px;line-height:1.6}.ds-feature-row:hover{background:#ffffff08}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Business Signal",
+    "overview": "Fortify presents business work as something observable and actionable. A near-black graphite field, silver type and carefully lit surfaces give the interface the feel of an instrument panel. Archivo carries the brand voice and decisions; Inter Tight keeps explanations and dense controls readable. The original theme is more softly layered and product first. The sci-fi theme is more diagrammatic and compact. Both share the same visual vocabulary.\n\nThe homepage uses two restrained dimensional illustrations: a connected signal at the hero and context-to-plan-to-action slabs at the final call to action. Each has a useful still frame. Ruled rows carry the tool and feature story, while framed previews identify actual product examples.",
+    "keyCharacteristics": [
+      "Graphite and silver with muted cool text, subtle borders and occasional white light.",
+      "Dotted signals, fine rules and precise control states.",
+      "Archivo emphasis with Inter Tight support.",
+      "Dimensional illustration only where it explains the product story."
+    ],
+    "rules": [
+      {
+        "name": "The Silver Signal Rule",
+        "body": "Use the brightest values for actions, selected states, focus and meaningful signal points; let graphite carry the larger surfaces.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Voice Rule",
+        "body": "Use Archivo for brand emphasis and primary decisions, Inter Tight when the interface needs sustained reading or dense controls.",
+        "section": "typography"
+      },
+      {
+        "name": "The Purposeful Depth Rule",
+        "body": "Raise a surface to identify a control, a product example or an interactive state; keep ordinary explanatory rows open and ruled.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the graphite and silver hierarchy across both themes.",
+      "Do use Archivo for headings and primary actions, and Inter Tight for supporting text and dense controls.",
+      "Do preserve visible keyboard focus and useful still frames for dimensional scenes.",
+      "Do use ruled rows for the public feature story and framed windows for product examples."
+    ],
+    "donts": [
+      "Don't turn every marketing feature into a floating card.",
+      "Don't make the dimensional scenes a prerequisite for understanding or operating the page.",
+      "Don't add continuous spatial motion to reduced-motion visits; retain color and focus feedback."
+    ]
+  }
+}

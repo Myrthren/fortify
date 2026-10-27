@@ -23,8 +23,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["ui-sans-serif", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
-        display: ["Chakra Petch", "system-ui", "sans-serif"],
+        sans: ["Archivo", "Inter Tight", "system-ui", "sans-serif"],
+        display: ["Archivo", "Inter Tight", "system-ui", "sans-serif"],
         mono: ["ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
       borderRadius: { lg: "12px", md: "8px", sm: "6px" },

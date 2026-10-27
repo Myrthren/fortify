@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { workspaceUserId } from "@/lib/workspace-request";
 import { labAiEnabled } from "@/lib/research-institute-ai";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { ResearchInstitute } from "@/components/research-institute";
 import { SIMULATION_TUTORIAL_VERSION, simulationStorageKey, tutorialScope } from "@/lib/simulation-tutorial";
 export default async function ResearchLabPage() {
@@ -12,5 +12,5 @@ export default async function ResearchLabPage() {
   const scope = tutorialScope(business?.id ?? null);
   const progress = await db.simulationTutorialProgress.findUnique({ where: { userId_scope: { userId: id, scope } }, select: { version: true } });
   const storageKey = simulationStorageKey(id, business?.id ?? null);
-  return <div className="min-h-screen"><DashboardNav user={user} active="research-lab"/><main className="institute-page"><ResearchInstitute key={storageKey} storageKey={storageKey} aiAvailable={labAiEnabled()} tutorial={{ businessId: business?.id ?? null, businessName: business?.name ?? "Personal workspace", seen: (progress?.version ?? 0) >= SIMULATION_TUTORIAL_VERSION }}/></main></div>;
+  return <div className="min-h-screen"><WorkspaceMemberSync user={user} active="research-lab"/><main className="institute-page"><ResearchInstitute key={storageKey} storageKey={storageKey} aiAvailable={labAiEnabled()} tutorial={{ businessId: business?.id ?? null, businessName: business?.name ?? "Personal workspace", seen: (progress?.version ?? 0) >= SIMULATION_TUTORIAL_VERSION }}/></main></div>;
 }

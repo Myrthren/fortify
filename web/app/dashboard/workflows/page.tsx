@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { WorkflowsClient } from "@/components/workflows-client";
 import { LockedPage } from "@/components/locked-page";
 import { getCapacityInfo, CAPACITY_PACKS } from "@/lib/workflow-capacity";
@@ -62,7 +62,7 @@ export default async function WorkflowsPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="workflows" />
+      <WorkspaceMemberSync user={user} active="workflows" />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-8">
           <h1 className="text-3xl font-bold tracking-tight mb-2">Workflows</h1>
