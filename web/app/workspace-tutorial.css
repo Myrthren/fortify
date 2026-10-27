@@ -1,0 +1,36 @@
+.workspace-tutorial{position:fixed;z-index:80;left:24px;bottom:24px;width:412px;max-width:calc(100% - 48px);max-height:calc(100dvh - 112px);overflow:auto;color:var(--text);background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:12px;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.workspace-tutorial-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--border);font-size:12px;color:#b9b9c1}
+.workspace-tutorial-top>span,.workspace-tutorial-top>div{display:flex;align-items:center;gap:8px}
+.workspace-tutorial-top button{min-height:32px;padding:6px;font-size:12px;border-radius:4px}
+.workspace-tutorial-top button:hover{color:var(--text);background:var(--bg-elevated)}
+.workspace-tutorial-progress{display:flex;gap:5px;padding:20px 24px 0}
+.workspace-tutorial-progress>span{height:3px;flex:1;background:#333339;border-radius:2px}
+.workspace-tutorial-progress>span[data-complete=true]{background:#e4e4e9}
+.workspace-tutorial-copy{padding:16px 24px 0}
+.workspace-tutorial-count{font-size:12px;color:#a4a4ad;margin:0 0 12px}
+:root[data-theme] .workspace-tutorial h2{font-size:24px;font-weight:500;line-height:1.3;letter-spacing:-.02em;margin:0 0 14px;outline:none}
+:root[data-theme=scifi] .workspace-tutorial h2{font-family:'Chakra Petch',system-ui,sans-serif}
+.workspace-tutorial-copy>p:not(.workspace-tutorial-count){font-size:14px;line-height:1.75;color:#c3c3cb;margin:0 0 14px}
+.workspace-tutorial-copy>p.workspace-tutorial-note{font-size:12px;line-height:1.7;color:#adadb7;margin-bottom:0}
+.workspace-tutorial-note a{text-decoration:underline;text-underline-offset:3px;color:var(--text)}
+.workspace-tutorial-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;padding:22px 24px 24px}
+:root[data-theme] .workspace-tutorial-actions .btn-primary,:root[data-theme] .workspace-tutorial-actions .btn-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:42px;padding:10px 14px;font-size:13px;border-radius:6px;box-shadow:none;transform:none}
+:root[data-theme] .workspace-tutorial-actions .btn-primary{background:#ededf0;color:#111115;border:0}
+.workspace-tutorial-actions .btn-primary::after{display:none}
+.workspace-tutorial-actions>button:not(.btn-primary):not(.btn-secondary),.workspace-tutorial-actions>a:not(.btn-primary){font-size:12px;min-height:36px;color:#c3c3cb}
+.workspace-tutorial-actions .workspace-tutorial-back{padding:10px;border:1px solid var(--border-strong);border-radius:6px}
+.workspace-tutorial button:disabled{opacity:.5;cursor:default}
+.workspace-tutorial button:focus-visible,.workspace-tutorial a:focus-visible,.workspace-tutorial-resume:focus-visible{outline:2px solid #e4e4e9;outline-offset:3px}
+.workspace-tutorial-error{margin:18px 24px 0;padding:12px;background:var(--bg-elevated);border-radius:6px;font-size:13px;line-height:1.6}
+.workspace-tutorial-error button{text-decoration:underline;text-underline-offset:3px;margin-top:7px}
+.workspace-tutorial-announcement{position:absolute;top:0;left:0;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.workspace-tutorial-resume{position:fixed;z-index:80;bottom:20px;left:24px;display:flex;align-items:center;gap:10px;padding:12px 16px;min-height:44px;background:var(--bg-panel);border:1px solid var(--border-strong);border-radius:8px;font-size:13px;color:var(--text)}
+.workspace-tutorial-resume>span{font-size:12px;color:#adadb7}
+[data-workspace-tutorial-target=true]{outline:2px solid #dedee6!important;outline-offset:4px!important;border-radius:6px}
+.workspace-tutorial-settings{display:flex;align-items:center;justify-content:space-between;gap:24px;padding:24px 0;margin:0 0 24px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.workspace-tutorial-settings h2{font-size:18px;font-weight:500;margin-bottom:8px}
+.workspace-tutorial-settings p{font-size:13px;line-height:1.7;color:var(--text-muted);max-width:58ch}
+.workspace-tutorial-settings button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:1px solid var(--border-strong);border-radius:6px;padding:10px 14px;font-size:13px;white-space:nowrap}
+.workspace-tutorial-settings button:hover{background:var(--bg-elevated)}
+@media(max-width:760px){.workspace-tutorial{left:12px;bottom:12px;width:calc(100% - 24px);max-width:none;max-height:calc(100dvh - 94px)}.workspace-tutorial-top{padding:10px 16px}.workspace-tutorial-progress{padding:16px 20px 0}.workspace-tutorial-copy{padding:14px 20px 0}:root[data-theme] .workspace-tutorial h2{font-size:22px}.workspace-tutorial-copy>p:not(.workspace-tutorial-count){font-size:13px;line-height:1.7}.workspace-tutorial-actions{padding:18px 20px 20px;gap:10px}.workspace-tutorial-error{margin:14px 20px 0}.workspace-tutorial-resume{left:12px;bottom:12px}.workspace-tutorial-settings{align-items:flex-start;flex-direction:column;gap:16px}}
+@media(prefers-reduced-motion:reduce){.workspace-tutorial *{animation:none!important;transition:none!important}}

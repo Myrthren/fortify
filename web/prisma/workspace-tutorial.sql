@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS "WorkspaceTutorialProgress" (
+  "userId" TEXT NOT NULL,
+  "version" INTEGER NOT NULL DEFAULT 1,
+  "step" INTEGER NOT NULL DEFAULT 0,
+  "outcome" TEXT NOT NULL DEFAULT 'pending',
+  "enrolledAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "WorkspaceTutorialProgress_pkey" PRIMARY KEY ("userId"),
+  CONSTRAINT "WorkspaceTutorialProgress_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE
+);

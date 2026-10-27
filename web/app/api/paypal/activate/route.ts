@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getSubscription } from "@/lib/paypal";
 import { syncTierRole, sendDM } from "@/lib/discord";
 import { PLAN_TO_TIER } from "@/lib/tiers";
+import { enrollWorkspaceTutorial } from "@/lib/workspace-tutorial";
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -23,7 +24,11 @@ export async function POST(req: Request) {
   if (!tier) return new NextResponse("Unknown plan", { status: 400 });
 
   // Persist
-  const user = await db.user.update({
+  const user = await db.$transaction(async tx => {
+    await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+    const previous = await tx.subscription.findUnique({ where: { userId }, select: { id: true } });
+    if (!previous) await enrollWorkspaceTutorial(tx, userId);
+    return tx.user.update({
     where: { id: userId },
     data: {
       tier,
@@ -51,6 +56,7 @@ export async function POST(req: Request) {
         },
       },
     },
+    });
   });
 
   // Discord role + welcome DM

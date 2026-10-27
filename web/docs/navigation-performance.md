@@ -61,8 +61,9 @@ covers route selection, safe member serialization, announcement expiry,
 authentication and cache invalidation. The appearance suite covers owner access,
 origins, failed reads/writes, cache reuse and immediate invalidation.
 
-A local bundle comparison against the cached pre-change production build,
-including the final dashboard and navigation refinement, found:
+A local bundle comparison at navigation-refinement commit `b5a8926`, before
+the first-plan tutorial was added, found the following against the cached
+pre-change production build:
 
 | Resources | Before | After |
 | --- | ---: | ---: |

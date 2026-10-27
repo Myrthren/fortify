@@ -11,6 +11,7 @@ import { BillingAccessSection } from "@/components/billing-access-section";
 import type { Tier } from "@prisma/client";
 import { Download, Trash2 } from "lucide-react";
 import { OwnerLeadExtractorSettings } from "./owner-lead-extractor";
+import { WorkspaceTutorialReplay } from "@/components/workspace-tutorial-replay";
 
 type Prefs = {
   dmPaymentFailed: boolean;
@@ -254,6 +255,7 @@ export function SettingsClient({
           </p>
         </div>
 
+        <WorkspaceTutorialReplay />
         <BillingAccessSection access={{ tier: user.tier, discordLinked: !!user.discordId, subscription, whop }} />
 
         {/* Google connection */}

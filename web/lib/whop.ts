@@ -8,6 +8,7 @@ import type { Tier } from "@prisma/client";
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "crypto";
 import { db } from "@/lib/db";
 import { syncTierRole } from "@/lib/discord";
+import { enrollWorkspaceTutorial } from "@/lib/workspace-tutorial";
 
 const AUTHORIZE_URL = "https://api.whop.com/oauth/authorize";
 const TOKEN_URL = "https://api.whop.com/oauth/token";
@@ -283,6 +284,7 @@ export async function syncWhopTier(userId: string, whopUserId: string) {
       return { applied: false, revoked: false, discordId: null, effectiveTier: me.tier };
     }
     if (membershipId) {
+      if (!me.subscription) await enrollWorkspaceTutorial(tx, userId);
       await tx.subscription.upsert({
         where: { userId },
         create: { userId, provider: "whop", whopMembershipId: membershipId, tier, status: "ACTIVE" },
