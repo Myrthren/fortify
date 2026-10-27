@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isOwner } from "@/lib/owner";
+import { invalidateAnnouncements } from "@/lib/announcements";
 
 async function guardOwner() {
   const session = await auth();
@@ -33,6 +34,7 @@ export async function PATCH(
     },
   });
 
+  invalidateAnnouncements();
   return NextResponse.json({ announcement });
 }
 
@@ -44,5 +46,6 @@ export async function DELETE(
   if (!await guardOwner()) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   const { id } = await params;
   await db.announcement.delete({ where: { id } });
+  invalidateAnnouncements();
   return NextResponse.json({ ok: true });
 }

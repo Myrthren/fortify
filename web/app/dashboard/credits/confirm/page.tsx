@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
 import { getPayPalAccessToken } from "@/lib/paypal";
 import { getPackById } from "@/lib/credit-packs";

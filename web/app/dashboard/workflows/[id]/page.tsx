@@ -1,7 +1,7 @@
 import { redirect, notFound } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { WorkflowEditor } from "@/components/workflow-editor";
 
 export default async function WorkflowDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -23,7 +23,7 @@ export default async function WorkflowDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="workflows" />
+      <WorkspaceMemberSync user={user} active="workflows" />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
         <WorkflowEditor
           workflow={{

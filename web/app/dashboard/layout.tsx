@@ -1,31 +1,45 @@
-import { db } from "@/lib/db";
+import { Suspense } from "react";
+import { redirect } from "next/navigation";
+import { currentUser } from "@/lib/session-user";
+import { isOwner } from "@/lib/owner";
+import { getAnnouncements } from "@/lib/announcements";
 import { AnnouncementBar } from "@/components/announcement-bar";
-import { FortifyAI } from "@/components/fortify-ai";
+import { FortifyAILauncher } from "@/components/fortify-ai-launcher";
+import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceLoading } from "@/components/workspace-loading";
+import "../workspace-navigation.css";
+import "../workspace-operations.css";
+import "../dashboard-shell.css";
+import "../navigation-performance.css";
 
 // The dashboard reads live announcements and member data. Do not attempt
 // these queries during static generation, when database access may be absent.
-export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+async function Announcements() {
+  return <AnnouncementBar announcements={await getAnnouncements()} />;
+}
+
+async function WorkspaceShell({ children }: { children: React.ReactNode }) {
+  const user = await currentUser();
+  if (!user) redirect("/login");
+  return <div className="workspace-shell">
+    <DashboardNav user={{ email: user.email, username: user.username, tier: user.tier, discordId: user.discordId, credits: user.credits }} owner={isOwner(user.discordId)} />
+    {children}
+    <FortifyAILauncher />
+  </div>;
+}
 
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const now = new Date();
-  const announcements = await db.announcement.findMany({
-    where: {
-      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-    },
-    orderBy: { createdAt: "asc" },
-    select: { id: true, message: true },
-  });
-
   return (
     <>
       <div className="dash-ambient" aria-hidden />
-      <AnnouncementBar announcements={announcements} />
-      {children}
-      <FortifyAI />
+      <Suspense fallback={null}><Announcements /></Suspense>
+      <Suspense fallback={<WorkspaceLoading shell />}><WorkspaceShell>{children}</WorkspaceShell></Suspense>
     </>
   );
 }

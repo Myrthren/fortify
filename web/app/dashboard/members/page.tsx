@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { MemberDirectory } from "@/components/member-directory";
 import { Users } from "lucide-react";
 
@@ -42,7 +42,7 @@ export default async function MembersPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={me} active="members" />
+      <WorkspaceMemberSync user={me} active="members" />
 
       {/* Hero */}
       <div className="relative overflow-hidden border-b border-bg-border">

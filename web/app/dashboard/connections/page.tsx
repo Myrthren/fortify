@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { ConnectionsClient } from "@/components/connections-client";
 
 export default async function ConnectionsPage() {
@@ -33,7 +33,7 @@ export default async function ConnectionsPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="connections" />
+      <WorkspaceMemberSync user={user} active="connections" />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
         <h1 className="text-2xl font-bold tracking-tight mb-8">Connections</h1>
         <ConnectionsClient

@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
 import { TIER_LIMITS } from "@/lib/tiers";
 import { checkMonthly } from "@/lib/usage";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { FunnelAuditor } from "@/components/funnel-auditor";
 import Link from "next/link";
 
@@ -21,7 +21,7 @@ export default async function AuditPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="audit" />
+      <WorkspaceMemberSync user={user} active="audit" />
 
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

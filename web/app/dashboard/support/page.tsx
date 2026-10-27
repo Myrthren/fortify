@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { SupportForm } from "@/components/support-form";
 import { CopyButton } from "@/components/copy-button";
 
@@ -44,7 +44,7 @@ export default async function SupportPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="support" />
+      <WorkspaceMemberSync user={user} active="support" />
 
       <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="mb-8">

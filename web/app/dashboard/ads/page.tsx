@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { AdsDashboard } from "@/components/ads-dashboard";
 import { LockedPage } from "@/components/locked-page";
 import { TIER_LIMITS } from "@/lib/tiers";
@@ -39,7 +39,7 @@ export default async function AdsPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="ads" />
+      <WorkspaceMemberSync user={user} active="ads" />
 
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
         <div className="anim-fade-up mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">

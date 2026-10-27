@@ -1,8 +1,10 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import path from "node:path";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  outputFileTracingRoot: path.resolve(__dirname),
   // Skip lint/type-check during prod build — we run these in CI separately.
   // Avoids spurious build failures on Netlify when CI environments differ.
   eslint: { ignoreDuringBuilds: true },

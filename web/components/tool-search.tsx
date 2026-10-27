@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { WorkspaceLink as Link } from "./workspace-link";
 import { useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Lock, Search } from "lucide-react";
 import { TOOLS, isLocked } from "@/lib/tools";

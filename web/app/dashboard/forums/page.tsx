@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { ForumsClient } from "@/components/forums-client";
 import { MessageSquare } from "lucide-react";
 
@@ -25,7 +25,7 @@ export default async function ForumsPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="forums" />
+      <WorkspaceMemberSync user={user} active="forums" />
 
       {/* Hero */}
       <div className="relative overflow-hidden border-b border-bg-border">

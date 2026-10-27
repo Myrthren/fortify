@@ -1,4 +1,10 @@
 /* Ambient detail belongs exclusively to the sci-fi theme. */
+:root[data-reduced-effects="true"] .site-atmosphere .particle-field { display: none; }
+:root[data-reduced-effects="true"] .site-atmosphere .ambient-stars { animation: none; }
+@media (pointer: coarse) {
+  :root[data-theme="scifi"] .site-atmosphere .particle-field { display: none; }
+  :root[data-theme="scifi"] .site-atmosphere .ambient-stars { animation: none; }
+}
 .site-atmosphere, .particle-field, .ambient-motion-toggle { display: none; }
 :root[data-theme="scifi"] .site-content { position: relative; z-index: 1; }
 

@@ -1,5 +1,5 @@
 import { Clock } from "lucide-react";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import type { Tier } from "@prisma/client";
 
 // Monochrome "coming soon" lock — used to hard-gate features that are built but
@@ -52,7 +52,7 @@ export function ComingSoonPage({
 }) {
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active={active as any} />
+      <WorkspaceMemberSync user={user} active={active as any} />
       <main className="mx-auto max-w-3xl px-4 py-20 sm:px-6">
         <ComingSoonCard title={title} description={description} />
       </main>

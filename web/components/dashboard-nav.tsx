@@ -1,4 +1,7 @@
-import Link from "next/link";
+"use client";
+import { useEffect, useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { WorkspaceLink as Link } from "./workspace-link";
 import Image from "next/image";
 import { Activity, ArrowUpRight, LayoutDashboard, Lock, MessageSquare, Users, LayoutGrid } from "lucide-react";
 import { WorkspaceToolbar } from "./workspace-toolbar";
@@ -7,8 +10,8 @@ import { Logo } from "./logo";
 import { NotificationBell } from "./notification-bell";
 import { BusinessSwitcher } from "./business-switcher";
 import { TIERS } from "@/lib/tiers";
-import { isOwner } from "@/lib/owner";
-import { HUBS, NAV_GROUPS, entryKeys, hubHref, hubMinTier, isLocked, tool, type ActiveKey, type NavEntry } from "@/lib/tools";
+import { workspaceMember, type WorkspaceMember } from "@/lib/workspace-member";
+import { HUBS, NAV_GROUPS, entryKeys, hubHref, hubMinTier, isLocked, tool, workspaceActiveKey, type NavEntry } from "@/lib/tools";
 import { handleSignOut } from "@/app/actions/auth";
 import type { Tier } from "@prisma/client";
 
@@ -40,7 +43,16 @@ function resolveEntry(entry: NavEntry, tier: Tier) {
 function Marker({ locked, soon }: { locked: boolean; soon?: boolean }) { return soon ? <span className="workspace-nav-tag">Soon</span> : locked ? <Lock size={12} aria-label="Requires a higher plan"/> : null; }
 function NavLink({ href, active, children }: { href: string; active: boolean; children: React.ReactNode }) { return <Link href={href} aria-current={active ? "page" : undefined} className="workspace-menu-link">{children}</Link>; }
 
-export function DashboardNav({ user, active }: { user: { email: string | null; username?: string | null; tier: Tier; discordId: string | null; credits?: number }; active: ActiveKey }) {
+export function DashboardNav({ user: initialUser, owner = false }: { user: WorkspaceMember; owner?: boolean }) {
+  const pathname = usePathname(), search = useSearchParams();
+  const active = workspaceActiveKey(pathname, search.get("assets") === "slideshow" ? "test" : search.get("view"));
+  const [user, setUser] = useState(initialUser);
+  useEffect(() => { setUser(initialUser); }, [initialUser]);
+  useEffect(() => {
+    const update = (event: Event) => setUser(workspaceMember((event as CustomEvent<WorkspaceMember>).detail));
+    window.addEventListener("fortify:member-updated", update);
+    return () => window.removeEventListener("fortify:member-updated", update);
+  }, []);
   const groups = NAV_GROUPS.map(group => ({ heading: group.heading, entries: group.entries.map(entry => resolveEntry(entry, user.tier)) }));
   const tierStyle = TIER_STYLE[user.tier], tierMeta = TIERS[user.tier], activeHub = tool(active)?.hub;
   const displayName = user.username ? `@${user.username}` : user.email;
@@ -63,7 +75,7 @@ export function DashboardNav({ user, active }: { user: { email: string | null; u
         <Link href="/dashboard/messages" title="Messages" aria-label="Messages" aria-current={active === "messages" ? "page" : undefined} className="workspace-messages-link"><MessageSquare size={17}/></Link>
         <span className="workspace-username">{displayName}</span>
         <span className="tier-badge" style={{ ["--tier-a" as string]: tierStyle.a, ["--tier-b" as string]: tierStyle.b, ["--tier-glow" as string]: tierStyle.glow, borderColor: tierStyle.border, background: tierStyle.bg } as React.CSSProperties}><span className="tier-text">{tierMeta.name}</span></span>
-        {isOwner(user.discordId) && <Link href="/admin" title="Admin" aria-label="Admin" className="admin-emblem"><Image src="/fortify-admin.png" alt="Admin" width={22} height={22} className="admin-emblem-icon"/></Link>}
+        {owner && <Link href="/admin" title="Admin" aria-label="Admin" className="admin-emblem"><Image src="/fortify-admin.png" alt="Admin" width={22} height={22} className="admin-emblem-icon"/></Link>}
         <NavigationDisclosure label="Account" placement="right" className="workspace-account-menu" active={ACCOUNT.some(item => item.key === active)} icon={<span className="workspace-avatar" aria-hidden="true">{(user.username || user.email || "F").slice(0,1).toUpperCase()}</span>}><div className="workspace-simple-menu"><p className="workspace-account-name">{displayName}</p><BusinessSwitcher tier={user.tier}/>{accountLinks}<NavLink href="/dashboard/connections" active={active === "connections"}>Connections</NavLink>{signOut}</div></NavigationDisclosure>
         <NavigationDisclosure label="Navigation" placement="mobile" className="workspace-mobile-menu"><div className="workspace-mobile-sheet"><BusinessSwitcher tier={user.tier}/><section><h2>Your workspace</h2><NavLink href="/dashboard" active={active === "dashboard"}>Dashboard</NavLink><NavLink href="/dashboard/activity" active={active === "activity"}>Activity</NavLink><NavLink href="/dashboard/notifications" active={active === "notifications"}>Notifications</NavLink><NavLink href="/dashboard/messages" active={active === "messages"}>Messages</NavLink></section>{groups.map(group => <section key={group.heading}><h2>{group.heading}</h2>{group.entries.map(item => <NavLink key={item.id} href={item.href} active={item.keys.includes(active)}><span>{item.label}</span><Marker locked={item.locked} soon={item.soon}/></NavLink>)}</section>)}<section><h2>Community</h2>{communityLinks}</section><section><h2>Account</h2>{accountLinks}<NavLink href="/dashboard/connections" active={active === "connections"}>Connections</NavLink>{signOut}</section></div></NavigationDisclosure>
       </div>

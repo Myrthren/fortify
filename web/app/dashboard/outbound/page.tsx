@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { LockedPage } from "@/components/locked-page";
 import { ComingSoonPage } from "@/components/coming-soon";
 import { isOwner } from "@/lib/owner";
@@ -120,7 +120,7 @@ export default async function OutboundPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="outbound" />
+      <WorkspaceMemberSync user={user} active="outbound" />
       <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-12">
         <OutboundClient
           tracking={tracking}

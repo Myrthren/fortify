@@ -1,9 +1,10 @@
 /** Deterministic SVG fields: no per-particle JavaScript or random hydration. */
-export function ParticleField({ shape = "wave", className = "" }: {
-  shape?: "wave" | "halo"; className?: string;
+export function ParticleField({ shape = "wave", className = "", sparse = false }: {
+  shape?: "wave" | "halo"; className?: string; sparse?: boolean;
 }) {
   const layers = Array.from({ length: 3 }, (_, layer) => {
-    const points = Array.from({ length: 144 }, (_, i) => {
+    const points = Array.from({ length: sparse ? 48 : 144 }, (_, point) => {
+      const i = point * (sparse ? 3 : 1);
       const row = Math.floor(i / 36) * 3 + layer;
       const column = i % 36;
       const phase = column / 35;
@@ -28,8 +29,8 @@ export function SiteAtmosphere() {
     <div className="ambient-stars ambient-stars-near" />
     <div className="ambient-stars ambient-stars-far" />
     <div className="ambient-horizon" />
-    <ParticleField className="ambient-field-left" />
-    <ParticleField shape="halo" className="ambient-field-right" />
+    <ParticleField sparse className="ambient-field-left" />
+    <ParticleField sparse shape="halo" className="ambient-field-right" />
     <span className="ambient-reticle reticle-top">+</span>
     <span className="ambient-reticle reticle-bottom">+</span>
   </div>;

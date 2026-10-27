@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 export function AmbientMotionControl() {
   const [paused, setPaused] = useState(false);
   useEffect(() => {
+    const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+    document.documentElement.dataset.reducedEffects = String(!!connection?.saveData || (navigator.hardwareConcurrency > 0 && navigator.hardwareConcurrency <= 4));
     try {
       const saved = localStorage.getItem("fortify-motion-paused") === "true";
       setPaused(saved);

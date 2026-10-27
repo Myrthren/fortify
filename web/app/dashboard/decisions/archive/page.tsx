@@ -1,9 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
 import { advisorSessionView } from "@/lib/advisor-run";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 export const dynamic = "force-dynamic";
 export default async function StrategyArchive({
   searchParams,
@@ -28,7 +28,7 @@ export default async function StrategyArchive({
   });
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="advisor" />
+      <WorkspaceMemberSync user={user} active="advisor" />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
         <span className="eyebrow">Your saved strategy archive</span>
         <h1 className="mt-3 text-3xl">Earlier sessions & Growth Briefs</h1>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { Send, Loader2, Paperclip, X, ShoppingCart, CheckCircle2, XCircle, History, SquarePen, Trash2, Download } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
@@ -50,8 +51,9 @@ function renderContent(text: string): React.ReactNode {
     if (linkMatch) {
       const [, label, href] = linkMatch;
       const isInternal = href.startsWith("/");
+      const ContentLink = isInternal ? Link : "a";
       nodes.push(
-        <a
+        <ContentLink
           key={si}
           href={href}
           target={isInternal ? "_self" : "_blank"}
@@ -60,7 +62,7 @@ function renderContent(text: string): React.ReactNode {
           onClick={isInternal ? (e) => { e.stopPropagation(); } : undefined}
         >
           {label} ↗
-        </a>
+        </ContentLink>
       );
       return;
     }
@@ -84,8 +86,8 @@ function renderContent(text: string): React.ReactNode {
 
 // ── Main component ─────────────────────────────────────────────────────────────
 
-export function FortifyAI() {
-  const [open,             setOpen]             = useState(false);
+export function FortifyAI({ initiallyOpen = false }: { initiallyOpen?: boolean }) {
+  const [open,             setOpen]             = useState(initiallyOpen);
   const [launching,        setLaunching]        = useState(false);
   const [btnHovered,       setBtnHovered]       = useState(false);
   const [messages,         setMessages]         = useState<Msg[]>([]);
@@ -109,8 +111,7 @@ export function FortifyAI() {
 
   function handleOpen() {
     if (open || launching) return;
-    setLaunching(true);
-    setTimeout(() => { setOpen(true); setLaunching(false); }, 210);
+    setOpen(true);
   }
 
   function handlePaste(e: React.ClipboardEvent) {

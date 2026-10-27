@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { PipelineClient } from "@/components/pipeline-client";
 import { pipelineWhere } from "@/lib/pipeline-query";
 
@@ -19,5 +19,5 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
   if (!user) redirect("/login");
   const page = rows.slice(0, 100), nextCursor = rows.length > 100 ? page[page.length - 1].id : null;
   const leads = selected && !page.some(item => item.id === selected.id) ? [selected, ...page] : page;
-  return <div className="min-h-screen"><DashboardNav user={user} active="pipeline"/><main className="mx-auto max-w-7xl px-4 py-10 sm:px-6"><PipelineClient initialLeads={leads.map(item => ({ ...item, createdAt: item.createdAt.toISOString(), updatedAt: item.updatedAt.toISOString(), followUpAt: item.followUpAt?.toISOString() ?? null }))} selectedId={selected?.id} initialView={view} nextCursor={nextCursor} initialCounts={Object.fromEntries(stages.map(item => [item.status, item._count]))}/></main></div>;
+  return <div className="min-h-screen"><WorkspaceMemberSync user={user} active="pipeline"/><main className="mx-auto max-w-7xl px-4 py-10 sm:px-6"><PipelineClient initialLeads={leads.map(item => ({ ...item, createdAt: item.createdAt.toISOString(), updatedAt: item.updatedAt.toISOString(), followUpAt: item.followUpAt?.toISOString() ?? null }))} selectedId={selected?.id} initialView={view} nextCursor={nextCursor} initialCounts={Object.fromEntries(stages.map(item => [item.status, item._count]))}/></main></div>;
 }

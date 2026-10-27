@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { ForumDetailClient } from "@/components/forum-detail-client";
 
 export default async function ForumDetailPage({
@@ -41,7 +41,7 @@ export default async function ForumDetailPage({
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="forums" />
+      <WorkspaceMemberSync user={user} active="forums" />
       <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6 sm:py-12">
         <ForumDetailClient
           forum={{

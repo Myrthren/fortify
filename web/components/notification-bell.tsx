@@ -14,9 +14,11 @@ export function NotificationBell({ active }: { active: boolean }) {
   }
 
   useEffect(() => {
-    fetchCount();
-    const id = setInterval(fetchCount, 30000);
-    return () => clearInterval(id);
+    const refresh = () => { if (!document.hidden) void fetchCount(); };
+    refresh();
+    const id = setInterval(refresh, 30000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { clearInterval(id); document.removeEventListener("visibilitychange", refresh); };
   }, []);
 
   return (

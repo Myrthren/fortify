@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
+import { dashboardSession as auth } from "@/lib/session-user";
 import { db } from "@/lib/db";
-import { DashboardNav } from "@/components/dashboard-nav";
+import { WorkspaceMemberSync } from "@/components/workspace-member-sync";
 import { LockedPage } from "@/components/locked-page";
 import { LeadPackClient, type PackView } from "@/components/lead-pack-client";
 import { PACK_SIZE, PACK_TIERS, weekStart, type PackLead } from "@/lib/lead-pack-core";
@@ -54,7 +54,7 @@ export default async function LeadPackPage() {
 
   return (
     <div className="min-h-screen">
-      <DashboardNav user={user} active="lead-pack" />
+      <WorkspaceMemberSync user={user} active="lead-pack" />
       <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
         <LeadPackClient
           packSize={PACK_SIZE[user.tier as "ELITE" | "APEX"]}

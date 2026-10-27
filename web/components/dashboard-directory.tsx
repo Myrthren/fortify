@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { WorkspaceLink as Link } from "./workspace-link";
 import { ArrowUpRight, ChevronDown, Lock, Search, Users, Briefcase, MessagesSquare, Network, UserCircle, UsersRound } from "lucide-react";
 import { HUBS, NAV_GROUPS, TOOLS, isLocked, tool, type MinTier } from "@/lib/tools";
 import { TIERS } from "@/lib/tiers";
