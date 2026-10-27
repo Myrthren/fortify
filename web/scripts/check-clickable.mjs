@@ -81,13 +81,17 @@ async function main() {
   const profile = mkdtempSync(join(tmpdir(), "fortify-click-"));
   const port = 9300 + Math.floor(Math.random() * 500);
   const chrome = spawn(findChrome(), [
-    "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
+    "--headless=new", "--disable-gpu", "--no-sandbox", "--disable-dev-shm-usage",
+    "--no-first-run", "--no-default-browser-check",
     `--remote-debugging-port=${port}`, `--user-data-dir=${profile}`, "about:blank",
-  ], { stdio: "ignore" });
+  ], { stdio: ["ignore", "ignore", "pipe"] });
+  let chromeError = "";
+  chrome.stderr?.on("data", (chunk) => { chromeError = (chromeError + chunk.toString()).slice(-2000); });
+  chrome.on("error", (error) => { chromeError = error.message; });
 
   const failures = [];
   try {
-    const ws = await connect(port);
+    const ws = await connect(port, chrome, () => chromeError);
     for (const vp of VIEWPORTS) {
       await ws.send("Emulation.setDeviceMetricsOverride", { width: vp.width, height: vp.height, deviceScaleFactor: 1, mobile: vp.mobile });
       for (const path of PAGES) {
@@ -121,16 +125,17 @@ async function main() {
   console.log("\nAll card links and checkout buttons are clickable.");
 }
 
-async function connect(port) {
+async function connect(port, chrome, getChromeError) {
   let target;
-  for (let i = 0; i < 50 && !target; i++) {
+  for (let i = 0; i < 150 && !target; i++) {
     try {
       const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
       target = list.find((t) => t.type === "page");
     } catch { /* Chrome still starting */ }
+    if (chrome.exitCode !== null) break;
     if (!target) await sleep(200);
   }
-  if (!target) throw new Error("Could not reach Chrome's DevTools endpoint");
+  if (!target) throw new Error(`Could not reach Chrome's DevTools endpoint (exit ${chrome.exitCode ?? "unknown"}). ${getChromeError()}`);
 
   const socket = new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => { socket.onopen = resolve; socket.onerror = reject; });
