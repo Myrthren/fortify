@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { isPipelineStage, leadUrl } from "@/lib/pipeline";
 import { mutationOrigin, workspaceUserId } from "@/lib/workspace-request";
+import { stampMissionOutcomes } from "@/lib/growth-mission-outcomes";
 
 
 // GET — all lead statuses for the current user, keyed by URL
@@ -34,12 +35,11 @@ export async function PATCH(req: Request) {
 
   let canonical: string;
   try { canonical = leadUrl(url); } catch { return NextResponse.json({ error: "A valid business URL is required" }, { status: 400 }); }
-  const existing = await db.leadStatus.findFirst({ where: { userId, url: { in: [url, canonical, canonical.replace(/\/$/, "")] } }, select: { id: true } });
-  if (existing) await db.leadStatus.update({ where: { id: existing.id, userId }, data: { status } });
-  else await db.leadStatus.upsert({
-    where: { userId_url: { userId, url: canonical } },
-    update: { status },
-    create: { userId, url: canonical, status },
+  await db.$transaction(async tx => {
+    const existing = await tx.leadStatus.findFirst({ where: { userId, url: { in: [url, canonical, canonical.replace(/\/$/, "")] } }, select: { id: true } });
+    const lead = existing ? await tx.leadStatus.update({ where: { id: existing.id, userId }, data: { status } })
+      : await tx.leadStatus.upsert({ where: { userId_url: { userId, url: canonical } }, update: { status }, create: { userId, url: canonical, status } });
+    await stampMissionOutcomes(tx, userId, lead.id, status);
   });
 
   return NextResponse.json({ ok: true });

@@ -99,6 +99,7 @@ model User {
   mediaItems            MediaItem[]
   companyDna            CompanyDna?
   businesses            BusinessProfile[]
+  growthMissions         GrowthMission[]
   simulationTutorials   SimulationTutorialProgress[]
   aiSessions            AiSession[]
   aiCreditPacks         AiCreditPack[]
@@ -428,9 +429,50 @@ model BusinessProfile {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  growthMissions  GrowthMission[]
 
   @@index([userId, active])
   @@index([userId, updatedAt])
+}
+
+// A member-owned outcome, tied to one saved business. Pipeline leads enter only
+// after the member explicitly adds them to review.
+model GrowthMission {
+  id          String   @id @default(cuid())
+  userId      String
+  businessId  String
+  goal        String
+  target      Int
+  deadline    DateTime
+  offer       String   @db.Text
+  audience    String   @db.Text
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business    BusinessProfile @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  leads       GrowthMissionLead[]
+
+  @@index([userId, status, createdAt])
+  @@index([businessId, status])
+}
+
+model GrowthMissionLead {
+  id          String   @id @default(cuid())
+  missionId   String
+  leadId      String
+  decision    String   @default("pending")
+  reviewedAt  DateTime?
+  repliedAt   DateTime?
+  bookedAt    DateTime?
+  wonAt       DateTime?
+  createdAt   DateTime @default(now())
+  mission     GrowthMission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  lead        LeadStatus @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@unique([missionId, leadId])
+  @@index([missionId, decision])
+  @@index([leadId])
 }
 
 // ─── Fortify AI sessions ──────────────────────────────────
@@ -646,6 +688,7 @@ model LeadStatus {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  growthMissions GrowthMissionLead[]
 
   @@unique([userId, url])
   @@index([userId])

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Activity, ArrowUpRight, Briefcase, ChevronDown, LayoutDashboard, LayoutGrid, Lock, MessageSquare, Network, Users, UsersRound, type LucideIcon } from "lucide-react";
+import { Activity, ArrowUpRight, Briefcase, ChevronDown, LayoutDashboard, LayoutGrid, Lock, MessageSquare, Network, Target, Users, UsersRound, type LucideIcon } from "lucide-react";
 import { WorkspaceLink as Link } from "./workspace-link";
 import { NavigationDisclosure, WorkspaceSkipLink } from "./navigation-disclosure";
 import { Logo } from "./logo";
@@ -87,6 +87,7 @@ export function DashboardNav({ user: initialUser, owner = false }: { user: Works
         <Logo withWord/>
         <nav className="workspace-primary" aria-label="Main navigation">
           <Link href="/dashboard" aria-current={active === "dashboard" ? "page" : undefined}><LayoutDashboard size={16}/> Dashboard</Link>
+          <Link href="/dashboard/missions" aria-current={active === "missions" ? "page" : undefined}><Target size={16}/> Missions</Link>
           <NavigationDisclosure label="Workspaces" icon={<LayoutGrid size={16}/>} active={GROUPS.some(group => group.items.some(item => item.key === active))} className="workspace-tools-menu"><Catalog active={active} tier={user.tier}/></NavigationDisclosure>
           <Link href="/dashboard/activity" aria-current={active === "activity" ? "page" : undefined}><Activity size={16}/> Activity</Link>
         </nav>
@@ -107,7 +108,7 @@ export function DashboardNav({ user: initialUser, owner = false }: { user: Works
         <NavigationDisclosure label="Navigation" placement="mobile" className="workspace-mobile-menu">
           <div className="workspace-mobile-sheet">
             <BusinessSwitcher tier={user.tier}/>
-            <section className="workspace-mobile-primary"><NavLink href="/dashboard" active={active === "dashboard"}>Dashboard</NavLink><NavLink href="/dashboard/activity" active={active === "activity"}>Activity</NavLink></section>
+            <section className="workspace-mobile-primary"><NavLink href="/dashboard" active={active === "dashboard"}>Dashboard</NavLink><NavLink href="/dashboard/missions" active={active === "missions"}>Growth Missions</NavLink><NavLink href="/dashboard/activity" active={active === "activity"}>Activity</NavLink></section>
             {GROUPS.map(group => <details key={group.heading} className="workspace-mobile-group" open={group.items.some(item => item.key === active)}><summary>{group.heading}<ChevronDown size={15}/></summary><div>{group.items.map(item => item.soon ? <div className="workspace-menu-link workspace-menu-unavailable" key={item.key} aria-disabled="true"><span>{item.label}</span><Marker item={item} tier={user.tier}/></div> : <NavLink key={item.key} href={item.href} active={active === item.key}><span>{item.label}</span><Marker item={item} tier={user.tier}/></NavLink>)}</div></details>)}
             <section className="workspace-mobile-account"><h2>{TIERS[user.tier].name} account</h2>{accountLinks}{ownerLink}{signOut}</section>
           </div>

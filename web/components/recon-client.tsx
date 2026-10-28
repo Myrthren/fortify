@@ -32,6 +32,7 @@ const STATUS_CONFIG: Record<LeadStatus, { label: string; cls: string }> = {
   qualified: { label: "Qualified", cls: "border-green-500/30 bg-green-500/10 text-green-400" },
   "draft-ready": { label: "Draft ready", cls: "border-white/15 text-text-muted" },
   replied: { label: "Replied", cls: "border-green-500/30 text-green-400" },
+  "meeting-booked": { label: "Call booked", cls: "border-green-500/30 text-green-400" },
   won: { label: "Won", cls: "border-green-500/30 text-green-400" },
   dead:      { label: "Dead",      cls: "border-red-500/30 bg-red-500/10 text-red-400" },
 };

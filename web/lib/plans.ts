@@ -33,6 +33,7 @@ export const PLANS: Plan[] = [
     highlights: [
       "500 credits a month",
       "Brand Voice Studio and unlimited AI chat",
+      "Growth Missions with prospect approval and progress",
       "Social lead extraction and lead scoring",
       "Competitor Scanner for 3 rivals",
     ],

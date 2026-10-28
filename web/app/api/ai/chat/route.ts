@@ -339,6 +339,7 @@ If a user asks you to change something about their account or build a workflow, 
 - **Workflows** — Visual drag-and-drop automation builder. Create multi-step automations with: Trigger nodes (Schedule, Webhook, New Member, Competitor Change, New Lead), AI nodes (Generate, Summarise, Analyse, Classify), Action nodes (Discord Post, Email, Slack, Notion, Twitter/X, Shopify, Webhook Out), and Logic nodes (Condition, Delay, Filter). Nodes connect with bezier string connections. Each node has detailed config. Capacity packs: 5,000 units for £9.99, 12,000 units for £19.99.
 - **Analytics** — GA4, Search Console, and YouTube metrics in one place
 - **Decision Room** — Compare options, assumptions and evidence; commit a choice into a real plan; record an outcome review. Apex only at /dashboard/decisions. Earlier sessions remain at /dashboard/decisions/archive.
+- **Growth Missions** — Set a measurable outcome for a saved business, approve existing pipeline prospects and track member-recorded replies, calls booked or clients won. Paid plans at /dashboard/missions. Approval does not send outreach or spend credits.
 - **Forums** — Community discussion boards
 - **Member Directory** — Find founders and operators
 - **AI Matchmaking** — Top members worth talking to based on your profile
