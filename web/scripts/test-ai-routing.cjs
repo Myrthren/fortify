@@ -101,7 +101,7 @@ function router({ allowClaude = true, primaryError, models, env = {}, apiKey = t
       openrouterConfigured: () => apiKey,
       validateOpenrouterRequest: params => { if (params.invalid) throw new Error('Invalid prompt'); },
       openrouterMessage: async (params, options) => {
-        events.push(['call', options.model]);
+        events.push(['call', options.model, params.max_tokens]);
         if (options.model.startsWith('anthropic/') && primaryError) throw primaryError;
         await options.onUsage({ id: 'completion', usage: { cost: .01 } });
         return { model: options.model, content: [{ type: 'text', text: 'Answer' }] };
@@ -141,6 +141,13 @@ test('provider outages fall back once; refusals and bad input do not route to an
   const invalid = router();
   await assert.rejects(invalid.api.routedAiMessage('member', { ...request, invalid: true }), /Invalid/);
   assert.equal(invalid.events.length, 0);
+});
+
+test('a provider credit cap retries the fallback with a bounded output ceiling', async () => {
+  const capped = router({ primaryError: { status: 402, message: 'This request requires more credits, or fewer max_tokens.' } });
+  const result = await capped.api.routedAiMessage('member', { ...request, max_tokens: 4000 });
+  assert.equal(result.fortify.fallback, true);
+  assert.deepEqual(capped.events.filter(e => e[0] === 'call').map(e => e[2]), [4000, 1500]);
 });
 
 test('tool and image requests never select an incompatible model, and tool continuations retain the selected alternate', async () => {

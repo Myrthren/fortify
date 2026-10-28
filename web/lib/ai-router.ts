@@ -8,6 +8,10 @@ export const AI_MODELS = {
   premium: process.env.OPENROUTER_CLAUDE_PREMIUM_MODEL?.trim() || "anthropic/claude-opus-5.5",
 };
 const FALLBACKS = ["minimax/minimax-m2.5", "moonshotai/kimi-k2.5", "qwen/qwen3.5-397b-a17b"];
+// A provider-level credit cap is checked against the requested output ceiling.
+// Keep a fallback response useful while allowing it to recover when the primary
+// Claude request cannot fit inside the remaining provider allowance.
+const FALLBACK_MAX_TOKENS = 1500;
 type Model = { id: string; context_length: number; pricing: Record<string, string>; supported_parameters?: string[]; architecture?: { input_modalities?: string[] } };
 let catalog: { at: number; models: Model[] } | undefined;
 let exchange: { at: number; rate: number } | undefined;
@@ -85,14 +89,16 @@ export async function routedAiMessage(userId: string, params: any, options?: { s
   const primaryId = params.model === AI_MODELS.premium || /opus|premium/.test(params.model ?? "") ? AI_MODELS.premium : AI_MODELS.fast;
   if (!primaryId.startsWith("anthropic/claude-")) throw new Error("The primary AI model must be Claude");
   const primary = models.find(m => m.id === primaryId && compatible(m, params));
+  const fallbackParams = { ...params, max_tokens: Math.min(params.max_tokens ?? FALLBACK_MAX_TOKENS, FALLBACK_MAX_TOKENS) };
   const invoke = async (model: Model, primaryCall: boolean) => {
-    const quote = quoteCall(params, model, fx);
+    const requestParams = primaryCall ? params : fallbackParams;
+    const quote = quoteCall(requestParams, model, fx);
     const reservation = await reserveAiCall(userId, model.id, quote, fx, primaryCall);
     if (!reservation) return null;
     let costGbp = reservation.reservedMicros / 1_000_000;
     try {
       if (options?.signal?.aborted) { await failAiCall(reservation, { status: 400 }); throw new Error("Generation cancelled"); }
-      const result = await openrouterMessage(params, { ...options, model: model.id, onUsage: async raw => { costGbp = await settleAiCall(reservation, raw); } });
+      const result = await openrouterMessage(requestParams, { ...options, model: model.id, onUsage: async raw => { costGbp = await settleAiCall(reservation, raw); } });
       return { ...result, fortify: { model: result.model, routedModel: model.id, fallback: !primaryCall, costGbp } };
     } catch (error) { await failAiCall(reservation, error); throw error; }
   };
@@ -104,7 +110,7 @@ export async function routedAiMessage(userId: string, params: any, options?: { s
   }
   const candidates = (continuation ? [continuation] : pool).map(id => models.find(m => m.id === id)).filter((m): m is Model => {
     if (!m || !compatible(m, params)) return false;
-    try { quoteCall(params, m, fx); return true; } catch { return false; }
+    try { quoteCall(fallbackParams, m, fx); return true; } catch { return false; }
   });
   // One random choice per provider call. No retry chain that multiplies charges.
   if (!candidates.length) throw new Error("No configured fallback supports this request");
