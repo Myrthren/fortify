@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Send, Loader2, Paperclip, X, ShoppingCart, CheckCircle2, XCircle, History, SquarePen, Trash2, Download } from "lucide-react";
+import { Send, Loader2, Paperclip, X, ShoppingCart, CheckCircle2, XCircle, History, SquarePen, Trash2, Download, AlertCircle, RotateCcw } from "lucide-react";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -16,7 +16,12 @@ type Msg = {
   generatedImage?: string;  // AI-generated image (base64 data URL)
   actions?: ActionResult[];
   model?: string;
+  fallback?: boolean;
+  error?: { retryable: boolean; requestId?: string };
 };
+
+type ChatHistoryMessage = Pick<Msg, "role" | "content">;
+type RetryRequest = { content: string; file: File | null; history: ChatHistoryMessage[] };
 
 type Usage = {
   tier: string;
@@ -107,6 +112,7 @@ export function FortifyAI({ initiallyOpen = false, visible, hideLauncher = false
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileRef   = useRef<HTMLInputElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const retryRequestRef = useRef<RetryRequest | null>(null);
 
   useEffect(() => { if (open && !usage) fetchUsage(); }, [open]);
   useEffect(() => { if (open) closeRef.current?.focus({ preventScroll: true }); }, [open]);
@@ -196,38 +202,38 @@ export function FortifyAI({ initiallyOpen = false, visible, hideLauncher = false
     if (currentSessionId === id) { setMessages([]); setCurrentSessionId(null); }
   }
 
-  async function send() {
-    if (!input.trim() && !file) return;
+  async function submit(request: RetryRequest, addUserMessage: boolean) {
+    const { content, file: attachedFile, history } = request;
     if (usage?.freeTrialExhausted) { return; } // blocked — upgrade banner shown
     if (usage?.sessionExhausted && !usage.hasPackCredits && !usage.isFree) { setShowPacks(true); return; }
 
-    const userMsg: Msg = {
-      role: "user",
-      content: input,
-      hasFile: !!file,
-      imagePreview: imagePreview ?? undefined,
-    };
-    setMessages((p) => [...p, userMsg]);
-    setInput("");
+    if (addUserMessage) {
+      setMessages((p) => [...p, {
+        role: "user",
+        content,
+        hasFile: !!attachedFile,
+        imagePreview: imagePreview ?? undefined,
+      }]);
+      setInput("");
+      setFile(null);
+      setImagePreview(null);
+    }
     setSending(true);
 
     try {
       let res: Response;
-      const history = messages.map((m) => ({ role: m.role, content: m.content }));
 
-      if (file) {
+      if (attachedFile) {
         const fd = new FormData();
-        fd.append("message", input);
+        fd.append("message", content);
         fd.append("history", JSON.stringify(history));
-        fd.append("file", file);
+        fd.append("file", attachedFile);
         res = await fetch("/api/ai/chat", { method: "POST", body: fd });
-        setFile(null);
-        setImagePreview(null);
       } else {
         res = await fetch("/api/ai/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ messages: [...history, { role: "user", content: input }] }),
+          body: JSON.stringify({ messages: [...history, { role: "user", content }] }),
         });
       }
 
@@ -240,7 +246,11 @@ export function FortifyAI({ initiallyOpen = false, visible, hideLauncher = false
             setShowPacks(true);
           }
         } else {
-          setMessages((p) => [...p, { role: "assistant", content: `Error: ${d.error ?? "Something went wrong."}` }]);
+          setMessages((p) => [...p, {
+            role: "assistant",
+            content: d.error ?? "Fortify AI could not finish that request.",
+            error: { retryable: d.retryable === true, requestId: d.requestId },
+          }]);
         }
         return;
       }
@@ -252,14 +262,36 @@ export function FortifyAI({ initiallyOpen = false, visible, hideLauncher = false
           role: "assistant",
           content: d.message,
           model: d.model,
+          fallback: d.fallback === true,
           actions: d.actions?.length ? d.actions : undefined,
           generatedImage: d.imageUrl ?? undefined,
         },
       ]);
       fetchUsage();
+    } catch {
+      setMessages((p) => [...p, {
+        role: "assistant",
+        content: "Fortify AI could not reach the service. Your message is still here — try again when you are ready.",
+        error: { retryable: true },
+      }]);
     } finally {
       setSending(false);
     }
+  }
+
+  async function send() {
+    if (!input.trim() && !file) return;
+    const history = messages
+      .filter((message) => !message.error)
+      .map(({ role, content }) => ({ role, content }));
+    const request = { content: input, file, history };
+    retryRequestRef.current = request;
+    await submit(request, true);
+  }
+
+  async function retryLastRequest() {
+    if (!retryRequestRef.current || sending) return;
+    await submit(retryRequestRef.current, false);
   }
 
   async function buyPack(pack: number) {
@@ -475,8 +507,27 @@ export function FortifyAI({ initiallyOpen = false, visible, hideLauncher = false
                     {m.hasFile && !m.imagePreview && (
                       <p className="text-[10px] text-text-muted mb-1 flex items-center gap-1"><Paperclip className="h-2.5 w-2.5" /> File attached</p>
                     )}
-                    {m.model && <p className="mb-1 text-[10px] text-text-muted">{m.model.split("/").pop()}</p>}
-                    <div className="whitespace-pre-wrap">{renderContent(m.content)}</div>
+                    {m.model && <p className="mb-1 text-[10px] text-text-muted">Delivered by {m.model.split("/").pop()}{m.fallback ? " · standard route" : ""}</p>}
+                    {m.error ? (
+                      <div className="space-y-2" role="alert">
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-300" />
+                          <p className="text-sm text-text">{m.content}</p>
+                        </div>
+                        {m.error.retryable && (
+                          <button
+                            type="button"
+                            onClick={() => void retryLastRequest()}
+                            disabled={sending}
+                            className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/[0.06] px-2.5 py-1.5 text-[11px] font-medium text-text transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            <RotateCcw className="h-3 w-3" />
+                            Try again
+                          </button>
+                        )}
+                        {m.error.requestId && <p className="text-[10px] text-text-dim">Support reference: {m.error.requestId}</p>}
+                      </div>
+                    ) : <div className="whitespace-pre-wrap">{renderContent(m.content)}</div>}
 
                     {/* AI-generated image */}
                     {m.generatedImage && (
@@ -524,12 +575,13 @@ export function FortifyAI({ initiallyOpen = false, visible, hideLauncher = false
 
               {sending && (
                 <div className="flex justify-start">
-                  <div className="bg-bg-panel border border-bg-border rounded-2xl theme-ai-composer px-4 py-3 flex items-center gap-2">
+                  <div className="bg-bg-panel border border-bg-border rounded-2xl theme-ai-composer px-4 py-3 flex items-center gap-2" role="status" aria-live="polite">
                     <div className="flex gap-1">
                       <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: "0ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: "120ms" }} />
                       <span className="w-1.5 h-1.5 rounded-full bg-text-muted animate-bounce" style={{ animationDelay: "240ms" }} />
                     </div>
+                    <span className="text-xs text-text-muted">Preparing your answer…</span>
                   </div>
                 </div>
               )}
@@ -663,3 +715,4 @@ export function FortifyAI({ initiallyOpen = false, visible, hideLauncher = false
     </>
   );
 }
+
