@@ -12,6 +12,32 @@ import { generateImage } from "@/lib/openai";
 // Cost of one gpt-image-1 generation at 1024×1024 high quality (in GBP)
 const IMAGE_GEN_COST_GBP = 0.04;
 
+function aiUnavailableResponse(error: unknown) {
+  const requestId = randomUUID().slice(0, 8);
+  const detail = error instanceof Error ? error.message : "Unknown provider failure";
+  const status = typeof error === "object" && error !== null && "status" in error
+    ? Number((error as { status?: unknown }).status)
+    : undefined;
+  console.error(`Fortify AI request ${requestId} failed`, { status, detail });
+
+  // A provider can refuse an otherwise-funded key when the requested output is
+  // larger than that key's currently available per-request allowance. Keep the
+  // provider detail out of the product UI and offer a concrete recovery instead.
+  if (status === 402 || /requires more credits|fewer max_tokens/i.test(detail)) {
+    return NextResponse.json({
+      error: "Fortify AI could not reserve a full-length answer right now. Try again and it will use the shorter recovery route.",
+      retryable: true,
+      requestId,
+    }, { status: 503 });
+  }
+
+  return NextResponse.json({
+    error: "Fortify AI is temporarily unavailable. Your request was not lost — try again in a moment.",
+    retryable: true,
+    requestId,
+  }, { status: 503 });
+}
+
 // ── Workflow node types (kept in sync with workflow-editor.tsx) ───────────────
 const WF_NODE_TYPES = [
   "trigger_schedule","trigger_webhook","trigger_new_member","trigger_competitor","trigger_lead",
@@ -339,6 +365,7 @@ If a user asks you to change something about their account or build a workflow, 
 - **Workflows** — Visual drag-and-drop automation builder. Create multi-step automations with: Trigger nodes (Schedule, Webhook, New Member, Competitor Change, New Lead), AI nodes (Generate, Summarise, Analyse, Classify), Action nodes (Discord Post, Email, Slack, Notion, Twitter/X, Shopify, Webhook Out), and Logic nodes (Condition, Delay, Filter). Nodes connect with bezier string connections. Each node has detailed config. Capacity packs: 5,000 units for £9.99, 12,000 units for £19.99.
 - **Analytics** — GA4, Search Console, and YouTube metrics in one place
 - **Decision Room** — Compare options, assumptions and evidence; commit a choice into a real plan; record an outcome review. Apex only at /dashboard/decisions. Earlier sessions remain at /dashboard/decisions/archive.
+- **Growth Missions** — Set a measurable outcome for a saved business, approve existing pipeline prospects and track member-recorded replies, calls booked or clients won. Paid plans at /dashboard/missions. Approval does not send outreach or spend credits.
 - **Forums** — Community discussion boards
 - **Member Directory** — Find founders and operators
 - **AI Matchmaking** — Top members worth talking to based on your profile
@@ -498,13 +525,18 @@ export async function POST(req: Request) {
   const systemPrompt = FORTIFY_KNOWLEDGE + dnaContext + memoryContext + apexNote;
 
   // ── First Claude call (may use tools) ──
-  const resp1 = await claude().messages.create({
-    model: aiModel,
-    max_tokens: maxTok1,
-    system: systemPrompt,
-    tools: FORTIFY_TOOLS,
-    messages,
-  } as any);
+  let resp1: any;
+  try {
+    resp1 = await claude().messages.create({
+      model: aiModel,
+      max_tokens: maxTok1,
+      system: systemPrompt,
+      tools: FORTIFY_TOOLS,
+      messages,
+    } as any);
+  } catch (error) {
+    return aiUnavailableResponse(error);
+  }
 
   let routedCost = (resp1 as any).fortify?.costGbp ?? 0;
   let lastRouting = (resp1 as any).fortify;
@@ -559,17 +591,22 @@ export async function POST(req: Request) {
     }
 
     // ── Second Claude call with tool results ──
-    const resp2 = await claude().messages.create({
-      model: (resp1 as any).fortify?.routedModel ?? aiModel,
-      max_tokens: maxTok2,
-      system: systemPrompt,
-      tools: FORTIFY_TOOLS,
-      messages: [
-        ...messages,
-        { role: "assistant", content: resp1.content },
-        { role: "user",      content: toolResults },
-      ],
-    } as any);
+    let resp2: any;
+    try {
+      resp2 = await claude().messages.create({
+        model: (resp1 as any).fortify?.routedModel ?? aiModel,
+        max_tokens: maxTok2,
+        system: systemPrompt,
+        tools: FORTIFY_TOOLS,
+        messages: [
+          ...messages,
+          { role: "assistant", content: resp1.content },
+          { role: "user",      content: toolResults },
+        ],
+      } as any);
+    } catch (error) {
+      return aiUnavailableResponse(error);
+    }
 
     routedCost += (resp2 as any).fortify?.costGbp ?? 0;
     lastRouting = (resp2 as any).fortify;
@@ -599,3 +636,4 @@ export async function POST(req: Request) {
     ...(generatedImageUrl ? { imageUrl: generatedImageUrl } : {}),
   });
 }
+
