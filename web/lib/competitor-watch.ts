@@ -45,7 +45,10 @@ async function publicUrl(value: string, signal: AbortSignal) {
 }
 
 /** Bound bytes and redirects; unsuccessful or challenge pages never replace evidence. */
-export async function readWatchPage(value: string): Promise<string> {
+export type PublicPage = { html: string; finalUrl: string; contentType: string };
+
+/** Safely fetch a public, readable document for Fortify-owned research features. */
+export async function readPublicPage(value: string): Promise<PublicPage> {
   const signal = AbortSignal.timeout(10_000);
   let url = value;
   for (let redirects = 0; redirects <= 3; redirects++) {
@@ -77,13 +80,18 @@ export async function readWatchPage(value: string): Promise<string> {
         chunks.push(chunk);
       }
     } finally { void reader.cancel().catch(() => {}); }
-    const text = readableWatchText(Buffer.concat(chunks).toString("utf8"));
+    const html = Buffer.concat(chunks).toString("utf8");
+    const text = readableWatchText(html);
     if (text.length < 20 || (text.length < 1000 && /just a moment|verify (?:that )?you are human|enable javascript|access denied|checking your browser/i.test(text))) {
       throw new Error("Page has no usable readable content");
     }
-    return text;
+    return { html, finalUrl: target.href, contentType: res.headers.get("content-type") ?? "" };
   }
   throw new Error("Too many redirects");
+}
+
+export async function readWatchPage(value: string): Promise<string> {
+  return readableWatchText((await readPublicPage(value)).html);
 }
 
 /** Compare visible wording, ignoring markup, scripts, navigation and timestamps. */

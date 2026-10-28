@@ -83,3 +83,28 @@ BEGIN
       FOREIGN KEY ("leadId") REFERENCES "LeadStatus"("id") ON DELETE CASCADE ON UPDATE CASCADE;
   END IF;
 END $$;
+
+CREATE TABLE IF NOT EXISTS "SitePulse" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "businessId" TEXT NOT NULL,
+    "url" TEXT NOT NULL,
+    "score" INTEGER NOT NULL,
+    "summary" TEXT NOT NULL,
+    "findings" JSONB NOT NULL DEFAULT '[]',
+    "checkedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "SitePulse_pkey" PRIMARY KEY ("id")
+);
+CREATE INDEX IF NOT EXISTS "SitePulse_userId_checkedAt_idx" ON "SitePulse"("userId", "checkedAt");
+CREATE INDEX IF NOT EXISTS "SitePulse_businessId_checkedAt_idx" ON "SitePulse"("businessId", "checkedAt");
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SitePulse_userId_fkey') THEN
+    ALTER TABLE "SitePulse" ADD CONSTRAINT "SitePulse_userId_fkey"
+      FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+   IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SitePulse_businessId_fkey') THEN
+    ALTER TABLE "SitePulse" ADD CONSTRAINT "SitePulse_businessId_fkey"
+      FOREIGN KEY ("businessId") REFERENCES "BusinessProfile"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;
