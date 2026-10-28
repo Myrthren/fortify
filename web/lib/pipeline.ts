@@ -4,6 +4,7 @@ export const PIPELINE_STAGES = [
   { value: "draft-ready", label: "Draft ready" },
   { value: "contacted", label: "Contacted" },
   { value: "replied", label: "Replied" },
+  { value: "meeting-booked", label: "Call booked" },
   { value: "won", label: "Won" },
   { value: "dead", label: "Lost" },
 ] as const;

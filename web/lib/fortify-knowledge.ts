@@ -33,6 +33,7 @@ PLATFORM FEATURES
 - Weekly AI strategy report — a weekly activity summary and suggested next action sent by Discord DM, for Elite and Apex only. Requires a linked Discord account and the Weekly strategy report notification enabled in Settings. This preference also controls lead-pack DMs and Apex Growth Brief DMs.
 - Apex does not include early access to new features; there is no early-access mechanism.
 - Decision Room — Apex decision workspace at /dashboard/decisions. Compare user-supplied options, costs, requirements and tradeoffs, commit a choice into linked Plans tasks, and record an outcome review. Earlier strategy sessions and monthly Growth Briefs remain readable at /dashboard/decisions/archive.
+- Growth Missions — paid workspace at /dashboard/missions. Set an outcome and deadline for a saved business, add existing pipeline prospects for explicit approval, then track replies, calls booked or clients won as members record those stages. Approval does not send outreach or spend credits. The weekly briefing uses member-entered pipeline data, not independently verified outcomes.
 Content:
 - Story Forge — guided script editor at /dashboard/content?view=story (Free+). Save five editable story beats, compare alternative openings, attach supporting evidence, lock wording, request a suggestion for one beat, approve and export. Suggestions use the active brand voice where available.
 - Brand Voice Studio — train Claude on your exact tone; use it in all AI tools (Pro+)

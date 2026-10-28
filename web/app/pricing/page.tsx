@@ -66,6 +66,7 @@ const COMPARISON: { section: string; rows: { label: string; cells: [Cell, Cell, 
   {
     section: "Business",
     rows: [
+      { label: "Growth Missions (goal, prospect review, progress)", cells: [false, true, true, true] },
       { label: "Company DNA (AI memory)", cells: [false, "30k characters", "100k characters", "Unlimited"] },
       { label: "Meta Ads, Shopify and Revenue dashboards", cells: [false, true, true, true] },
       { label: "Analytics (GA4, Search Console)", cells: [false, SOON(), SOON(), SOON()] },

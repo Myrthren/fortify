@@ -17,7 +17,7 @@ export type ActiveKey =
   | "revenue" | "virality" | "dna" | "members" | "deals" | "pods"
   | "forums" | "messages" | "connections" | "notifications" | "profile"
   | "settings" | "support" | "credits" | "recon" | "competitor-watch"
-  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity" | "plans" | "research-lab" | "story" | "setup";
+  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity" | "plans" | "research-lab" | "story" | "setup" | "missions";
 
 export type HubKey = "leads" | "competitors" | "insights";
 
@@ -40,6 +40,7 @@ export type Tool = {
 const OUTBOUND_LIVE = process.env.NEXT_PUBLIC_OUTBOUND_ENABLED === "true";
 
 export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "activity" | "members" | "deals" | "pods" | "forums" | "messages" | "connections" | "notifications" | "profile" | "settings" | "support" | "credits">, Tool> = {
+  missions: { key: "missions", href: "/dashboard/missions", label: "Growth Missions", desc: "Set a goal, approve prospects and track outcomes", icon: Target, minTier: "PRO" },
   setup: { key: "setup", href: "/dashboard/setup", label: "Business Setup", desc: "Configure the context, outcome and operating path", icon: Building2, minTier: "PRO" },
   "research-lab": { key: "research-lab", href: "/dashboard/research-lab", label: "Simulation Lab", desc: "Run a small research institute with six autonomous agents", icon: FlaskConical },
   plans: { key: "plans", href: "/dashboard/plans", label: "Plans", desc: "Map future goals, decisions and connected procedures", icon: Layers },
@@ -114,7 +115,7 @@ export type NavEntry = { kind: "tool"; key: ActiveKey } | { kind: "hub"; hub: Hu
 
 export const NAV_GROUPS: { heading: string; entries: NavEntry[] }[] = [
   { heading: "Content",    entries: [{ kind: "tool", key: "inspiration" }, { kind: "tool", key: "story" }, { kind: "tool", key: "virality" }, { kind: "tool", key: "voice" }] },
-  { heading: "Growth",     entries: [{ kind: "hub", hub: "leads" }, { kind: "tool", key: "audit" }] },
+  { heading: "Growth",     entries: [{ kind: "tool", key: "missions" }, { kind: "hub", hub: "leads" }, { kind: "tool", key: "audit" }] },
   { heading: "Research",   entries: [{ kind: "tool", key: "research-lab" }, { kind: "tool", key: "trends" }, { kind: "hub", hub: "competitors" }] },
   { heading: "Business",   entries: [{ kind: "tool", key: "setup" }, { kind: "tool", key: "plans" }, { kind: "tool", key: "advisor" }, { kind: "hub", hub: "insights" }, { kind: "tool", key: "dna" }] },
   { heading: "Automation", entries: [{ kind: "tool", key: "workflows" }] },
