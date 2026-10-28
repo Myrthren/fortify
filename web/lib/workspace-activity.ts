@@ -21,7 +21,7 @@ export async function getWorkspaceSnapshot(userId: string): Promise<WorkspaceSna
   const endOfDay = new Date(now); endOfDay.setUTCHours(23, 59, 59, 999);
   const weekAgo = new Date(now.getTime() - 7 * 86400000);
   const dueWhere = { userId, followUpAt: { lte: endOfDay }, status: { notIn: CLOSED_STAGES } };
-  const [preference, stages, dueCount, due, leads, searches, workflows, scans, changeCount, generations, generationCounts, drafts, watches, topics, savedContent, storyCount, account] = await Promise.all([
+  const [preference, stages, dueCount, due, leads, searches, workflows, scans, changeCount, generations, generationCounts, drafts, watches, topics, savedContent, storyCount, account, sitePulse] = await Promise.all([
     db.workspacePreference.findUnique({ where: { userId } }),
     db.leadStatus.groupBy({ by: ["status"], where: { userId }, _count: true }),
     db.leadStatus.count({ where: dueWhere }),
@@ -39,6 +39,7 @@ export async function getWorkspaceSnapshot(userId: string): Promise<WorkspaceSna
     db.contentRecord.findMany({where:{userId},orderBy:{updatedAt:'desc'},take:8,select:{id:true,title:true,kind:true,updatedAt:true}}),
     db.contentRecord.count({where:{userId,kind:'story'}}),
     db.user.findUnique({where:{id:userId},select:{tier:true}}),
+    db.sitePulse.findFirst({ where: { userId }, orderBy: { checkedAt: "desc" }, select: { score: true, summary: true } }),
   ]);
   const name = (lead: { company: string | null; url: string }) => {
     if (lead.company) return lead.company;
@@ -62,6 +63,7 @@ export async function getWorkspaceSnapshot(userId: string): Promise<WorkspaceSna
     attention: [
       ...due.map(item => ({ id: `due:${item.id}`, title: `Follow up with ${name(item)}`, detail: `Due ${item.followUpAt!.toISOString().slice(0, 10)}`, href: `/dashboard/pipeline?lead=${encodeURIComponent(item.id)}`, action: "Review lead" })),
       ...failed.slice(0, 4).map(item => ({ id: `failed:${item.id}`, title: item.name, detail: "The latest run failed. Review the log before retrying.", href: `/dashboard/workflows/${item.id}`, action: "Review failure", warning: true })),
+      ...(sitePulse && sitePulse.score < 70 ? [{ id: "site-pulse", title: "Website Pulse needs attention", detail: sitePulse.summary, href: "/dashboard/site-pulse", action: "Review public signals", warning: true }] : []),
     ],
     activity: activity.slice(0, 24),
   };

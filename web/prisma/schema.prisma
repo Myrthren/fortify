@@ -100,6 +100,7 @@ model User {
   companyDna            CompanyDna?
   businesses            BusinessProfile[]
   growthMissions         GrowthMission[]
+  sitePulses            SitePulse[]
   simulationTutorials   SimulationTutorialProgress[]
   aiSessions            AiSession[]
   aiCreditPacks         AiCreditPack[]
@@ -430,6 +431,7 @@ model BusinessProfile {
   updatedAt       DateTime @updatedAt
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   growthMissions  GrowthMission[]
+  sitePulses      SitePulse[]
 
   @@index([userId, active])
   @@index([userId, updatedAt])
@@ -473,6 +475,25 @@ model GrowthMissionLead {
   @@unique([missionId, leadId])
   @@index([missionId, decision])
   @@index([leadId])
+}
+
+// Public-web evidence for a member's active business. Findings are kept as a
+// compact JSON record so Growth Briefs can cite only observed website/domain
+// facts without pretending to have private analytics or inbox access.
+model SitePulse {
+  id         String   @id @default(cuid())
+  userId     String
+  businessId String
+  url        String
+  score      Int
+  summary    String   @db.Text
+  findings   Json     @default("[]")
+  checkedAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  business   BusinessProfile @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([userId, checkedAt])
+  @@index([businessId, checkedAt])
 }
 
 // ─── Fortify AI sessions ──────────────────────────────────

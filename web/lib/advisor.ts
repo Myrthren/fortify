@@ -22,6 +22,7 @@ export async function buildAdvisorContext(userId: string): Promise<string> {
     shopifyConn,
     metaConn,
     profile,
+    sitePulse,
   ] = await Promise.all([
     user?.tier === "FREE" ? Promise.resolve(null) : db.businessProfile.findFirst({ where: { userId, active: true }, select: { name: true, website: true, industry: true, stage: true, businessModel: true, offer: true, audience: true, objective: true, bottleneck: true, teamSize: true, channels: true } }),
     db.companyDna.findUnique({ where: { userId } }),
@@ -60,6 +61,7 @@ export async function buildAdvisorContext(userId: string): Promise<string> {
     db.shopifyConnection.findUnique({ where: { userId }, select: { shop: true } }),
     db.metaConnection.findUnique({ where: { userId }, select: { accountId: true } }),
     db.profile.findUnique({ where: { userId }, select: { niche: true, skills: true, canOffer: true, lookingFor: true } }),
+    db.sitePulse.findFirst({ where: { userId }, orderBy: { checkedAt: "desc" }, select: { url: true, score: true, summary: true, findings: true, checkedAt: true } }),
   ]);
 
   // ── Build context document ───────────────────────────────────────────────────
@@ -142,6 +144,14 @@ export async function buildAdvisorContext(userId: string): Promise<string> {
   if (metaConn?.accountId) platforms.push(`Meta Ads`);
   if (platforms.length > 0) {
     lines.push(`\n## Connected Platforms: ${platforms.join(", ")}`);
+  }
+
+  if (sitePulse) {
+    lines.push(`\n## Latest Website Pulse (${new Date(sitePulse.checkedAt).toLocaleDateString()}):`);
+    lines.push(`- ${sitePulse.url} · ${sitePulse.score}/100 public checklist score`);
+    lines.push(`- ${sitePulse.summary}`);
+    const gaps = Array.isArray(sitePulse.findings) ? (sitePulse.findings as any[]).filter(item => item?.status !== "ready").slice(0, 4) : [];
+    if (gaps.length) lines.push(gaps.map(item => `- Needs review: ${item.title} — ${item.detail}`).join("\n"));
   }
 
   // Recent chat history context

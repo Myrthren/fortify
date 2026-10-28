@@ -1,7 +1,7 @@
 import {
   Sparkles, Send, ClipboardCheck, Radar, TrendingUp, Search, Lightbulb, BarChart3,
   ShoppingBag, LineChart, Clapperboard, Dna, MapPin, Eye, Workflow, Zap, Activity,
-  Handshake, AtSign, Target, PackageOpen, Layers, FlaskConical, Building2, type LucideIcon,
+  Handshake, AtSign, Target, PackageOpen, Layers, FlaskConical, Building2, Globe2, type LucideIcon,
 } from "lucide-react";
 import type { Tier } from "@prisma/client";
 
@@ -17,7 +17,7 @@ export type ActiveKey =
   | "revenue" | "virality" | "dna" | "members" | "deals" | "pods"
   | "forums" | "messages" | "connections" | "notifications" | "profile"
   | "settings" | "support" | "credits" | "recon" | "competitor-watch"
-  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity" | "plans" | "research-lab" | "story" | "setup" | "missions";
+  | "workflows" | "advisor" | "outbound" | "lead-extractor" | "lead-pack" | "pipeline" | "activity" | "plans" | "research-lab" | "story" | "setup" | "missions" | "site-pulse";
 
 export type HubKey = "leads" | "competitors" | "insights";
 
@@ -58,6 +58,7 @@ export const TOOLS: Record<Exclude<ActiveKey, "dashboard" | "activity" | "member
   outbound:         { key: "outbound", href: "/dashboard/outbound", label: "Outbound Engine", tabLabel: "Autopilot", desc: "Finds, researches and emails leads for you", icon: Zap, minTier: "ELITE", soon: !OUTBOUND_LIVE, hub: "leads" },
 
   audit:            { key: "audit", href: "/dashboard/audit", label: "Funnel Auditor", desc: "Score and fix any landing page", icon: ClipboardCheck, minTier: "PRO" },
+  "site-pulse":    { key: "site-pulse", href: "/dashboard/site-pulse", label: "Website Pulse", desc: "Public website, domain and search-readiness checks", icon: Globe2, minTier: "PRO" },
   trends:           { key: "trends", href: "/dashboard/trends", label: "Trend Radar", desc: "Track topics across the web", icon: TrendingUp },
   competitors:      { key: "competitors", href: "/dashboard/competitors", label: "Competitor Scanner", tabLabel: "Scanner", desc: "Intel reports on rivals", icon: Radar, minTier: "PRO", hub: "competitors" },
   "competitor-watch": { key: "competitor-watch", href: "/dashboard/competitor-tracking", label: "Competitor Watch", tabLabel: "Watch", desc: "Get alerted when their pages change", icon: Eye, minTier: "ELITE", hub: "competitors" },
@@ -115,7 +116,7 @@ export type NavEntry = { kind: "tool"; key: ActiveKey } | { kind: "hub"; hub: Hu
 
 export const NAV_GROUPS: { heading: string; entries: NavEntry[] }[] = [
   { heading: "Content",    entries: [{ kind: "tool", key: "inspiration" }, { kind: "tool", key: "story" }, { kind: "tool", key: "virality" }, { kind: "tool", key: "voice" }] },
-  { heading: "Growth",     entries: [{ kind: "tool", key: "missions" }, { kind: "hub", hub: "leads" }, { kind: "tool", key: "audit" }] },
+  { heading: "Growth",     entries: [{ kind: "tool", key: "missions" }, { kind: "hub", hub: "leads" }, { kind: "tool", key: "audit" }, { kind: "tool", key: "site-pulse" }] },
   { heading: "Research",   entries: [{ kind: "tool", key: "research-lab" }, { kind: "tool", key: "trends" }, { kind: "hub", hub: "competitors" }] },
   { heading: "Business",   entries: [{ kind: "tool", key: "setup" }, { kind: "tool", key: "plans" }, { kind: "tool", key: "advisor" }, { kind: "hub", hub: "insights" }, { kind: "tool", key: "dna" }] },
   { heading: "Automation", entries: [{ kind: "tool", key: "workflows" }] },
