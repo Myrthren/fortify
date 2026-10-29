@@ -7,4 +7,3 @@ CREATE TABLE IF NOT EXISTS "SiteAppearance" (
   "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT "SiteAppearance_pkey" PRIMARY KEY ("id")
 );
-ALTER TABLE "SiteAppearance" ADD COLUMN IF NOT EXISTS "workspaceLayout" TEXT NOT NULL DEFAULT 'classic';
