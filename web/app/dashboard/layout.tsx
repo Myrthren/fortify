@@ -14,6 +14,7 @@ import "../workspace-feedback.css";
 import "../navigation-performance.css";
 import "../workspace-refinement.css";
 import "../workspace-tutorial.css";
+import "../command-centre.css";
 
 // The dashboard reads live announcements and member data. Do not attempt
 // these queries during static generation, when database access may be absent.

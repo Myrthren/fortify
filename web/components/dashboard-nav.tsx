@@ -80,7 +80,15 @@ export function DashboardNav({ user: initialUser, owner = false }: { user: Works
   const signOut = <form action={handleSignOut}><button type="submit" className="workspace-menu-signout">Sign out</button></form>;
   const accountLinks = ACCOUNT.map(item => <NavLink key={item.key} href={item.href} active={active === item.key}><span>{item.label}</span>{item.key === "credits" && user.credits !== undefined && <small>{user.credits.toLocaleString()}</small>}</NavLink>);
   const ownerLink = owner && <NavLink href="/admin" active={false}>Administration</NavLink>;
-  return <header className="workspace-header workspace-header--focused sticky top-0 z-40">
+  return <><aside className="command-sidebar" aria-label="Workspace navigation">
+    <div className="command-sidebar-brand"><Logo withWord/></div>
+    <div className="command-business"><BusinessSwitcher tier={user.tier}/></div>
+    <nav className="command-sidebar-scroll">
+      <div className="command-primary-links"><NavLink href="/dashboard" active={active === "dashboard"}><LayoutDashboard size={18}/><span>Overview</span></NavLink><NavLink href="/dashboard/missions" active={active === "missions"}><Target size={18}/><span>Growth Missions</span></NavLink><NavLink href="/dashboard/activity" active={active === "activity"}><Activity size={18}/><span>Activity</span></NavLink></div>
+      {GROUPS.map(group => <details key={group.heading} className="command-nav-group" open={group.items.some(item => item.key === active)}><summary>{group.heading}<ChevronDown size={14}/></summary><div>{group.items.map(item => item.soon ? <div key={item.key} className="workspace-menu-link workspace-menu-unavailable" aria-disabled="true"><item.icon size={16}/><span>{item.label}</span><Marker item={item} tier={user.tier}/></div> : <NavLink key={item.key} href={item.href} active={active === item.key}><item.icon size={16}/><span>{item.label}</span><Marker item={item} tier={user.tier}/></NavLink>)}</div></details>)}
+    </nav>
+    <div className="command-sidebar-footer"><NavLink href="/dashboard/settings" active={active === "settings"}>Settings</NavLink><NavLink href="/dashboard/support" active={active === "support"}>Help & support</NavLink>{ownerLink}{signOut}</div>
+  </aside><header className="workspace-header workspace-header--focused sticky top-0 z-40">
     <WorkspaceSkipLink/>
     <div className="workspace-topbar">
       <div className="workspace-brand-nav">
@@ -115,5 +123,5 @@ export function DashboardNav({ user: initialUser, owner = false }: { user: Works
         </NavigationDisclosure>
       </div>
     </div>
-  </header>;
+  </header></>;
 }

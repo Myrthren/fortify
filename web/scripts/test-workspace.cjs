@@ -13,6 +13,7 @@ function fixture() {
   const match = (lead, where) => (!where.userId || lead.userId === where.userId) && (!where.id || (typeof where.id === 'string' ? lead.id === where.id : lead.id < where.id.lt)) && (!where.url || (typeof where.url === 'string' ? lead.url === where.url : where.url.in.includes(lead.url))) && (!where.updatedAt || lead.updatedAt.getTime() === where.updatedAt.getTime());
   const scoped = where => { state.reads++; assert.equal(where.userId ?? where.watch?.userId, 'alice', 'every activity query is scoped to the signed-in user'); };
   const db = {
+    $transaction: async work => work(db),
     contentRecord: { findMany: async () => [], count: async () => 0 },
     user: { findUnique: async () => ({ id: 'alice', tier: 'FREE' }) },
     brandVoice: { findFirst: async () => null },
@@ -35,6 +36,8 @@ function fixture() {
     competitorWatchScan: { findMany: async ({ where }) => { scoped(where); return []; }, count: async ({ where }) => { scoped(where); return 0; } },
     competitorWatch: { count: async ({ where }) => { scoped(where); return 0; } },
     watchTerm: { count: async ({ where }) => { scoped(where); return 0; } },
+    sitePulse: { findFirst: async ({ where }) => { scoped(where); return null; } },
+    growthMissionLead: { updateMany: async () => ({ count: 0 }) },
   };
   const cache = new Map();
   function load(relative) {

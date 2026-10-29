@@ -1,6 +1,16 @@
 -- Idempotent additions required by the current application schema.
 -- Keep this deliberately additive: production contains legacy tables that
 -- are not represented in schema.prisma and must not be removed by db push.
+CREATE TABLE IF NOT EXISTS "SiteAppearance" (
+    "id" TEXT NOT NULL DEFAULT 'global',
+    "theme" TEXT NOT NULL DEFAULT 'scifi',
+    "workspaceLayout" TEXT NOT NULL DEFAULT 'classic',
+    "updatedBy" TEXT,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "SiteAppearance_pkey" PRIMARY KEY ("id")
+);
+ALTER TABLE "SiteAppearance" ADD COLUMN IF NOT EXISTS "workspaceLayout" TEXT NOT NULL DEFAULT 'classic';
+
 ALTER TABLE "PaypalConnection"
   ADD COLUMN IF NOT EXISTS "clientSecret" TEXT;
 

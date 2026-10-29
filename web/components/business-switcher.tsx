@@ -23,10 +23,11 @@ export function BusinessSwitcher({ tier }: { tier: string }) {
   useEffect(() => {
     const onOpen = () => {
       const panel = root.current?.closest<HTMLElement>(".workspace-disclosure-panel");
-      if (panel && !panel.hidden) void load();
+      if ((panel && !panel.hidden) || root.current?.closest(".command-business")) void load();
     };
     window.addEventListener("fortify:navigation-open", onOpen);
     window.addEventListener("fortify:businesses-changed", onOpen);
+    if (root.current?.closest(".command-business")) void load();
     return () => { window.removeEventListener("fortify:navigation-open", onOpen); window.removeEventListener("fortify:businesses-changed", onOpen); };
   }, [tier]);
   async function activate(business: BusinessOption) {

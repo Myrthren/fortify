@@ -1196,10 +1196,11 @@ model DripMetric {
 
 // One owner-controlled appearance choice shared by the website and all visitors.
 model SiteAppearance {
-  id        String   @id @default("global")
-  theme     String   @default("scifi")
-  updatedBy String?
-  updatedAt DateTime @updatedAt
+  id              String   @id @default("global")
+  theme           String   @default("scifi")
+  workspaceLayout String   @default("classic")
+  updatedBy       String?
+  updatedAt       DateTime @updatedAt
 }
 
 model FuturePlan {

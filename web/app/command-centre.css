@@ -1,0 +1,56 @@
+/* Persistent workspace frame. Page motion never delays access to controls. */
+.command-sidebar{display:none}
+.command-page-entry{min-width:0}
+@keyframes command-page-enter{from{opacity:.55;filter:blur(3px);transform:translateY(10px)}to{opacity:1;filter:blur(0);transform:none}}
+:root[data-workspace-layout=command-centre] .command-page-entry .workspace-command-heading,:root[data-workspace-layout=command-centre] .command-page-entry .home-business-setup,:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.home-focus-grid,:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.workspace-live-heading,:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.workspace-metrics,:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.workspace-activity-grid,:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.home-goal-disclosure,:root[data-workspace-layout=command-centre] .command-page-entry .home-account-help{animation:command-page-enter 420ms cubic-bezier(.16,1,.3,1) both}
+:root[data-workspace-layout=command-centre] .command-page-entry .home-business-setup,:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.home-focus-grid{animation-delay:45ms}:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.workspace-live-heading{animation-delay:85ms}:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.workspace-metrics{animation-delay:115ms}:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.workspace-activity-grid{animation-delay:155ms}:root[data-workspace-layout=command-centre] .command-page-entry .workspace-live>.home-goal-disclosure,:root[data-workspace-layout=command-centre] .command-page-entry .home-account-help{animation-delay:190ms}
+.command-sidebar :is(a,button,summary):focus-visible{outline:2px solid var(--text);outline-offset:3px}
+.command-sidebar .workspace-menu-link{min-height:42px;gap:10px;font-size:13px;border-radius:7px;padding:10px 12px}
+.command-sidebar .workspace-menu-link>svg{flex-shrink:0}
+.command-sidebar .workspace-menu-link>span{min-width:0}
+.command-sidebar .workspace-menu-link[aria-current=page]{background:#ffffff12;color:var(--text);box-shadow:inset 0 0 0 1px #ffffff14}
+.command-sidebar .workspace-menu-link:hover{background:#ffffff09}
+.command-sidebar .workspace-plan-marker{font-size:9px;margin-left:auto;gap:3px}
+.command-sidebar .workspace-menu-unavailable{opacity:.55}
+.command-sidebar-brand{padding:23px 23px 20px}
+.command-business{padding:0 14px 18px;border-bottom:1px solid var(--border)}
+.command-sidebar-scroll{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#444 transparent;flex:1;padding:18px 12px}
+.command-primary-links{padding-bottom:18px;border-bottom:1px solid var(--border);margin-bottom:14px}
+.command-nav-group{margin:4px 0}
+.command-nav-group>summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none;min-height:44px;padding:10px 12px;color:var(--text-muted,#b0b0b9);font-size:12px;font-weight:600}
+.command-nav-group>summary::-webkit-details-marker{display:none}
+.command-nav-group[open]>summary svg{transform:rotate(180deg)}
+.command-nav-group>div{padding-bottom:10px}
+.command-sidebar-footer{padding:12px;border-top:1px solid var(--border)}
+.command-sidebar-footer .workspace-menu-signout{margin:0;padding:10px 12px;min-height:40px;border:0}
+:root[data-workspace-layout=command-centre] .dashboard-home{font-variant-numeric:tabular-nums}
+:root[data-workspace-layout=command-centre] .dashboard-home .workspace-command-heading{min-height:0;margin-bottom:24px;padding-bottom:24px}
+:root[data-workspace-layout=command-centre] .dashboard-home .workspace-command-heading h1{font-size:32px;font-weight:650}
+:root[data-workspace-layout=command-centre] .dashboard-home .home-next-action{border-radius:12px;padding:26px}
+:root[data-workspace-layout=command-centre] .dashboard-home .workspace-metrics{border-radius:12px}
+:root[data-workspace-layout=command-centre] .dashboard-home .workspace-metrics>a{flex-wrap:wrap;align-content:center;min-height:100px}
+:root[data-workspace-layout=command-centre] .dashboard-home .workspace-metrics strong{font-size:25px}
+:root[data-workspace-layout=command-centre] .dashboard-home .home-business-setup{border-radius:10px}
+@media(min-width:1100px){
+ :root[data-workspace-layout=command-centre] .workspace-shell{padding-left:244px}
+ :root[data-workspace-layout=command-centre] .command-sidebar{display:flex;flex-direction:column;position:fixed;inset:0 auto 0 0;width:244px;z-index:45;background:var(--bg-panel,#111);border-right:1px solid var(--border)}
+ :root[data-workspace-layout=command-centre][data-theme] .workspace-header .workspace-primary{display:none}
+ :root[data-workspace-layout=command-centre][data-theme] .workspace-header .workspace-brand-nav .logo-word{display:none}
+ :root[data-workspace-layout=command-centre][data-theme] .workspace-header .workspace-topbar{max-width:none;padding:0 28px}
+ :root[data-workspace-layout=command-centre][data-theme] .workspace-header .workspace-account-actions{margin-left:auto}
+ :root[data-workspace-layout=command-centre] .dashboard-home{max-width:1600px;padding:30px 28px 48px}
+ :root[data-workspace-layout=command-centre] .workspace-home-view{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px 24px;align-items:start}
+ :root[data-workspace-layout=command-centre] .workspace-home-view .home-focus-grid{display:contents}
+ :root[data-workspace-layout=command-centre] .workspace-home-view .home-next-action{grid-column:1;grid-row:1;min-height:260px}
+ :root[data-workspace-layout=command-centre] .workspace-home-view .home-operating-brief{grid-column:2;grid-row:1 / span 4;align-self:stretch;border:1px solid var(--border);border-radius:12px;background:var(--bg-panel);padding:22px}
+ :root[data-workspace-layout=command-centre] .workspace-home-view>.workspace-live-heading{grid-column:1;margin:0;flex-wrap:wrap;gap:10px}
+ :root[data-workspace-layout=command-centre] .workspace-home-view>.workspace-metrics{grid-column:1;margin:0;grid-template-columns:repeat(2,minmax(0,1fr))}
+ :root[data-workspace-layout=command-centre] .workspace-home-view>.workspace-activity-grid{grid-column:1;grid-template-columns:1fr;gap:20px}
+ :root[data-workspace-layout=command-centre] .workspace-home-view>.home-goal-disclosure{grid-column:1 / -1;margin:0}
+ :root[data-workspace-layout=command-centre] .workspace-home-view .workspace-metrics>a:nth-child(2){border-right:0}
+ :root[data-workspace-layout=command-centre] .workspace-home-view .workspace-metrics>a:nth-child(-n+2){border-bottom:1px solid var(--border)}
+}
+@media(min-width:1550px){:root[data-workspace-layout=command-centre] .workspace-home-view{grid-template-columns:minmax(0,1fr) 330px}:root[data-workspace-layout=command-centre] .workspace-home-view>.workspace-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}:root[data-workspace-layout=command-centre] .workspace-home-view .workspace-metrics>a:nth-child(-n+2){border-bottom:0}:root[data-workspace-layout=command-centre] .workspace-home-view .workspace-metrics>a:nth-child(2){border-right:1px solid var(--border)}:root[data-workspace-layout=command-centre] .workspace-home-view>.workspace-activity-grid{grid-template-columns:1.2fr 1fr}}
+@media(max-width:1099px){:root[data-theme] .workspace-header .workspace-primary,:root[data-theme] .workspace-header .workspace-account-menu{display:none}:root[data-theme] .workspace-header .workspace-mobile-menu{display:block}}
+@media(prefers-reduced-motion:reduce){.command-page-entry *{animation-duration:1ms!important;animation-delay:0ms!important}}
+:root[data-motion=paused] .command-page-entry *{animation:none!important}

@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { readSiteTheme } from "@/lib/site-appearance";
+import { readSiteAppearance } from "@/lib/site-appearance";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    return NextResponse.json({ theme: await readSiteTheme() }, {
+    return NextResponse.json(await readSiteAppearance(), {
       headers: { "Cache-Control": "no-store" },
     });
   } catch {

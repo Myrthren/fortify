@@ -56,7 +56,7 @@ function fixture() {
     new Function('require', 'module', 'exports', result.outputText)(localRequire, module, module.exports);
     return module.exports;
   }
-  return { state, patch: load('app/api/admin/site-theme/route.ts').PATCH, get: load('app/api/site-theme/route.ts').GET, storage: load('lib/site-appearance.ts') };
+  return { state, patch: load('app/api/admin/site-theme/route.ts').PATCH, patchWorkspaceLayout: load('app/api/admin/workspace-layout/route.ts').PATCH, get: load('app/api/site-theme/route.ts').GET, storage: load('lib/site-appearance.ts') };
 }
 
 function request(body, origin = 'https://fortify-io.com') {
@@ -66,11 +66,18 @@ function request(body, origin = 'https://fortify-io.com') {
   });
 }
 
-test('new installation defaults to the approved sci-fi theme without writing', async () => {
+function workspaceLayoutRequest(body, origin = 'https://fortify-io.com') {
+  return new Request('https://fortify-io.com/api/admin/workspace-layout', {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json', origin },
+    body: typeof body === 'string' ? body : JSON.stringify(body),
+  });
+}
+
+test('new installation defaults to the approved theme and classic workspace without writing', async () => {
   const f = fixture();
   const res = await f.get();
   assert.equal(res.status, 200);
-  assert.deepEqual(await res.json(), { theme: 'scifi' });
+  assert.deepEqual(await res.json(), { theme: 'scifi', workspaceLayout: 'classic' });
   assert.equal(res.headers.get('cache-control'), 'no-store');
   assert.equal(f.state.writes, 0);
 });
@@ -84,10 +91,22 @@ test('only authenticated owners can change the universal theme', async () => {
   assert.equal(f.state.writes, 0);
 });
 
+test('only authenticated owners can change the universal workspace layout', async () => {
+  const f = fixture();
+  f.state.session = null;
+  assert.equal((await f.patchWorkspaceLayout(workspaceLayoutRequest({ workspaceLayout: 'command-centre' }))).status, 401);
+  f.state.session = { user: { id: 'member' } }; f.state.owner = false;
+  assert.equal((await f.patchWorkspaceLayout(workspaceLayoutRequest({ workspaceLayout: 'command-centre' }))).status, 403);
+  assert.equal(f.state.writes, 0);
+});
+
 test('foreign and missing origins cannot change appearance', async () => {
   const f = fixture();
   for (const origin of ['https://elsewhere.example', '', 'null']) {
     assert.equal((await f.patch(request({ theme: 'original' }, origin))).status, 403);
+  }
+  for (const origin of ['https://elsewhere.example', '', 'null']) {
+    assert.equal((await f.patchWorkspaceLayout(workspaceLayoutRequest({ workspaceLayout: 'command-centre' }, origin))).status, 403);
   }
   assert.equal(f.state.writes, 0);
 });
@@ -100,6 +119,14 @@ test('invalid themes, empty values and malformed JSON never reach storage', asyn
   assert.equal(f.state.writes, 0);
 });
 
+test('invalid workspace layouts and malformed JSON never reach storage', async () => {
+  const f = fixture();
+  for (const body of [{ workspaceLayout: 'hybrid' }, { workspaceLayout: '' }, { workspaceLayout: 1 }, {}, null, '{bad-json']) {
+    assert.equal((await f.patchWorkspaceLayout(workspaceLayoutRequest(body))).status, 400);
+  }
+  assert.equal(f.state.writes, 0);
+});
+
 test('owner can switch both ways and anonymous readers get the same persisted setting', async () => {
   const f = fixture();
   for (const theme of ['original', 'scifi']) {
@@ -107,7 +134,21 @@ test('owner can switch both ways and anonymous readers get the same persisted se
     assert.equal(saved.status, 200);
     assert.deepEqual(await saved.json(), { theme });
     f.state.session = null;
-    assert.deepEqual(await (await f.get()).json(), { theme });
+    assert.deepEqual(await (await f.get()).json(), { theme, workspaceLayout: 'classic' });
+    f.state.session = { user: { id: 'owner' } };
+    assert.equal(f.state.setting.updatedBy, 'owner');
+  }
+  assert.equal(f.state.writes, 2);
+});
+
+test('owner can switch workspace layouts and anonymous readers receive the persisted choice', async () => {
+  const f = fixture();
+  for (const workspaceLayout of ['command-centre', 'classic']) {
+    const saved = await f.patchWorkspaceLayout(workspaceLayoutRequest({ workspaceLayout }));
+    assert.equal(saved.status, 200);
+    assert.deepEqual(await saved.json(), { workspaceLayout });
+    f.state.session = null;
+    assert.deepEqual(await (await f.get()).json(), { theme: 'scifi', workspaceLayout });
     f.state.session = { user: { id: 'owner' } };
     assert.equal(f.state.setting.updatedBy, 'owner');
   }
@@ -135,11 +176,11 @@ test('repeated theme reads share one database read and owner edits invalidate it
   await Promise.all([f.get(), f.get(), f.get()]);
   assert.equal(f.state.reads, 1);
   await f.patch(request({ theme: 'original' }));
-  assert.deepEqual(await (await f.get()).json(), { theme: 'original' });
+  assert.deepEqual(await (await f.get()).json(), { theme: 'original', workspaceLayout: 'classic' });
   assert.equal(f.state.reads, 2);
   f.state.writeFails = true;
   assert.equal((await f.patch(request({ theme: 'scifi' }))).status, 503);
-  assert.deepEqual(await (await f.get()).json(), { theme: 'original' });
+  assert.deepEqual(await (await f.get()).json(), { theme: 'original', workspaceLayout: 'classic' });
   assert.equal(f.state.reads, 2);
 });
 
@@ -147,11 +188,13 @@ test('storage rejects invalid values even outside the HTTP handler', async () =>
   const f = fixture();
   await assert.rejects(() => f.storage.saveSiteTheme('unknown', 'owner'), /Invalid/);
   assert.equal(f.state.writes, 0);
+  await assert.rejects(() => f.storage.saveWorkspaceLayout('unknown', 'owner'), /Invalid/);
+  assert.equal(f.state.writes, 0);
 });
 
 function syncFixture(fetcher) {
   const document = Object.assign(new EventTarget(), {
-    visibilityState: 'visible', documentElement: { dataset: { theme: 'scifi' } },
+    visibilityState: 'visible', documentElement: { dataset: { theme: 'scifi', workspaceLayout: 'classic' } },
   });
   let tick, cleanup, cleared = false;
   const window = Object.assign(new EventTarget(), {
@@ -166,6 +209,7 @@ function syncFixture(fetcher) {
     if (name === 'react') return { useEffect: fn => { cleanup = fn(); } };
     if (name === 'next/navigation') return { usePathname: () => '/dashboard' };
     if (name === '@/lib/site-theme') return { isSiteTheme: value => value === 'original' || value === 'scifi' };
+    if (name === '@/lib/workspace-layout') return { isWorkspaceLayout: value => value === 'classic' || value === 'command-centre' };
     throw Error(name);
   };
   new Function('require','module','exports','document','window','fetch',result.outputText)(requireMock,module,module.exports,document,window,fetcher);
@@ -173,20 +217,22 @@ function syncFixture(fetcher) {
   return { document, window, tick: () => tick(), cleanup: () => cleanup(), isCleared: () => cleared };
 }
 
-test('open pages adopt the global selection and retain it through outages', async () => {
-  let response = { theme: 'original' }, status = 200;
+test('open pages adopt global appearance choices and retain them through outages', async () => {
+  let response = { theme: 'original', workspaceLayout: 'command-centre' }, status = 200;
   const f = syncFixture(async (_, options) => {
     assert.equal(options.cache, 'no-store');
     return Response.json(response, { status });
   });
   await new Promise(setImmediate);
   assert.equal(f.document.documentElement.dataset.theme, 'original');
+  assert.equal(f.document.documentElement.dataset.workspaceLayout, 'command-centre');
   status = 503; response = { error: 'offline' };
   await f.tick();
   assert.equal(f.document.documentElement.dataset.theme, 'original');
-  status = 200; response = { theme: 'scifi' };
+  status = 200; response = { theme: 'scifi', workspaceLayout: 'classic' };
   await f.tick();
   assert.equal(f.document.documentElement.dataset.theme, 'scifi');
+  assert.equal(f.document.documentElement.dataset.workspaceLayout, 'classic');
   f.cleanup(); assert.equal(f.isCleared(), true);
 });
 
@@ -194,8 +240,10 @@ test('an older in-flight poll cannot undo a freshly saved selection', async () =
   let resolve;
   const f = syncFixture(() => new Promise(done => { resolve = done; }));
   f.window.dispatchEvent(new CustomEvent('fortify-theme-saved', { detail: 'scifi' }));
-  resolve(Response.json({ theme: 'original' }));
+  f.window.dispatchEvent(new CustomEvent('fortify-workspace-layout-saved', { detail: 'command-centre' }));
+  resolve(Response.json({ theme: 'original', workspaceLayout: 'classic' }));
   await new Promise(setImmediate);
   assert.equal(f.document.documentElement.dataset.theme, 'scifi');
+  assert.equal(f.document.documentElement.dataset.workspaceLayout, 'command-centre');
   f.cleanup();
 });

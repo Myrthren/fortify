@@ -1,6 +1,6 @@
 import { SiteAtmosphere } from "@/components/particle-field";
 import { AmbientMotionControl } from "@/components/ambient-motion-control";
-import { getSiteTheme } from "@/lib/site-appearance";
+import { getSiteAppearance } from "@/lib/site-appearance";
 import { SiteThemeSync } from "@/components/site-theme-sync";
 import type { Metadata, Viewport } from "next";
 import { CookieBanner } from "@/components/cookie-banner";
@@ -63,9 +63,9 @@ export const viewport: Viewport = {
 export const revalidate = 30;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const theme = await getSiteTheme();
+  const appearance = await getSiteAppearance();
   return (
-    <html lang="en" data-theme={theme}>
+    <html lang="en" data-theme={appearance.theme} data-workspace-layout={appearance.workspaceLayout}>
       <head>
         <link rel="preload" href="/fonts/archivo/Archivo-Variable.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />
         <script
